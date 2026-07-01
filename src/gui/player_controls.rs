@@ -549,6 +549,8 @@ impl PlayerControls {
         if let Ok(mut playlist) = self.imp().playlist.lock() {
             playlist.add_song(song);
         }
+        // 用户选择了新歌曲，清除恢复时保存的播放进度
+        self.imp().pending_seek_position.set(0);
         self.save_playlist();
     }
 
@@ -588,6 +590,8 @@ impl PlayerControls {
         if let Ok(mut playlist) = self.imp().playlist.lock() {
             playlist.add_list(list);
         }
+        // 用户选择了新歌单，清除恢复时保存的播放进度
+        self.imp().pending_seek_position.set(0);
         self.save_playlist();
     }
 
