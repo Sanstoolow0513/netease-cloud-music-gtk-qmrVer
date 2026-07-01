@@ -109,6 +109,10 @@ msgstr ""
 msgid "_About netease-cloud-music-gtk4"
 msgstr ""
 
+#: data/gtk/window.ui:274
+msgid "_Quit"
+msgstr ""
+
 #: data/gtk/window.ui:304
 msgid "Singer"
 msgstr ""
