@@ -7,7 +7,7 @@ use async_channel::Sender;
 use chrono::{TimeZone, Utc};
 use gettextrs::gettext;
 use glib::{ParamSpec, ParamSpecBoolean, Value};
-pub(crate) use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
+pub(crate) use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use ncm_api::SongList;
 use once_cell::sync::{Lazy, OnceCell};
 

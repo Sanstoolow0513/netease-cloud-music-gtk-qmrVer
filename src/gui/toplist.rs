@@ -7,10 +7,10 @@ use crate::{
     application::Action, gui::songlist_view::SongListView, model::ImageDownloadImpl, path::CACHE,
     utils::*,
 };
-use adw::{prelude::ActionRowExt, subclass::prelude::BinImpl, ActionRow};
+use adw::{ActionRow, prelude::ActionRowExt, subclass::prelude::BinImpl};
 use async_channel::Sender;
 use gettextrs::gettext;
-use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
+use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use ncm_api::{SongInfo, TopList};
 use once_cell::sync::OnceCell;
 use std::{cell::RefCell, rc::Rc};

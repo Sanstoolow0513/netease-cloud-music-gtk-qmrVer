@@ -243,12 +243,8 @@ impl NeteaseCloudMusicGtk4Window {
     /// Apply header page visibility and order from GSettings (once at startup).
     fn apply_pages_config(&self) {
         let settings = self.settings();
-        let order = sanitize_pages_order(
-            settings
-                .strv("pages-order")
-                .iter()
-                .map(|s| s.to_string()),
-        );
+        let order =
+            sanitize_pages_order(settings.strv("pages-order").iter().map(|s| s.to_string()));
         let show_discover = settings.boolean("show-discover");
         let show_toplist = settings.boolean("show-toplist");
 
@@ -551,7 +547,9 @@ impl NeteaseCloudMusicGtk4Window {
         player_controls.remove_song(song_info);
 
         let sis = player_controls.get_list();
-        let si = player_controls.get_current_song().unwrap_or(crate::utils::empty_song_info());
+        let si = player_controls
+            .get_current_song()
+            .unwrap_or(crate::utils::empty_song_info());
 
         self.init_playlist_lyrics_page(sis, si.to_owned());
 
