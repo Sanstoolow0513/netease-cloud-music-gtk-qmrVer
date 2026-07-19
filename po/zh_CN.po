@@ -594,7 +594,7 @@ msgstr "上一首"
 msgid "Next"
 msgstr "下一首"
 
-#: data/gtk/songlist-page.ui
+#: data/gtk/songlist-page.ui data/gtk/toplist.ui
 msgid "Play All"
 msgstr "播放全部"
 

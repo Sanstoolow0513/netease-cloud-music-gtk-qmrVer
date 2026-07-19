@@ -55,7 +55,7 @@ impl TopListView {
 
             // download cover
             if !path.exists() {
-                image.set_from_net(t.cover.to_owned(), path, (140, 140), sender);
+                image.set_from_net(t.cover.to_owned(), path, (200, 200), sender);
             } else {
                 image.set_from_file(Some(&path));
             }
@@ -71,7 +71,7 @@ impl TopListView {
                 let mut path = CACHE.clone();
                 path.push(format!("{}-toplist.jpg", t.id));
                 imp.cover_image
-                    .set_from_net(t.cover.to_owned(), path, (140, 140), sender);
+                    .set_from_net(t.cover.to_owned(), path, (200, 200), sender);
             }
         }
         imp.data.set(list).unwrap();
