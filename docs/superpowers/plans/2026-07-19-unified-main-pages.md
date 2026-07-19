@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - 项目无 Rust 测试框架（无 `#[test]`、无 dev-dependencies）。每个任务的"验证"= `cargo build` 零警告 + `cd _build && ninja` 通过（gresource 编译能抓出 ui/css 语法错误）。**不要**新增测试依赖。
-- 所有颜色只允许引用 Libadwaita 命名色（`@accent_bg_color`、`@accent_fg_color`、`@theme_fg_color` 等），禁止硬编码颜色值，保证明暗主题自适应。
+- 所有颜色只允许引用 Libadwaita 命名色（`@accent_bg_color`、`@accent_fg_color`、`@theme_fg_color` 等），禁止硬编码颜色值，保证明暗主题自适应；与主题无关的场景（如图片上的悬停遮罩）允许使用 `white`/`black` 等标准 CSS 颜色关键字。
 - 间距只使用 4 / 8 / 12 / 16 / 24 / 32 六档；清理模板中 9 / 13 / 15 / 18 / 20 / 58 等散数。
 - 不新增任何 `Action` 枚举成员；不改动 `src/application.rs`。
 - 本轮不新增用户可见字符串（六个快捷入口标签与分区标题复用现有 `translatable` 字符串），无需动 `po/`。
