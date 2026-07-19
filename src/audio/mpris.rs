@@ -67,7 +67,7 @@ impl MprisController {
         );
         // 取消从缓存获取专辑封面
         //let mut path_cover = crate::path::CACHE.clone();
-        //path_cover.push(format!("{}-songlist.jpg", si.album_id));
+        //path_cover.push(format!("{}-songlist-200.jpg", si.album_id));
         //if path_cover.exists() {
         //metadata.set_art_url(Some(format!("file://{}", path_cover.to_string_lossy())));
         //} else {

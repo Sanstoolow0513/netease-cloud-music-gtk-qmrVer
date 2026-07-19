@@ -62,7 +62,7 @@ impl SonglistPage {
         // 设置专辑图
         let cover_image = imp.cover_image.get();
         let mut path = CACHE.clone();
-        path.push(format!("{}-songlist.jpg", songlist.id));
+        path.push(format!("{}-songlist-200.jpg", songlist.id));
         if !path.exists() {
             cover_image.set_icon_name(Some("image-missing-symbolic"));
             cover_image.set_from_net(songlist.cover_img_url.to_owned(), path, (200, 200), sender);

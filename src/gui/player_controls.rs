@@ -197,7 +197,7 @@ impl PlayerControls {
         let imp = self.imp();
         let cover_image = imp.cover_image.get();
         let mut path_cover = CACHE.clone();
-        path_cover.push(format!("{}-songlist.jpg", song_info.album_id));
+        path_cover.push(format!("{}-songlist-200.jpg", song_info.album_id));
         if path_cover.exists() {
             cover_image.set_from_file(Some(&path_cover));
         } else {
@@ -206,7 +206,7 @@ impl PlayerControls {
             cover_image.set_from_net(
                 song_info.pic_url.to_owned(),
                 path_cover.to_owned(),
-                (140, 140),
+                (200, 200),
                 &sender,
             );
         }

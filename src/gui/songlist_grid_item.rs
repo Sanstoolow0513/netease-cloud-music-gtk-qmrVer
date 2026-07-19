@@ -40,11 +40,11 @@ impl SongListGridItem {
             .build();
 
         let mut path = crate::path::CACHE.clone();
-        path.push(format!("{}-songlist.jpg", sl.id));
+        path.push(format!("{}-songlist-200.jpg", sl.id));
 
         // download cover
         if !path.exists() {
-            icon.set_from_net(sl.cover_img_url.to_owned(), path, (140, 140), sender);
+            icon.set_from_net(sl.cover_img_url.to_owned(), path, (200, 200), sender);
         } else {
             icon.set_from_file(Some(&path));
         }
@@ -116,10 +116,10 @@ impl SongListGridItem {
         for sl in song_list {
             let (boxs, image, label, label_author) = Self::create(pic_size);
             let mut path = crate::path::CACHE.clone();
-            path.push(format!("{}-songlist.jpg", sl.id));
+            path.push(format!("{}-songlist-200.jpg", sl.id));
             // download cover
             if !path.exists() {
-                image.set_from_net(sl.cover_img_url.to_owned(), path, (140, 140), sender);
+                image.set_from_net(sl.cover_img_url.to_owned(), path, (200, 200), sender);
             } else {
                 image.set_from_file(Some(&path));
             }

@@ -74,7 +74,7 @@ pub fn load_default_cover_pixbuf() -> Option<Pixbuf> {
 
 fn load_cover_icon_data(album_id: u64) -> Vec<u8> {
     let mut path = crate::path::CACHE.clone();
-    path.push(format!("{}-songlist.jpg", album_id));
+    path.push(format!("{}-songlist-200.jpg", album_id));
 
     let pixbuf = if album_id != 0 && path.exists() {
         Pixbuf::from_file_at_scale(&path, 140, 140, true).ok()
