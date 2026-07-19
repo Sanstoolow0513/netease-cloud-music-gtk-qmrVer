@@ -85,3 +85,24 @@ gridview > child:hover .card-play-badge {
     opacity: 1;
 }
 
+
+/* ===== 发现页 ===== */
+
+.banner-image {
+    border-radius: 16px;
+    box-shadow: 0 2px 8px alpha(black, 0.18);
+}
+
+/* FlowBox 卡片间距（从 discover.css 迁入，统一管理；规则内容不变） */
+flowboxchild {
+  margin: 12px;
+  padding: 4px;
+}
+
+flowboxchild:hover {
+    background-color: alpha(@theme_fg_color, 0.1);
+}
+
+flowboxchild:active {
+    background-color: alpha(@theme_fg_color, 0.2);
+}

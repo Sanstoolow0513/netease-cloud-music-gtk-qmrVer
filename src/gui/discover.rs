@@ -105,6 +105,7 @@ impl Discover {
         image.set_valign(gtk::Align::Fill);
         image.set_width_request(730);
         image.set_can_shrink(true);
+        image.add_css_class("banner-image");
         carousel.append(&image);
         self.imp().banners.borrow_mut().push(banner);
     }
