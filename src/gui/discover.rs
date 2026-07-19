@@ -93,18 +93,13 @@ impl Discover {
 
         let sender = self.imp().sender.get().unwrap().clone();
         let image = Picture::new();
-        image.set_from_net(banner.pic.to_owned(), path, (730, 283), &sender);
+        image.set_from_net(banner.pic.to_owned(), path, (1200, 465), &sender);
 
-        // 图片加载方式已验证，必须这样才能实现。
-        // let image = gtk::gdk_pixbuf::Pixbuf::from_file(path).unwrap();
-        // let image = image
-        //     .scale_simple(730, 283, gtk::gdk_pixbuf::InterpType::Bilinear)
-        //     .unwrap();
-        // let image = gtk::Picture::for_pixbuf(&image);
-        image.set_halign(gtk::Align::Center);
+        image.set_halign(gtk::Align::Fill);
         image.set_valign(gtk::Align::Fill);
-        image.set_width_request(730);
+        image.set_hexpand(true);
         image.set_can_shrink(true);
+        image.set_content_fit(gtk::ContentFit::Cover);
         image.add_css_class("banner-image");
         carousel.append(&image);
         self.imp().banners.borrow_mut().push(banner);
