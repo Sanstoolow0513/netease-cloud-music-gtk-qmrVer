@@ -58,6 +58,15 @@ impl SonglistRow {
     pub fn switch_image(&self, visible: bool) {
         let imp = self.imp();
         imp.play_icon.set_visible(visible);
+        if visible {
+            self.add_css_class("playing");
+            imp.title_label.add_css_class("playing-title");
+            imp.play_icon.add_css_class("playing-icon");
+        } else {
+            self.remove_css_class("playing");
+            imp.title_label.remove_css_class("playing-title");
+            imp.play_icon.remove_css_class("playing-icon");
+        }
     }
 
     pub fn set_like_button_visible(&self, visible: bool) {

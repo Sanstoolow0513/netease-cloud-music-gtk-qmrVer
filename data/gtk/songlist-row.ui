@@ -4,7 +4,6 @@
     <template class="SonglistRow" parent="GtkListBoxRow">
         <property name="focusable">False</property>
         <property name="selectable">False</property>
-        <property name="height-request">59</property>
         <style>
             <class name="song_row" />
         </style>
@@ -93,39 +92,48 @@
                             </object>
                         </child>
                         <child>
-                            <object class="GtkButton" id="like_button">
+                            <object class="GtkBox">
                                 <property name="halign">end</property>
                                 <property name="valign">center</property>
-                                <property name="icon-name">non-starred-symbolic</property>
-                                <property name="tooltip-text" translatable="yes">Like song</property>
-                                <signal name="clicked" handler="like_button_clicked_cb" swapped="true" />
                                 <style>
-                                    <class name="flat" />
+                                    <class name="row-actions" />
                                 </style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton" id="album_button">
-                                <property name="halign">end</property>
-                                <property name="valign">center</property>
-                                <property name="icon-name">media-optical-cd-audio-symbolic</property>
-                                <property name="tooltip-text" translatable="yes">View album</property>
-                                <signal name="clicked" handler="album_button_clicked_cb" swapped="true" />
-                                <style>
-                                    <class name="flat" />
-                                </style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton" id="remove_button">
-                                <property name="halign">end</property>
-                                <property name="valign">center</property>
-                                <property name="icon-name">user-trash-symbolic</property>
-                                <property name="tooltip-text" translatable="yes">Remove song</property>
-                                <signal name="clicked" handler="remove_button_clicked_cb" swapped="true" />
-                                <style>
-                                    <class name="flat" />
-                                </style>
+                                <child>
+                                    <object class="GtkButton" id="like_button">
+                                        <property name="halign">end</property>
+                                        <property name="valign">center</property>
+                                        <property name="icon-name">non-starred-symbolic</property>
+                                        <property name="tooltip-text" translatable="yes">Like song</property>
+                                        <signal name="clicked" handler="like_button_clicked_cb" swapped="true" />
+                                        <style>
+                                            <class name="flat" />
+                                        </style>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="album_button">
+                                        <property name="halign">end</property>
+                                        <property name="valign">center</property>
+                                        <property name="icon-name">media-optical-cd-audio-symbolic</property>
+                                        <property name="tooltip-text" translatable="yes">View album</property>
+                                        <signal name="clicked" handler="album_button_clicked_cb" swapped="true" />
+                                        <style>
+                                            <class name="flat" />
+                                        </style>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkButton" id="remove_button">
+                                        <property name="halign">end</property>
+                                        <property name="valign">center</property>
+                                        <property name="icon-name">user-trash-symbolic</property>
+                                        <property name="tooltip-text" translatable="yes">Remove song</property>
+                                        <signal name="clicked" handler="remove_button_clicked_cb" swapped="true" />
+                                        <style>
+                                            <class name="flat" />
+                                        </style>
+                                    </object>
+                                </child>
                             </object>
                         </child>
                     </object>
@@ -134,6 +142,7 @@
         </child>
         <child>
             <object class="GtkGestureClick">
+                <property name="button">1</property>
                 <signal name="released" handler="on_click" swapped="yes" />
             </object>
         </child>
