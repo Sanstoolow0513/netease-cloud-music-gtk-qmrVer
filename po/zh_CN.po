@@ -138,6 +138,14 @@ msgstr "首选项"
 msgid "General"
 msgstr "通用"
 
+#: data/gtk/preferences.ui:86
+msgid "Header Pages"
+msgstr "顶栏页面"
+
+#: data/gtk/preferences.ui:87
+msgid "Takes effect after restart"
+msgstr "重启后生效"
+
 #: data/gtk/preferences.ui:15
 msgid "Exit to the background"
 msgstr "退出到后台"

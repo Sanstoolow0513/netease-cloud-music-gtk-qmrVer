@@ -67,6 +67,50 @@ impl Default for Debounce {
     }
 }
 
+/// Default header page names in UI order.
+pub const DEFAULT_HEADER_PAGES: [&str; 3] = ["discover", "toplist", "my"];
+
+/// Sanitize a stored pages-order value into a permutation of the three header pages.
+pub fn sanitize_pages_order(order: impl IntoIterator<Item = impl AsRef<str>>) -> Vec<String> {
+    let mut result = Vec::with_capacity(DEFAULT_HEADER_PAGES.len());
+    for name in order {
+        let name = name.as_ref();
+        if DEFAULT_HEADER_PAGES.contains(&name) && !result.iter().any(|s| s == name) {
+            result.push(name.to_string());
+        }
+    }
+    for &name in &DEFAULT_HEADER_PAGES {
+        if !result.iter().any(|s| s == name) {
+            result.push(name.to_string());
+        }
+    }
+    result
+}
+
+/// Whether a header page should be visible given the show-* settings.
+/// "my" is always visible.
+pub fn header_page_visible(name: &str, show_discover: bool, show_toplist: bool) -> bool {
+    match name {
+        "discover" => show_discover,
+        "toplist" => show_toplist,
+        "my" => true,
+        _ => false,
+    }
+}
+
+/// First visible page name in the given order; falls back to "my".
+pub fn first_visible_header_page(
+    order: &[String],
+    show_discover: bool,
+    show_toplist: bool,
+) -> String {
+    order
+        .iter()
+        .find(|name| header_page_visible(name, show_discover, show_toplist))
+        .cloned()
+        .unwrap_or_else(|| "my".to_string())
+}
+
 pub fn empty_song_info() -> SongInfo {
     SongInfo {
         id: 0,

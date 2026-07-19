@@ -4,6 +4,7 @@ use crate::{
     gui::*,
     model::*,
     ncmapi::NcmClient,
+    utils::{first_visible_header_page, header_page_visible, sanitize_pages_order},
 };
 use adw::{ColorScheme, StyleManager, Toast};
 use async_channel::Sender;
@@ -235,6 +236,78 @@ impl NeteaseCloudMusicGtk4Window {
 
     pub fn settings(&self) -> &Settings {
         self.imp().settings.get().expect("Could not get settings.")
+    }
+
+    /// Apply header page visibility and order from GSettings (once at startup).
+    fn apply_pages_config(&self) {
+        let settings = self.settings();
+        let order = sanitize_pages_order(
+            settings
+                .strv("pages-order")
+                .iter()
+                .map(|s| s.to_string()),
+        );
+        let show_discover = settings.boolean("show-discover");
+        let show_toplist = settings.boolean("show-toplist");
+
+        let stack = self.imp().stack.get();
+        let page_names = ["discover", "toplist", "my", "search"];
+
+        struct PageMeta {
+            child: gtk::Widget,
+            name: Option<String>,
+            title: Option<String>,
+            icon_name: Option<String>,
+        }
+
+        let mut pages: Vec<PageMeta> = Vec::with_capacity(page_names.len());
+        for name in page_names {
+            if let Some(child) = stack.child_by_name(name) {
+                let page = stack.page(&child);
+                pages.push(PageMeta {
+                    child,
+                    name: page.name().map(|s| s.to_string()),
+                    title: page.title().map(|s| s.to_string()),
+                    icon_name: page.icon_name().map(|s| s.to_string()),
+                });
+            }
+        }
+
+        for page in &pages {
+            stack.remove(&page.child);
+        }
+
+        let mut take_page = |name: &str| -> Option<PageMeta> {
+            pages
+                .iter()
+                .position(|p| p.name.as_deref() == Some(name))
+                .map(|i| pages.remove(i))
+        };
+
+        for name in order.iter() {
+            if let Some(meta) = take_page(name) {
+                let page = stack.add_titled_with_icon(
+                    &meta.child,
+                    meta.name.as_deref(),
+                    meta.title.as_deref().unwrap_or(""),
+                    meta.icon_name.as_deref().unwrap_or(""),
+                );
+                page.set_visible(header_page_visible(name, show_discover, show_toplist));
+            }
+        }
+
+        if let Some(meta) = take_page("search") {
+            let page = stack.add_named(&meta.child, meta.name.as_deref());
+            page.set_visible(false);
+        }
+
+        let first = first_visible_header_page(&order, show_discover, show_toplist);
+        stack.set_visible_child_name(&first);
+
+        if let Ok(mut stack_child) = self.imp().stack_child.lock() {
+            stack_child.clear();
+            stack_child.push_back((first, "".to_owned()));
+        }
     }
 
     fn setup_action(&self) {
@@ -526,6 +599,8 @@ impl NeteaseCloudMusicGtk4Window {
     pub fn init_page_data(&self) {
         let imp = self.imp();
         let sender = imp.sender.get().unwrap();
+
+        self.apply_pages_config();
 
         // 初始化我的页面
         let my_page = imp.my_page.get();
