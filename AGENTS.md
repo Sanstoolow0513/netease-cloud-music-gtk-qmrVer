@@ -46,6 +46,14 @@ cargo build
 cargo run
 ```
 
+**本地免安装运行**：根目录 `Makefile` 提供了无需 root、不写入系统目录的运行方式。它使用独立构建目录 `_local`，将 meson `prefix` 指向项目内 `_local/prefix`（使编译期写入 `src/config.rs` 的 `PKGDATADIR`/`LOCALEDIR` 均为本地路径），`meson install` 到该本地前缀后直接运行（GSettings schema 通过 `GSETTINGS_SCHEMA_DIR` 指向本地编译产物）。
+
+```bash
+make run     # 构建并运行（默认 debug 构建，可用 make BUILDTYPE=release 覆盖）
+make build   # 只构建并安装到 _local/prefix
+make clean   # 删除 _local
+```
+
 查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。
 
 macOS 构建时根目录 `build.rs`（Cargo 自动识别）会设置 GStreamer framework 的 pkg-config / rpath 路径；`Cargo.toml` 中 `[package.metadata.bundle]` 供 cargo-bundle 打包 macOS dmg 使用。仓库根部的 `.buildconfig` 是 GNOME Builder 的配置文件，与构建脚本无关。
