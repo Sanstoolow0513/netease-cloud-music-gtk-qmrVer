@@ -1,5 +1,5 @@
 use gettextrs::gettext;
-use glib::{timeout_add_seconds, SourceId};
+use glib::{SourceId, timeout_add_seconds};
 use gtk::glib;
 use ncm_api::{SongCopyright, SongInfo, SongQualityState};
 use std::sync::{Arc, Mutex};

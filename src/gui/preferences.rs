@@ -9,7 +9,7 @@ use adw::prelude::{ActionRowExt, PreferencesGroupExt};
 use gettextrs::gettext;
 use gio::Settings;
 use gtk::gio::SettingsBindFlags;
-use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
+use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use once_cell::sync::OnceCell;
 use std::cell::RefCell;
 
@@ -113,12 +113,8 @@ impl NeteaseCloudMusicGtk4Preferences {
         }
 
         let settings = self.settings();
-        let order = sanitize_pages_order(
-            settings
-                .strv("pages-order")
-                .iter()
-                .map(|s| s.to_string()),
-        );
+        let order =
+            sanitize_pages_order(settings.strv("pages-order").iter().map(|s| s.to_string()));
         let order_len = order.len();
 
         for (index, name) in order.iter().enumerate() {
@@ -172,12 +168,8 @@ impl NeteaseCloudMusicGtk4Preferences {
 
     fn move_page(&self, from: usize, to: usize) {
         let settings = self.settings();
-        let mut order = sanitize_pages_order(
-            settings
-                .strv("pages-order")
-                .iter()
-                .map(|s| s.to_string()),
-        );
+        let mut order =
+            sanitize_pages_order(settings.strv("pages-order").iter().map(|s| s.to_string()));
         if from >= order.len() || to >= order.len() {
             return;
         }

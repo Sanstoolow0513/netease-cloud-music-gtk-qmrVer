@@ -1,5 +1,7 @@
 /target
 /build
+/_local
+/worktrees
 **/*.rs.bk
 /src/config.rs
 /Cargo.lock

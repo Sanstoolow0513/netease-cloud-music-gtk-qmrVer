@@ -120,9 +120,9 @@
                                         <property name="valign">center</property>
                                         <property name="margin-start">9</property>
                                         <property name="label" translatable="yes">Top Picks</property>
-                                        <attributes>
-                                            <attribute name="size" value="15000" />
-                                        </attributes>
+                                        <style>
+                                            <class name="title-3" />
+                                        </style>
                                     </object>
                                 </child>
                                 <child>
@@ -187,9 +187,9 @@
                                         <property name="valign">center</property>
                                         <property name="margin-start">9</property>
                                         <property name="label" translatable="yes">New Albums</property>
-                                        <attributes>
-                                            <attribute name="size" value="15000" />
-                                        </attributes>
+                                        <style>
+                                            <class name="title-3" />
+                                        </style>
                                     </object>
                                 </child>
                                 <child>

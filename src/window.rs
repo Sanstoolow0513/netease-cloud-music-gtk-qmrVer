@@ -14,9 +14,10 @@ use glib::{
     ParamSpec, ParamSpecEnum, ParamSpecObject, ParamSpecUInt64, Value, clone, source::Priority,
 };
 use gtk::{
-    CompositeTemplate,
+    CompositeTemplate, CssProvider,
     gio::{self, SettingsBindFlags},
     glib,
+    style_context_add_provider_for_display,
 };
 use log::*;
 use ncm_api::{BannersInfo, LoginInfo, SongInfo, SongList, TopList};
@@ -116,6 +117,7 @@ mod imp {
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
             klass.bind_template_instance_callbacks();
+            load_css();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -241,12 +243,8 @@ impl NeteaseCloudMusicGtk4Window {
     /// Apply header page visibility and order from GSettings (once at startup).
     fn apply_pages_config(&self) {
         let settings = self.settings();
-        let order = sanitize_pages_order(
-            settings
-                .strv("pages-order")
-                .iter()
-                .map(|s| s.to_string()),
-        );
+        let order =
+            sanitize_pages_order(settings.strv("pages-order").iter().map(|s| s.to_string()));
         let show_discover = settings.boolean("show-discover");
         let show_toplist = settings.boolean("show-toplist");
 
@@ -549,7 +547,9 @@ impl NeteaseCloudMusicGtk4Window {
         player_controls.remove_song(song_info);
 
         let sis = player_controls.get_list();
-        let si = player_controls.get_current_song().unwrap_or(crate::utils::empty_song_info());
+        let si = player_controls
+            .get_current_song()
+            .unwrap_or(crate::utils::empty_song_info());
 
         self.init_playlist_lyrics_page(sis, si.to_owned());
 
@@ -1175,4 +1175,17 @@ impl Default for NeteaseCloudMusicGtk4Window {
             .downcast()
             .unwrap()
     }
+}
+
+fn load_css() {
+    // Load the CSS file and add it to the provider
+    let provider = CssProvider::new();
+    provider.load_from_resource("/com/gitee/gmg137/NeteaseCloudMusicGtk4/themes/modern.css");
+
+    // Add the provider to the default screen
+    style_context_add_provider_for_display(
+        &gtk::gdk::Display::default().expect("Could not connect to a display."),
+        &provider,
+        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
 }

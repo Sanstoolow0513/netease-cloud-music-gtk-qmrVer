@@ -6,16 +6,16 @@
 
 use adw::prelude::GtkWindowExt;
 use glib::clone;
-use gtk::prelude::Cast;
 use gtk::glib;
-use mpris_server::{zbus::Result, Time, TrackId, *};
+use gtk::prelude::Cast;
+use mpris_server::{Time, TrackId, zbus::Result, *};
 
 use ncm_api::SongInfo;
 use std::rc::Rc;
 
+use crate::application::NeteaseCloudMusicGtk4Application;
 use crate::gui::PlayerControls;
 use crate::window::NeteaseCloudMusicGtk4Window;
-use crate::application::NeteaseCloudMusicGtk4Application;
 
 use super::LoopsState;
 
@@ -67,7 +67,7 @@ impl MprisController {
         );
         // 取消从缓存获取专辑封面
         //let mut path_cover = crate::path::CACHE.clone();
-        //path_cover.push(format!("{}-songlist.jpg", si.album_id));
+        //path_cover.push(format!("{}-songlist-200.jpg", si.album_id));
         //if path_cover.exists() {
         //metadata.set_art_url(Some(format!("file://{}", path_cover.to_string_lossy())));
         //} else {

@@ -6,13 +6,13 @@
 use gio::Settings;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, *};
+use gtk::{CompositeTemplate, glib, *};
 
 use crate::{application::Action, gui::songlist_row::SonglistRow};
 use async_channel::Sender;
 use glib::{
-    clone, subclass::Signal, ParamSpec, ParamSpecBoolean, ParamSpecInt, RustClosure,
-    SignalHandlerId, Value,
+    ParamSpec, ParamSpecBoolean, ParamSpecInt, RustClosure, SignalHandlerId, Value, clone,
+    subclass::Signal,
 };
 use ncm_api::SongInfo;
 use once_cell::sync::{Lazy, OnceCell};
@@ -218,9 +218,11 @@ mod imp {
 
         fn signals() -> &'static [Signal] {
             static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![Signal::builder("row-activated")
-                    .param_types([SonglistRow::static_type()])
-                    .build()]
+                vec![
+                    Signal::builder("row-activated")
+                        .param_types([SonglistRow::static_type()])
+                        .build(),
+                ]
             });
             SIGNALS.as_ref()
         }

@@ -7,10 +7,10 @@ use crate::{
     application::Action, gui::songlist_view::SongListView, model::ImageDownloadImpl, path::CACHE,
     utils::*,
 };
-use adw::{prelude::ActionRowExt, subclass::prelude::BinImpl, ActionRow};
+use adw::{ActionRow, prelude::ActionRowExt, subclass::prelude::BinImpl};
 use async_channel::Sender;
 use gettextrs::gettext;
-use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
+use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use ncm_api::{SongInfo, TopList};
 use once_cell::sync::OnceCell;
 use std::{cell::RefCell, rc::Rc};
@@ -50,12 +50,12 @@ impl TopListView {
                 .subtitle(&t.update)
                 .build();
             let mut path = CACHE.clone();
-            path.push(format!("{}-toplist.jpg", t.id));
+            path.push(format!("{}-toplist-200.jpg", t.id));
             let image = gtk::Image::from_icon_name("image-missing-symbolic");
 
             // download cover
             if !path.exists() {
-                image.set_from_net(t.cover.to_owned(), path, (140, 140), sender);
+                image.set_from_net(t.cover.to_owned(), path, (200, 200), sender);
             } else {
                 image.set_from_file(Some(&path));
             }
@@ -69,9 +69,9 @@ impl TopListView {
 
                 // 加载初始选中的榜单封面
                 let mut path = CACHE.clone();
-                path.push(format!("{}-toplist.jpg", t.id));
+                path.push(format!("{}-toplist-200.jpg", t.id));
                 imp.cover_image
-                    .set_from_net(t.cover.to_owned(), path, (140, 140), sender);
+                    .set_from_net(t.cover.to_owned(), path, (200, 200), sender);
             }
         }
         imp.data.set(list).unwrap();
@@ -173,7 +173,7 @@ mod imp {
                     .unwrap();
                 let mut path = CACHE.clone();
 
-                path.push(format!("{}-toplist.jpg", info.id));
+                path.push(format!("{}-toplist-200.jpg", info.id));
                 self.cover_image.set_from_file(Some(path));
 
                 let title = self.title_label.get();

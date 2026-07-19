@@ -5,8 +5,8 @@
 //
 use adw::subclass::prelude::BinImpl;
 use async_channel::Sender;
-use glib::{closure_local, ParamSpec, Value};
-use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
+use glib::{ParamSpec, Value, closure_local};
+use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use log::warn;
 use ncm_api::SongInfo;
 use once_cell::sync::Lazy;
@@ -143,11 +143,7 @@ impl PlayListLyricsPage {
             &buffer.start_iter(),
             &buffer.end_iter(),
         );
-        buffer.remove_tag(
-            &uttered_text_tag,
-            &buffer.start_iter(),
-            &buffer.end_iter(),
-        );
+        buffer.remove_tag(&uttered_text_tag, &buffer.start_iter(), &buffer.end_iter());
         // gtk doesn't seem to be happy to apply tags to a multi-line TextIter region after an immediate `remove_tag``, so we apply tags line by line
         for i in 0..line_start {
             let start = buffer.iter_at_line(i);

@@ -40,11 +40,11 @@ impl SongListGridItem {
             .build();
 
         let mut path = crate::path::CACHE.clone();
-        path.push(format!("{}-songlist.jpg", sl.id));
+        path.push(format!("{}-songlist-200.jpg", sl.id));
 
         // download cover
         if !path.exists() {
-            icon.set_from_net(sl.cover_img_url.to_owned(), path, (140, 140), sender);
+            icon.set_from_net(sl.cover_img_url.to_owned(), path, (200, 200), sender);
         } else {
             icon.set_from_file(Some(&path));
         }
@@ -57,15 +57,25 @@ impl SongListGridItem {
         let image = Image::builder()
             .pixel_size(pic_size)
             .icon_name("image-missing")
+            .css_classes(vec!["songlist-card-cover".to_string()])
             .build();
 
-        let frame = Frame::builder()
+        // 悬停时浮现的播放徽标（纯视觉，点击行为仍由整卡激活处理）
+        let badge = Image::builder()
+            .icon_name("media-playback-start-symbolic")
+            .halign(Align::End)
+            .valign(Align::End)
+            .css_classes(vec!["card-play-badge".to_string()])
+            .build();
+
+        let overlay = Overlay::builder()
             .halign(Align::Center)
             .valign(Align::Center)
             .child(&image)
             .build();
+        overlay.add_overlay(&badge);
 
-        boxs.append(&frame);
+        boxs.append(&overlay);
 
         let label = Label::builder()
             .lines(2)
@@ -106,10 +116,10 @@ impl SongListGridItem {
         for sl in song_list {
             let (boxs, image, label, label_author) = Self::create(pic_size);
             let mut path = crate::path::CACHE.clone();
-            path.push(format!("{}-songlist.jpg", sl.id));
+            path.push(format!("{}-songlist-200.jpg", sl.id));
             // download cover
             if !path.exists() {
-                image.set_from_net(sl.cover_img_url.to_owned(), path, (140, 140), sender);
+                image.set_from_net(sl.cover_img_url.to_owned(), path, (200, 200), sender);
             } else {
                 image.set_from_file(Some(&path));
             }
@@ -151,9 +161,9 @@ impl SongListGridItem {
                 .downcast::<SongListGridItem>()
                 .unwrap();
 
-            let frame = list_item.child().unwrap().first_child().unwrap();
-            let image = frame.first_child().unwrap();
-            let label = frame.next_sibling().unwrap();
+            let overlay = list_item.child().unwrap().first_child().unwrap();
+            let image = overlay.first_child().unwrap();
+            let label = overlay.next_sibling().unwrap();
             let label_author = label.next_sibling().unwrap();
 
             songlist_object

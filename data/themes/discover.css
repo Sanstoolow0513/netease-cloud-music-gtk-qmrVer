@@ -14,18 +14,7 @@ button.hover-button:hover {
     color: @theme_fg_color;
 }
 
-flowboxchild {
-  margin: 12px;
-  padding: 4px;
-}
-
-flowboxchild:hover {
-    background-color: alpha(@theme_fg_color, 0.1);
-}
-
-flowboxchild:active {
-    background-color: alpha(@theme_fg_color, 0.2);
-}
+/* flowboxchild 三条规则已迁入 modern.css 统一管理 */
 
 .songlist_grid_page gridview {
   padding: 20px;
@@ -40,10 +29,3 @@ flowboxchild:active {
   padding: 6px;
 }
 
-.song_row label {
-	opacity: 0.5;
-}
-
-.song_row.activatable label {
-	opacity: 1;
-}

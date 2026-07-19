@@ -7,7 +7,7 @@ use async_channel::Sender;
 use chrono::{TimeZone, Utc};
 use gettextrs::gettext;
 use glib::{ParamSpec, ParamSpecBoolean, Value};
-pub(crate) use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
+pub(crate) use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use ncm_api::SongList;
 use once_cell::sync::{Lazy, OnceCell};
 
@@ -62,10 +62,10 @@ impl SonglistPage {
         // 设置专辑图
         let cover_image = imp.cover_image.get();
         let mut path = CACHE.clone();
-        path.push(format!("{}-songlist.jpg", songlist.id));
+        path.push(format!("{}-songlist-200.jpg", songlist.id));
         if !path.exists() {
             cover_image.set_icon_name(Some("image-missing-symbolic"));
-            cover_image.set_from_net(songlist.cover_img_url.to_owned(), path, (140, 140), sender);
+            cover_image.set_from_net(songlist.cover_img_url.to_owned(), path, (200, 200), sender);
         } else {
             cover_image.set_from_file(Some(&path));
         }
@@ -77,6 +77,7 @@ impl SonglistPage {
         imp.num_label
             .get()
             .set_label(&gettext_f("{num} songs", &[("num", "0")]));
+        imp.description_label.set_visible(false);
         self.set_property("like", false);
 
         imp.songs_list.clear_list();
@@ -100,13 +101,17 @@ impl SonglistPage {
                 let dt = dt.format("%Y-%m-%d");
                 imp.time_label.set_label(&format!("{}", dt,));
 
+                let desc = detail.description.trim();
+                imp.description_label.set_visible(!desc.is_empty());
+                imp.description_label.set_label(desc);
+
                 imp.num_label.set_label(&format!(
                     "{}, {}",
                     gettext_f("{num} songs", &[("num", &sis.len().to_string())]),
                     gettext_f("{num} favs", &[("num", &dy.sub_count.to_string())])
                 ));
             }
-            SongListDetail::PlayList(_detail, dy) => {
+            SongListDetail::PlayList(detail, dy) => {
                 self.set_property("like", dy.subscribed);
                 imp.songs_list.set_property("no-act-album", false);
                 imp.songs_list.set_property("no-act-remove", true);
@@ -116,8 +121,13 @@ impl SonglistPage {
                     gettext_f("{num} songs", &[("num", &sis.len().to_string())]),
                     gettext_f("{num} favs", &[("num", &dy.booked_count.to_string())])
                 ));
+
+                let desc = detail.description.trim();
+                imp.description_label.set_visible(!desc.is_empty());
+                imp.description_label.set_label(desc);
             }
             SongListDetail::Radio(detail) => {
+                imp.description_label.set_visible(false);
                 imp.songs_list.set_property("no-act-album", true);
                 imp.songs_list.set_property("no-act-like", true);
                 imp.songs_list.set_property("no-act-remove", true);
@@ -165,6 +175,8 @@ mod imp {
         pub time_label: TemplateChild<Label>,
         #[template_child(id = "num_label")]
         pub num_label: TemplateChild<Label>,
+        #[template_child(id = "description_label")]
+        pub description_label: TemplateChild<Label>,
         #[template_child(id = "play_button")]
         pub play_button: TemplateChild<Button>,
         #[template_child(id = "like_button")]
