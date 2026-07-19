@@ -929,7 +929,7 @@ impl PlayerControls {
     fn title_clicked_cb(&self) {
         if let Some(songinfo) = self.get_current_song() {
             let sender = self.imp().sender.get().unwrap().clone();
-            let clipboard = self.clipboard();
+            let clipboard = gtk::prelude::WidgetExt::clipboard(self);
             let share = gettext_f(
                 "https://music.163.com/song?id={id}\nsong:{name}\nsinger:{singer}",
                 &[

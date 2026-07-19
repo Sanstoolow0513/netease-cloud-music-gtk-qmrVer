@@ -134,7 +134,8 @@ impl SongListGridItem {
     fn setup_factory(grid: &GridView, pic_size: i32, show_author: bool) {
         let factory = SignalListItemFactory::new();
 
-        factory.connect_setup(move |_, list_item| {
+        factory.connect_setup(move |_, obj| {
+            let list_item = obj.downcast_ref::<ListItem>().unwrap();
             let (boxs, _, label, label_author) = Self::create(pic_size);
             if show_author {
                 label.set_lines(1);
@@ -142,7 +143,8 @@ impl SongListGridItem {
             label_author.set_visible(show_author);
             list_item.set_child(Some(&boxs));
         });
-        factory.connect_bind(move |_, list_item| {
+        factory.connect_bind(move |_, obj| {
+            let list_item = obj.downcast_ref::<ListItem>().unwrap();
             let songlist_object = list_item
                 .item()
                 .unwrap()

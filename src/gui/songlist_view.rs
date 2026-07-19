@@ -73,17 +73,20 @@ impl SongListView {
             row.set_remove_button_visible(!no_act_remove);
 
             let si = si.clone();
-            row.connect_activate(clone!(
-                #[weak(rename_to = s)]
-                self,
-                move |row| {
-                    if row.is_activatable() || row.not_ignore_grey() {
-                        row.switch_image(true);
-                        sender.send_blocking(Action::AddPlay(si.clone())).unwrap();
-                        s.emit_row_activated(row);
+            gtk::prelude::ListBoxRowExt::connect_activate(
+                &row,
+                clone!(
+                    #[weak(rename_to = s)]
+                    self,
+                    move |row| {
+                        if row.is_activatable() || row.not_ignore_grey() {
+                            row.switch_image(true);
+                            sender.send_blocking(Action::AddPlay(si.clone())).unwrap();
+                            s.emit_row_activated(row);
+                        }
                     }
-                }
-            ));
+                ),
+            );
 
             settings
                 .bind("not-ignore-grey", &row, "not-ignore-grey")
@@ -127,7 +130,7 @@ impl SongListView {
         if let Some(row) = listbox.row_at_index(index) {
             let row = row.downcast::<SonglistRow>().unwrap();
             if do_active {
-                row.emit_activate();
+                gtk::prelude::ListBoxRowExt::emit_activate(&row);
             } else {
                 row.switch_image(true);
             }
