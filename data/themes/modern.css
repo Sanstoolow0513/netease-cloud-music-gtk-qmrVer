@@ -73,7 +73,7 @@
 .card-play-badge {
     color: @accent_fg_color;
     background-color: @accent_bg_color;
-    border-radius: 50%;
+    border-radius: 9999px;
     padding: 8px;
     margin: 8px;
     opacity: 0;
@@ -84,7 +84,6 @@ flowboxchild:hover .card-play-badge,
 gridview > child:hover .card-play-badge {
     opacity: 1;
 }
-
 
 /* ===== 发现页 ===== */
 

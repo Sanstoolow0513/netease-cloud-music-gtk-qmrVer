@@ -14,11 +14,11 @@ use glib::{
     ParamSpec, ParamSpecEnum, ParamSpecObject, ParamSpecUInt64, Value, clone, source::Priority,
 };
 use gtk::{
-    CompositeTemplate,
+    CompositeTemplate, CssProvider,
     gio::{self, SettingsBindFlags},
     glib,
+    style_context_add_provider_for_display,
 };
-use gtk::{CssProvider, style_context_add_provider_for_display};
 use log::*;
 use ncm_api::{BannersInfo, LoginInfo, SongInfo, SongList, TopList};
 use once_cell::sync::{Lazy, OnceCell};
