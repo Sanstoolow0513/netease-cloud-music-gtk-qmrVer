@@ -44,7 +44,7 @@ impl SonglistRow {
         self.set_album(&si.album);
         self.set_duration(si.duration);
 
-        self.set_activatable(si.copyright.playable());
+        gtk::prelude::ListBoxRowExt::set_activatable(self, si.copyright.playable());
     }
 
     pub fn not_ignore_grey(&self) -> bool {
@@ -101,7 +101,7 @@ impl SonglistRow {
 impl SonglistRow {
     #[template_callback]
     fn on_click(&self) {
-        self.emit_activate();
+        gtk::prelude::ListBoxRowExt::emit_activate(self);
     }
 
     #[template_callback]

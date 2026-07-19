@@ -197,7 +197,7 @@ mod imp {
                 .unwrap();
 
             if let Some(weak_window) = self.window.get() {
-                weak_window.upgrade().unwrap().present();
+                gtk::prelude::GtkWindowExt::present(&weak_window.upgrade().unwrap());
                 return;
             }
 
@@ -220,7 +220,7 @@ mod imp {
             );
 
             // Ask the window manager/compositor to present the window
-            window.present();
+            gtk::prelude::GtkWindowExt::present(&window);
         }
     }
 
@@ -246,7 +246,7 @@ impl NeteaseCloudMusicGtk4Application {
         let imp = self.imp();
         let window = NeteaseCloudMusicGtk4Window::new(&self.clone(), imp.sender.clone());
 
-        window.present();
+        gtk::prelude::GtkWindowExt::present(&window);
         window
     }
 
@@ -1350,7 +1350,7 @@ impl NeteaseCloudMusicGtk4Application {
                 window.update_tray_song_title(title, artist, album_id);
             }
             Action::ShowMainWindow => {
-                window.present();
+                gtk::prelude::GtkWindowExt::present(&window);
             }
             Action::ShowPlayerBar => {
                 window.show_player_bar();
@@ -1399,7 +1399,7 @@ impl NeteaseCloudMusicGtk4Application {
         let (size, unit) = crate::path::get_cache_size();
         preferences.set_cache_size_label(size, unit);
 
-        preferences.present(Some(&window));
+        AdwDialogExt::present(&preferences, Some(&window));
     }
 
     fn show_about(&self) {
