@@ -82,6 +82,12 @@
                     </object>
                 </child>
                 <child>
+                    <object class="AdwPreferencesGroup" id="pages_group">
+                        <property name="title" translatable="yes">Header Pages</property>
+                        <property name="description" translatable="yes">Takes effect after restart</property>
+                    </object>
+                </child>
+                <child>
                     <object class="AdwPreferencesGroup">
                         <property name="title" translatable="yes">Music</property>
                         <child>

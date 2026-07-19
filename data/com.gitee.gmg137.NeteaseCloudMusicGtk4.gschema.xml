@@ -56,5 +56,17 @@
             <default>false</default>
             <summary>Desktop Lyrics</summary>
         </key>
+        <key name="pages-order" type="as">
+            <default>['discover', 'toplist', 'my']</default>
+            <summary>Header pages order</summary>
+        </key>
+        <key name="show-discover" type="b">
+            <default>true</default>
+            <summary>Show Discover page in header</summary>
+        </key>
+        <key name="show-toplist" type="b">
+            <default>true</default>
+            <summary>Show Toplist page in header</summary>
+        </key>
     </schema>
 </schemalist>

@@ -4,10 +4,14 @@
 // Distributed under terms of the GPL-3.0-or-later license.
 //
 
+use crate::utils::sanitize_pages_order;
+use adw::prelude::{ActionRowExt, PreferencesGroupExt};
+use gettextrs::gettext;
 use gio::Settings;
 use gtk::gio::SettingsBindFlags;
 use gtk::{glib, prelude::*, subclass::prelude::*, CompositeTemplate, *};
 use once_cell::sync::OnceCell;
+use std::cell::RefCell;
 
 glib::wrapper! {
     pub struct NeteaseCloudMusicGtk4Preferences(ObjectSubclass<imp::NeteaseCloudMusicGtk4Preferences>)
@@ -82,6 +86,106 @@ impl NeteaseCloudMusicGtk4Preferences {
             .get()
             .set_property("subtitle", format!("{:.1} {}", size, unit));
     }
+
+    fn page_title(name: &str) -> String {
+        match name {
+            "discover" => gettext("Discover"),
+            "toplist" => gettext("Toplist"),
+            "my" => gettext("My"),
+            _ => name.to_string(),
+        }
+    }
+
+    fn show_setting_key(name: &str) -> Option<&'static str> {
+        match name {
+            "discover" => Some("show-discover"),
+            "toplist" => Some("show-toplist"),
+            _ => None,
+        }
+    }
+
+    fn rebuild_page_rows(&self) {
+        let imp = self.imp();
+        let pages_group = imp.pages_group.get();
+
+        for row in imp.page_rows.borrow_mut().drain(..) {
+            pages_group.remove(&row);
+        }
+
+        let settings = self.settings();
+        let order = sanitize_pages_order(
+            settings
+                .strv("pages-order")
+                .iter()
+                .map(|s| s.to_string()),
+        );
+        let order_len = order.len();
+
+        for (index, name) in order.iter().enumerate() {
+            let row = adw::ActionRow::builder()
+                .title(Self::page_title(name))
+                .build();
+
+            if let Some(key) = Self::show_setting_key(name) {
+                let switch = Switch::builder().valign(Align::Center).build();
+                settings
+                    .bind(key, &switch, "active")
+                    .flags(SettingsBindFlags::DEFAULT)
+                    .build();
+                row.add_suffix(&switch);
+                row.set_activatable_widget(Some(&switch));
+            }
+
+            let up_button = Button::builder()
+                .icon_name("go-up-symbolic")
+                .valign(Align::Center)
+                .sensitive(index > 0)
+                .build();
+            up_button.add_css_class("flat");
+
+            let down_button = Button::builder()
+                .icon_name("go-down-symbolic")
+                .valign(Align::Center)
+                .sensitive(index + 1 < order_len)
+                .build();
+            down_button.add_css_class("flat");
+
+            let this = self.clone();
+            let idx = index;
+            up_button.connect_clicked(move |_| {
+                this.move_page(idx, idx - 1);
+            });
+
+            let this = self.clone();
+            let idx = index;
+            down_button.connect_clicked(move |_| {
+                this.move_page(idx, idx + 1);
+            });
+
+            row.add_suffix(&up_button);
+            row.add_suffix(&down_button);
+
+            pages_group.add(&row);
+            imp.page_rows.borrow_mut().push(row);
+        }
+    }
+
+    fn move_page(&self, from: usize, to: usize) {
+        let settings = self.settings();
+        let mut order = sanitize_pages_order(
+            settings
+                .strv("pages-order")
+                .iter()
+                .map(|s| s.to_string()),
+        );
+        if from >= order.len() || to >= order.len() {
+            return;
+        }
+        order.swap(from, to);
+        let refs: Vec<&str> = order.iter().map(|s| s.as_str()).collect();
+        let _ = settings.set_strv("pages-order", refs);
+        self.rebuild_page_rows();
+    }
 }
 
 impl Default for NeteaseCloudMusicGtk4Preferences {
@@ -100,6 +204,7 @@ mod imp {
     #[template(resource = "/com/gitee/gmg137/NeteaseCloudMusicGtk4/gtk/preferences.ui")]
     pub struct NeteaseCloudMusicGtk4Preferences {
         pub settings: OnceCell<Settings>,
+        pub page_rows: RefCell<Vec<adw::ActionRow>>,
         #[template_child]
         pub exit_switch: TemplateChild<Switch>,
         #[template_child]
@@ -114,6 +219,8 @@ mod imp {
         pub cache_clear: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub desktop_lyrics: TemplateChild<Switch>,
+        #[template_child]
+        pub pages_group: TemplateChild<adw::PreferencesGroup>,
     }
 
     #[glib::object_subclass]
@@ -138,6 +245,7 @@ mod imp {
 
             obj.setup_settings();
             obj.bind_settings();
+            obj.rebuild_page_rows();
         }
     }
     impl WidgetImpl for NeteaseCloudMusicGtk4Preferences {}
