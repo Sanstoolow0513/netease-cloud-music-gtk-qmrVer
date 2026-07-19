@@ -10,7 +10,7 @@
 
 /* ===== 歌曲列表行 ===== */
 
-/* 行高由原模板写死 59px 改为 padding 控制（约 44px），提高列表密度 */
+/* 行高由原模板写死 59px 改为 padding 控制，提高列表密度 */
 .song_row {
     padding-top: 6px;
     padding-bottom: 6px;
