@@ -7,6 +7,9 @@
                 <child>
                     <object class="GtkScrolledWindow">
                         <property name="width-request">220</property>
+                        <property name="margin-start">12</property>
+                        <property name="margin-top">16</property>
+                        <property name="margin-bottom">12</property>
                         <child>
                             <object class="GtkViewport">
                                 <property name="scroll-to-focus">True</property>
@@ -26,86 +29,73 @@
                 <child>
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
-                        <property name="spacing">20</property>
+                        <property name="spacing">12</property>
                         <child>
-                            <object class="AdwClamp">
-                                <property name="margin-top">20</property>
-                                <property name="margin-start">20</property>
-                                <property name="margin-end">20</property>
-                                <property name="maximum-size">1000</property>
-                                <property name="tightening-threshold">730</property>
+                            <object class="GtkBox">
+                                <property name="orientation">horizontal</property>
+                                <property name="spacing">16</property>
+                                <property name="hexpand">true</property>
+                                <style>
+                                    <class name="page-header" />
+                                </style>
+                                <child>
+                                    <object class="GtkFrame">
+                                        <style>
+                                            <class name="songlist-cover-frame" />
+                                        </style>
+                                        <child>
+                                            <object class="GtkImage" id="cover_image">
+                                                <property name="pixel-size">200</property>
+                                                <property name="icon-name">image-missing-symbolic</property>
+                                            </object>
+                                        </child>
+                                    </object>
+                                </child>
                                 <child>
                                     <object class="GtkBox">
+                                        <property name="orientation">vertical</property>
                                         <property name="halign">fill</property>
-                                        <property name="valign">fill</property>
+                                        <property name="valign">end</property>
                                         <property name="hexpand">true</property>
-                                        <property name="orientation">horizontal</property>
-                                        <property name="spacing">12</property>
+                                        <property name="spacing">8</property>
                                         <child>
-                                            <object class="GtkFrame">
+                                            <object class="GtkLabel" id="title_label">
+                                                <property name="label">Title</property>
+                                                <property name="halign">start</property>
+                                                <property name="wrap">True</property>
+                                                <property name="lines">2</property>
+                                                <property name="ellipsize">end</property>
                                                 <style>
-                                                    <class name="songlist-cover-frame" />
+                                                    <class name="title-1" />
                                                 </style>
-                                                <child>
-                                                    <object class="GtkImage" id="cover_image">
-                                                        <property name="halign">fill</property>
-                                                        <property name="valign">fill</property>
-                                                        <property name="pixel-size">200</property>
-                                                        <property name="icon-name">image-missing-symbolic</property>
-                                                    </object>
-                                                </child>
                                             </object>
                                         </child>
                                         <child>
                                             <object class="GtkBox">
-                                                <property name="orientation">vertical</property>
-                                                <property name="halign">fill</property>
-                                                <property name="valign">end</property>
-                                                <property name="spacing">2</property>
+                                                <property name="orientation">horizontal</property>
+                                                <property name="spacing">8</property>
                                                 <child>
-                                                    <object class="GtkLabel" id="title_label">
-                                                        <property name="label">Title</property>
+                                                    <object class="GtkLabel" id="num_label">
+                                                        <property name="label">0 songs</property>
                                                         <property name="halign">start</property>
-                                                        <property name="valign">end</property>
-                                                        <property name="wrap">True</property>
-                                                        <property name="lines">2</property>
-                                                        <property name="ellipsize">end</property>
-                                                        <style>
-                                                            <class name="title-1" />
-                                                        </style>
                                                     </object>
                                                 </child>
                                                 <child>
-                                                    <object class="GtkBox">
-                                                        <property name="halign">fill</property>
-                                                        <property name="valign">end</property>
-                                                        <property name="spacing">7</property>
-                                                        <property name="orientation">horizontal</property>
+                                                    <object class="GtkButton" id="play_button">
+                                                        <property name="halign">end</property>
+                                                        <property name="hexpand">true</property>
+                                                        <property name="tooltip-text" translatable="yes">Play songs list</property>
+                                                        <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
                                                         <child>
-                                                            <object class="GtkLabel" id="num_label">
-                                                                <property name="label">0 songs</property>
-                                                                <property name="halign">start</property>
-                                                                <property name="valign">end</property>
+                                                            <object class="AdwButtonContent">
+                                                                <property name="icon-name">media-playback-start-symbolic</property>
+                                                                <property name="label" translatable="yes">Play All</property>
                                                             </object>
                                                         </child>
-                                                        <child>
-                                                            <object class="GtkButton" id="play_button">
-                                                                <property name="halign">end</property>
-                                                                <property name="valign">center</property>
-                                                                <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
-                                                                <property name="tooltip-text" translatable="yes">Play songs list</property>
-                                                                <child>
-                                                                    <object class="AdwButtonContent">
-                                                                        <property name="icon-name">media-playback-start-symbolic</property>
-                                                                        <property name="label" translatable="yes">Play All</property>
-                                                                    </object>
-                                                                </child>
-                                                                <style>
-                                                                    <class name="suggested-action" />
-                                                                    <class name="pill" />
-                                                                </style>
-                                                            </object>
-                                                        </child>
+                                                        <style>
+                                                            <class name="suggested-action" />
+                                                            <class name="pill" />
+                                                        </style>
                                                     </object>
                                                 </child>
                                             </object>
@@ -116,6 +106,11 @@
                         </child>
                         <child>
                             <object class="SongListView" id="songs_list">
+                                <property name="clamp-maximum-size">100000</property>
+                                <property name="clamp-margin-top">12</property>
+                                <property name="clamp-margin-bottom">12</property>
+                                <property name="clamp-margin-start">24</property>
+                                <property name="clamp-margin-end">24</property>
                             </object>
                         </child>
                     </object>

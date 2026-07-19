@@ -235,6 +235,8 @@ mod imp {
                     ParamSpecBoolean::builder("no-act-remove").build(),
                     ParamSpecInt::builder("clamp-margin-top").build(),
                     ParamSpecInt::builder("clamp-margin-bottom").build(),
+                    ParamSpecInt::builder("clamp-margin-start").build(),
+                    ParamSpecInt::builder("clamp-margin-end").build(),
                     ParamSpecInt::builder("clamp-maximum-size").build(),
                     ParamSpecInt::builder("clamp-tightening-threshold").build(),
                 ]
@@ -264,6 +266,14 @@ mod imp {
                     let val = value.get().unwrap();
                     self.adw_clamp.set_margin_bottom(val);
                 }
+                "clamp-margin-start" => {
+                    let val = value.get().unwrap();
+                    self.adw_clamp.set_margin_start(val);
+                }
+                "clamp-margin-end" => {
+                    let val = value.get().unwrap();
+                    self.adw_clamp.set_margin_end(val);
+                }
                 "clamp-maximum-size" => {
                     let val = value.get().unwrap();
                     self.adw_clamp.set_maximum_size(val);
@@ -283,6 +293,8 @@ mod imp {
                 "no-act-remove" => self.no_act_remove.get().to_value(),
                 "clamp-margin-top" => self.adw_clamp.margin_top().to_value(),
                 "clamp-margin-bottom" => self.adw_clamp.margin_bottom().to_value(),
+                "clamp-margin-start" => self.adw_clamp.margin_start().to_value(),
+                "clamp-margin-end" => self.adw_clamp.margin_end().to_value(),
                 "clamp-maximum-size" => self.adw_clamp.maximum_size().to_value(),
                 "clamp-tightening-threshold" => self.adw_clamp.tightening_threshold().to_value(),
                 n => unimplemented!("{}", n),
