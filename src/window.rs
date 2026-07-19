@@ -18,6 +18,7 @@ use gtk::{
     gio::{self, SettingsBindFlags},
     glib,
 };
+use gtk::{CssProvider, style_context_add_provider_for_display};
 use log::*;
 use ncm_api::{BannersInfo, LoginInfo, SongInfo, SongList, TopList};
 use once_cell::sync::{Lazy, OnceCell};
@@ -116,6 +117,7 @@ mod imp {
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
             klass.bind_template_instance_callbacks();
+            load_css();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -1175,4 +1177,17 @@ impl Default for NeteaseCloudMusicGtk4Window {
             .downcast()
             .unwrap()
     }
+}
+
+fn load_css() {
+    // Load the CSS file and add it to the provider
+    let provider = CssProvider::new();
+    provider.load_from_resource("/com/gitee/gmg137/NeteaseCloudMusicGtk4/themes/modern.css");
+
+    // Add the provider to the default screen
+    style_context_add_provider_for_display(
+        &gtk::gdk::Display::default().expect("Could not connect to a display."),
+        &provider,
+        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
 }
