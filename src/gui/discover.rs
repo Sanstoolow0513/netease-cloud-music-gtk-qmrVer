@@ -151,7 +151,6 @@ mod imp {
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
             klass.bind_template_callbacks();
-            load_css();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -281,17 +280,4 @@ mod imp {
     }
     impl WidgetImpl for Discover {}
     impl BoxImpl for Discover {}
-}
-
-fn load_css() {
-    // Load the CSS file and add it to the provider
-    let provider = CssProvider::new();
-    provider.load_from_resource("/com/gitee/gmg137/NeteaseCloudMusicGtk4/themes/discover.css");
-
-    // Add the provider to the default screen
-    style_context_add_provider_for_display(
-        &gdk::Display::default().expect("Could not connect to a display."),
-        &provider,
-        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
 }

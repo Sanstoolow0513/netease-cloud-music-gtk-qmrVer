@@ -98,7 +98,7 @@ src/
 
 data/
 ├── gtk/*.ui                 # GTK Builder 模板（与 gui 模块一一对应）
-├── themes/*.css             # 自定义样式；modern.css 为集中式现代化展示样式（歌曲行/卡片/详情页头部/发现页），由 window.rs 在启动时按资源路径加载
+├── themes/*.css             # 自定义样式；modern.css 为集中式现代化样式（页面骨架/歌曲行/卡片/详情页头部/发现页），由 window.rs 在启动时按资源路径加载
 ├── icons/hicolor/           # 应用图标
 ├── *.gschema.xml            # GSettings 模式（com.gitee.gmg137.NeteaseCloudMusicGtk4）
 ├── *.desktop.in / *.metainfo.xml.in   # 桌面文件与 AppStream 元数据模板
