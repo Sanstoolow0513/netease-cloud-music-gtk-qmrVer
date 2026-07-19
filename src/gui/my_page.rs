@@ -65,8 +65,6 @@ mod imp {
     pub struct MyPage {
         #[template_child]
         pub rec_grid: TemplateChild<gtk::FlowBox>,
-        #[template_child]
-        pub daily_rec_avatar: TemplateChild<adw::Avatar>,
 
         pub sender: OnceCell<Sender<Action>>,
     }
@@ -91,14 +89,6 @@ mod imp {
     impl MyPage {
         #[template_callback]
         fn daily_rec_cb(&self) {
-            if let Ok(datetime) = glib::DateTime::now_local() {
-                self.daily_rec_avatar.set_show_initials(true);
-                self.daily_rec_avatar.set_text(Some(&format!(
-                    "{} {}",
-                    datetime.day_of_month() / 10,
-                    datetime.day_of_month() % 10
-                )));
-            }
             let sender = self.sender.get().unwrap();
             sender.send_blocking(Action::ToMyPageDailyRec).unwrap();
         }
@@ -134,19 +124,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for MyPage {
-        fn constructed(&self) {
-            self.parent_constructed();
-            if let Ok(datetime) = glib::DateTime::now_local() {
-                self.daily_rec_avatar.set_show_initials(true);
-                self.daily_rec_avatar.set_text(Some(&format!(
-                    "{} {}",
-                    datetime.day_of_month() / 10,
-                    datetime.day_of_month() % 10
-                )));
-            }
-        }
-    }
+    impl ObjectImpl for MyPage {}
     impl WidgetImpl for MyPage {}
     impl BoxImpl for MyPage {}
 }
