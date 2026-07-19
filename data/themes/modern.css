@@ -50,3 +50,26 @@
     opacity: 1;
 }
 
+/* ===== 歌单卡片 ===== */
+
+.songlist-card-cover {
+    border-radius: 12px;
+    box-shadow: 0 1px 4px alpha(black, 0.18);
+}
+
+/* 悬停播放徽标：默认透明，悬停淡入 */
+.card-play-badge {
+    color: @accent_fg_color;
+    background-color: @accent_bg_color;
+    border-radius: 50%;
+    padding: 8px;
+    margin: 8px;
+    opacity: 0;
+    transition: opacity 150ms ease-out;
+}
+
+flowboxchild:hover .card-play-badge,
+gridview > child:hover .card-play-badge {
+    opacity: 1;
+}
+
