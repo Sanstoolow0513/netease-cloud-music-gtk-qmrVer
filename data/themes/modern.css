@@ -22,11 +22,11 @@
 }
 
 /* 播放中的行：歌名与播放图标用强调色 */
-.playing-title {
+.song_row.playing .playing-title {
     color: @accent_bg_color;
 }
 
-.playing-icon {
+.song_row.playing .playing-icon {
     color: @accent_bg_color;
 }
 
