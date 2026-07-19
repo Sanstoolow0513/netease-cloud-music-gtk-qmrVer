@@ -135,7 +135,7 @@ flowboxchild:active {
 
 /* 轮播图左右切换按钮悬停态（白色半透明，位于图片之上与主题无关） */
 button.hover-button:hover {
-    background-color: alpha(@white, 0.5);
+    background-color: alpha(white, 0.5);
 }
 
 .label-album-grid-artist {
