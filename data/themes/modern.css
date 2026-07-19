@@ -57,6 +57,18 @@
     box-shadow: 0 1px 4px alpha(black, 0.18);
 }
 
+/* ===== 详情页头部 ===== */
+
+.songlist-cover-frame {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px alpha(black, 0.22);
+    padding: 0;
+}
+
+.songlist-cover-frame image {
+    border-radius: 12px;
+}
+
 /* 悬停播放徽标：默认透明，悬停淡入 */
 .card-play-badge {
     color: @accent_fg_color;

@@ -23,11 +23,14 @@
                         <property name="spacing">12</property>
                         <child>
                             <object class="GtkFrame">
+                                <style>
+                                    <class name="songlist-cover-frame" />
+                                </style>
                                 <child>
                                     <object class="GtkImage" id="cover_image">
                                         <property name="halign">fill</property>
                                         <property name="valign">fill</property>
-                                        <property name="pixel-size">140</property>
+                                        <property name="pixel-size">200</property>
                                         <property name="icon-name">image-missing-symbolic</property>
                                     </object>
                                 </child>
@@ -50,7 +53,8 @@
                                                 <property name="label">Title</property>
                                                 <property name="halign">start</property>
                                                 <property name="valign">end</property>
-                                                <property name="max-width-chars">27</property>
+                                                <property name="wrap">True</property>
+                                                <property name="lines">2</property>
                                                 <property name="ellipsize">end</property>
                                                 <style>
                                                     <class name="title-1" />
@@ -72,6 +76,21 @@
                                                 <property name="valign">end</property>
                                             </object>
                                         </child>
+                                        <child>
+                                            <object class="GtkLabel" id="description_label">
+                                                <property name="halign">start</property>
+                                                <property name="valign">end</property>
+                                                <property name="visible">False</property>
+                                                <property name="wrap">True</property>
+                                                <property name="lines">2</property>
+                                                <property name="ellipsize">end</property>
+                                                <property name="xalign">0</property>
+                                                <style>
+                                                    <class name="dim-label" />
+                                                    <class name="caption" />
+                                                </style>
+                                            </object>
+                                        </child>
                                     </object>
                                 </child>
                                 <child>
@@ -84,12 +103,17 @@
                                             <object class="GtkButton" id="play_button">
                                                 <property name="halign">end</property>
                                                 <property name="valign">center</property>
-                                                <property name="hexpand">true</property>
-                                                <property name="icon-name">media-playback-start-symbolic</property>
                                                 <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
                                                 <property name="tooltip-text" translatable="yes">Play songs list</property>
+                                                <child>
+                                                    <object class="AdwButtonContent">
+                                                        <property name="icon-name">media-playback-start-symbolic</property>
+                                                        <property name="label" translatable="yes">Play All</property>
+                                                    </object>
+                                                </child>
                                                 <style>
-                                                    <class name="circular" />
+                                                    <class name="suggested-action" />
+                                                    <class name="pill" />
                                                 </style>
                                             </object>
                                         </child>
