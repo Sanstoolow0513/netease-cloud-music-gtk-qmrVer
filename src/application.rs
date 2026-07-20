@@ -1328,7 +1328,8 @@ impl NeteaseCloudMusicGtk4Application {
                         .await;
                     if let Some(page) = page.upgrade() {
                         if let Some(SearchResult::SongLists(sls)) = res {
-                            page.update_songlist(&sls[1..]);
+                            let songlists = skip_liked_playlist(sls, None);
+                            page.update_songlist(&songlists);
                         }
                     }
                 });
