@@ -31,7 +31,7 @@
 
 三页统一引入 **1280px 限宽栏**，用 `AdwClamp` 实现（GTK CSS 无 max-width）：
 
-- `maximum-size: 1280`，`tightening-threshold: 1000`（窗口窄于 ~1000px 时栏自动贴满，小屏零影响）。
+- `maximum-size: 1280`；`tightening-threshold` 保持 AdwClamp 默认 400（即可用宽度超过 1280+400=1680 时才收紧：窗口 ≥1680 出现两侧留白，1280~1680 之间贴满——有意决策，经用户确认；小屏零影响）。
 - Clamp 套在**滚动容器之内、页面内容之外**；Clamp 自身不带 margin，横向留白仍由现有 `.page-content`（24px）保证。
 - 卡片类元素一律**固定尺寸、禁止随窗口拉伸**：FlowBox 子项根容器加 `halign: center` + 固定 `width-request`。
 - `modern.css` 只新增布局类（如需要），继续遵守头注约束：只用 Libadwaita 命名色。
