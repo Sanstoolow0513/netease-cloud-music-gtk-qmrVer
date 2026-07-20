@@ -815,8 +815,10 @@ impl NeteaseCloudMusicGtk4Window {
         self.imp().my_page.reset();
     }
 
-    pub fn invalidate_my_page_requests(&self) {
-        self.imp().my_page.invalidate_requests();
+    /// Synchronously invalidate in-flight MyPage requests and clear preview
+    /// widgets/models without switching the my-page stack (used on logout).
+    pub fn reset_my_page_previews(&self) {
+        self.imp().my_page.reset();
     }
 
     pub fn begin_my_page_request(&self, section: MyPageSection) -> MyPageRequestId {

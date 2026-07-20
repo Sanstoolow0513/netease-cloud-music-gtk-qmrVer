@@ -95,8 +95,8 @@ impl MyPage {
         }
 
         let split = songs.len().min(4);
-        left.set_visible(true);
-        right.set_visible(songs.len() > split);
+        Self::set_song_column_visible(&left, true);
+        Self::set_song_column_visible(&right, songs.len() > split);
         self.fill_song_list(&left, &songs[..split], &likes[..split]);
         self.fill_song_list(&right, &songs[split..], &likes[split..]);
         self.set_section_state(section, "content");
@@ -206,6 +206,18 @@ impl MyPage {
     fn clear_listbox(list: &gtk::ListBox) {
         while let Some(child) = list.last_child() {
             list.remove(&child);
+        }
+    }
+
+    /// Hide/show the FlowBoxChild wrapper so homogeneous FlowBox does not
+    /// reserve an empty column when the right list has no songs.
+    fn set_song_column_visible(list: &gtk::ListBox, visible: bool) {
+        match list
+            .parent()
+            .and_then(|parent| parent.downcast::<gtk::FlowBoxChild>().ok())
+        {
+            Some(wrapper) => wrapper.set_visible(visible),
+            None => list.set_visible(visible),
         }
     }
 }

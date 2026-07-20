@@ -400,7 +400,9 @@ impl NeteaseCloudMusicGtk4Application {
             }
             Action::Logout => {
                 let login_session = imp.login_session.begin();
-                window.invalidate_my_page_requests();
+                // Clear preview widgets/models immediately so the previous
+                // user's content cannot linger while network logout runs.
+                window.reset_my_page_previews();
                 let sender = imp.sender.clone();
                 let s = self.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
@@ -1335,8 +1337,9 @@ impl NeteaseCloudMusicGtk4Application {
                 });
             }
             Action::InitMyPage => {
+                // CheckLogin already switched/reset via prepare_my_page();
+                // only dispatch section loads here to avoid a double reset.
                 if window.is_logined() {
-                    window.prepare_my_page();
                     for section in MyPageSection::ALL {
                         imp.sender
                             .send_blocking(Action::LoadMyPageSection(section))
