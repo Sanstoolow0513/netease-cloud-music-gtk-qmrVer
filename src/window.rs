@@ -16,8 +16,7 @@ use glib::{
 use gtk::{
     CompositeTemplate, CssProvider,
     gio::{self, SettingsBindFlags},
-    glib,
-    style_context_add_provider_for_display,
+    glib, style_context_add_provider_for_display,
 };
 use log::*;
 use ncm_api::{BannersInfo, LoginInfo, SongInfo, SongList, TopList};
@@ -811,8 +810,40 @@ impl NeteaseCloudMusicGtk4Window {
         imp.my_stack.set_visible_child_name("my_no_login");
     }
 
-    pub fn init_my_page(&self, sls: Vec<SongList>) {
-        self.imp().my_page.init_page(sls);
+    pub fn prepare_my_page(&self) {
+        self.switch_my_page_to_login();
+        self.imp().my_page.reset();
+    }
+
+    /// Synchronously invalidate in-flight MyPage requests and clear preview
+    /// widgets/models without switching the my-page stack (used on logout).
+    pub fn reset_my_page_previews(&self) {
+        self.imp().my_page.reset();
+    }
+
+    pub fn begin_my_page_request(&self, section: MyPageSection) -> MyPageRequestId {
+        self.imp().my_page.begin_request(section)
+    }
+
+    pub fn is_current_my_page_request(
+        &self,
+        section: MyPageSection,
+        request_id: MyPageRequestId,
+    ) -> bool {
+        self.imp().my_page.is_current_request(section, request_id)
+    }
+
+    pub fn update_my_page_songs(&self, section: MyPageSection, songs: Vec<SongInfo>) {
+        let likes = self.get_song_likes(&songs);
+        self.imp().my_page.update_songs(section, &songs, &likes);
+    }
+
+    pub fn update_my_page_collections(&self, section: MyPageSection, items: Vec<SongList>) {
+        self.imp().my_page.update_collections(section, items);
+    }
+
+    pub fn fail_my_page_section(&self, section: MyPageSection) {
+        self.imp().my_page.set_failed(section);
     }
 
     pub fn init_playlist_lyrics_page(&self, sis: Vec<SongInfo>, si: SongInfo) {

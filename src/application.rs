@@ -10,7 +10,13 @@ use ncm_api::{
     SongInfo, SongList, TargetType, TopList,
 };
 use once_cell::sync::OnceCell;
-use std::{cell::RefCell, fs, path::PathBuf, sync::Arc, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    fs,
+    path::PathBuf,
+    sync::Arc,
+    time::Duration,
+};
 
 use crate::{
     MAINCONTEXT, NeteaseCloudMusicGtk4Window, audio::MprisController, config::VERSION,
@@ -33,6 +39,26 @@ impl<Targ> std::fmt::Debug for dyn ActionCallbackTr<Targ> {
 //   unique id for sender object, and store a map
 //   sender object create new (sender, receiver) and attach, then action send back
 pub type ActionCallback<Targ = ()> = Arc<dyn ActionCallbackTr<Targ>>;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct LoginSessionId(u64);
+
+#[derive(Debug, Default)]
+struct LoginSessionGeneration {
+    current: Cell<u64>,
+}
+
+impl LoginSessionGeneration {
+    fn begin(&self) -> LoginSessionId {
+        let next = self.current.get().wrapping_add(1);
+        self.current.set(next);
+        LoginSessionId(next)
+    }
+
+    fn is_current(&self, session_id: LoginSessionId) -> bool {
+        self.current.get() == session_id.0
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Action {
@@ -64,10 +90,9 @@ pub enum Action {
     // login
     CheckLogin(UserMenuChild, CookieJar),
     Logout,
-    InitUserInfo(LoginInfo),
+    InitUserInfo(LoginSessionId, LoginInfo),
     SwitchUserMenuToPhone,
     SwitchUserMenuToQr,
-    SwitchUserMenuToUser(LoginInfo, UserMenuChild),
     GetCaptcha(String, String),
     CaptchaLogin(String, String, String),
 
@@ -94,7 +119,10 @@ pub enum Action {
 
     // my
     InitMyPage,
-    InitMyPageRecSongList(Vec<SongList>),
+    LoadMyPageSection(MyPageSection),
+    SetupMyPageSongs(MyPageSection, MyPageRequestId, Vec<SongInfo>),
+    SetupMyPageCollections(MyPageSection, MyPageRequestId, Vec<SongList>),
+    FailMyPageSection(MyPageSection, MyPageRequestId),
 
     // playlist
     ToPlayListLyricsPage(Vec<SongInfo>, SongInfo),
@@ -136,6 +164,32 @@ pub enum Action {
     ShowPlayerBar,
 }
 
+const MY_PAGE_SONG_PREVIEW_LIMIT: usize = 8;
+const MY_PAGE_COLLECTION_PREVIEW_LIMIT: usize = 10;
+
+fn take_preview<T>(items: Vec<T>, limit: usize) -> Vec<T> {
+    items.into_iter().take(limit).collect()
+}
+
+fn skip_liked_playlist<T>(items: Vec<T>, limit: Option<usize>) -> Vec<T> {
+    match limit {
+        Some(limit) => items.into_iter().skip(1).take(limit).collect(),
+        None => items.into_iter().skip(1).collect(),
+    }
+}
+
+fn fail_my_page_request(
+    sender: &Sender<Action>,
+    section: MyPageSection,
+    request_id: MyPageRequestId,
+    err: impl std::fmt::Debug,
+) {
+    error!("{:?}", err);
+    sender
+        .send_blocking(Action::FailMyPageSection(section, request_id))
+        .unwrap();
+}
+
 mod imp {
 
     use std::sync::{Arc, RwLock};
@@ -148,6 +202,7 @@ mod imp {
         pub receiver: RefCell<Option<Receiver<Action>>>,
         pub unikey: Arc<RwLock<String>>,
         pub ncmapi: RefCell<Option<NcmClient>>,
+        pub(super) login_session: LoginSessionGeneration,
     }
 
     #[glib::object_subclass]
@@ -161,6 +216,7 @@ mod imp {
             let window = OnceCell::new();
             let unikey = Arc::new(RwLock::new(String::new()));
             let ncmapi = RefCell::new(None);
+            let login_session = LoginSessionGeneration::default();
 
             Self {
                 window,
@@ -168,6 +224,7 @@ mod imp {
                 receiver,
                 unikey,
                 ncmapi,
+                login_session,
             }
         }
     }
@@ -293,53 +350,66 @@ impl NeteaseCloudMusicGtk4Application {
 
         match action {
             Action::CheckLogin(user_menu, logined_cookie_jar) => {
+                if window.is_logined() {
+                    return glib::ControlFlow::Continue;
+                }
+
+                let login_session = imp.login_session.begin();
                 let sender = imp.sender.clone();
                 let ncmapi = self.init_ncmapi(NcmClient::from_cookie_jar(logined_cookie_jar));
                 let s = self.clone();
 
                 MAINCONTEXT.spawn_local_with_priority(Priority::HIGH_IDLE, async move {
-                    if !window.is_logined() {
-                        match ncmapi.client.login_status().await {
-                            Ok(login_info) => {
-                                debug!("获取用户信息成功: {:?}", login_info);
-                                window.set_uid(login_info.uid);
+                    let login_result = ncmapi.client.login_status().await;
+                    if !s.imp().login_session.is_current(login_session) {
+                        return;
+                    }
 
-                                ncmapi.save_cookie_jar_to_file();
-                                s.imp().ncmapi.replace(Some(ncmapi));
+                    match login_result {
+                        Ok(login_info) => {
+                            debug!("获取用户信息成功: {:?}", login_info);
+                            window.set_uid(login_info.uid);
 
-                                sender
-                                    .send(Action::InitUserInfo(login_info.to_owned()))
-                                    .await
-                                    .unwrap();
-                                sender
-                                    .send(Action::SwitchUserMenuToUser(login_info, user_menu))
-                                    .await
-                                    .unwrap();
-                                sender.send(Action::InitMyPage).await.unwrap();
-                                sender
-                                    .send(Action::AddToast(gettext("Login successful!")))
-                                    .await
-                                    .unwrap();
-                            }
-                            Err(err) => {
-                                error!("获取用户信息失败！{:?}", err);
-                                sender
-                                    .send(Action::AddToast(gettext("Login failed!")))
-                                    .await
-                                    .unwrap();
+                            ncmapi.save_cookie_jar_to_file();
+                            s.imp().ncmapi.replace(Some(ncmapi));
 
-                                s.imp().ncmapi.replace(None);
-                                NcmClient::clean_cookie_file();
-                            }
+                            window.prepare_my_page();
+                            sender
+                                .send_blocking(Action::InitUserInfo(
+                                    login_session,
+                                    login_info.to_owned(),
+                                ))
+                                .unwrap();
+
+                            window.switch_user_menu_to_user(login_info.clone(), user_menu);
+                            let avatar_url = login_info.avatar_url;
+                            let mut path = CACHE.clone();
+                            path.push("avatar.jpg");
+                            window.set_avatar(avatar_url, path);
+                            window.add_toast(gettext("Login successful!"));
+                        }
+                        Err(err) => {
+                            error!("获取用户信息失败！{:?}", err);
+                            window.add_toast(gettext("Login failed!"));
+
+                            s.imp().ncmapi.replace(None);
+                            NcmClient::clean_cookie_file();
                         }
                     }
                 });
             }
             Action::Logout => {
+                let login_session = imp.login_session.begin();
+                // Clear preview widgets/models immediately so the previous
+                // user's content cannot linger while network logout runs.
+                window.reset_my_page_previews();
                 let sender = imp.sender.clone();
                 let s = self.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
                     ncmapi.client.logout().await;
+                    if !s.imp().login_session.is_current(login_session) {
+                        return;
+                    }
 
                     s.imp().ncmapi.replace(None);
                     NcmClient::clean_cookie_file();
@@ -353,13 +423,20 @@ impl NeteaseCloudMusicGtk4Application {
                         .unwrap();
                 });
             }
-            Action::InitUserInfo(login_info) => {
+            Action::InitUserInfo(login_session, login_info) => {
+                let sender = imp.sender.clone();
+                let s = self.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
-                    match ncmapi.client.user_song_id_list(login_info.uid).await {
-                        Ok(song_ids) => {
-                            window.set_user_like_songs(&song_ids);
+                    let song_ids = ncmapi.client.user_song_id_list(login_info.uid).await;
+                    if s.imp().login_session.is_current(login_session)
+                        && window.is_logined()
+                        && window.get_uid() == login_info.uid
+                    {
+                        match song_ids {
+                            Ok(song_ids) => window.set_user_like_songs(&song_ids),
+                            Err(err) => error!("{:?}", err),
                         }
-                        Err(err) => error!("{:?}", err),
+                        sender.send_blocking(Action::InitMyPage).unwrap();
                     }
                 });
             }
@@ -503,13 +580,6 @@ impl NeteaseCloudMusicGtk4Application {
                             .unwrap();
                     }
                 });
-            }
-            Action::SwitchUserMenuToUser(login_info, menu) => {
-                window.switch_user_menu_to_user(login_info.clone(), menu);
-                let avatar_url = login_info.avatar_url;
-                let mut path = CACHE.clone();
-                path.push("avatar.jpg");
-                window.set_avatar(avatar_url, path);
             }
             Action::AddToast(mes) => {
                 window.add_toast(mes);
@@ -775,7 +845,9 @@ impl NeteaseCloudMusicGtk4Application {
                         song_info.album_id,
                     ))
                     .unwrap();
-                sender.send_blocking(Action::UpdateTrayPlaying(true)).unwrap();
+                sender
+                    .send_blocking(Action::UpdateTrayPlaying(true))
+                    .unwrap();
 
                 window.play(song_info);
             }
@@ -1258,32 +1330,157 @@ impl NeteaseCloudMusicGtk4Application {
                         .await;
                     if let Some(page) = page.upgrade() {
                         if let Some(SearchResult::SongLists(sls)) = res {
-                            page.update_songlist(&sls[1..]);
+                            let songlists = skip_liked_playlist(sls, None);
+                            page.update_songlist(&songlists);
                         }
                     }
                 });
             }
             Action::InitMyPage => {
-                window.switch_my_page_to_login();
-                let sender = imp.sender.clone();
-                MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
-                    match ncmapi.client.recommend_resource().await {
-                        Ok(sls) => {
-                            debug!("获取推荐歌单：{:?}", sls);
-                            sender
-                                .send(Action::InitMyPageRecSongList(sls))
-                                .await
-                                .unwrap();
-                        }
-                        Err(err) => {
-                            error!("{:?}", err);
-                            sender.send(Action::InitMyPage).await.unwrap();
-                        }
+                // CheckLogin already switched/reset via prepare_my_page();
+                // only dispatch section loads here to avoid a double reset.
+                if window.is_logined() {
+                    for section in MyPageSection::ALL {
+                        imp.sender
+                            .send_blocking(Action::LoadMyPageSection(section))
+                            .unwrap();
                     }
-                });
+                }
             }
-            Action::InitMyPageRecSongList(sls) => {
-                window.init_my_page(sls);
+            Action::LoadMyPageSection(section) => {
+                if window.is_logined() {
+                    let uid = window.get_uid();
+                    let request_id = window.begin_my_page_request(section);
+                    let sender = imp.sender.clone();
+                    MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
+                        match section {
+                            MyPageSection::DailyRec => {
+                                match ncmapi.client.recommend_songs().await {
+                                    Ok(songs) => {
+                                        sender
+                                            .send(Action::SetupMyPageSongs(
+                                                section,
+                                                request_id,
+                                                take_preview(songs, MY_PAGE_SONG_PREVIEW_LIMIT),
+                                            ))
+                                            .await
+                                            .unwrap();
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
+                            }
+                            MyPageSection::FavoriteSongs => {
+                                match ncmapi.client.user_song_list(uid, 0, 1).await {
+                                    Ok(songlists) => {
+                                        if let Some(songlist) = songlists.first() {
+                                            match ncmapi.client.song_list_detail(songlist.id).await
+                                            {
+                                                Ok(detail) => {
+                                                    sender
+                                                        .send(Action::SetupMyPageSongs(
+                                                            section,
+                                                            request_id,
+                                                            take_preview(
+                                                                detail.songs,
+                                                                MY_PAGE_SONG_PREVIEW_LIMIT,
+                                                            ),
+                                                        ))
+                                                        .await
+                                                        .unwrap();
+                                                }
+                                                Err(err) => fail_my_page_request(
+                                                    &sender, section, request_id, err,
+                                                ),
+                                            }
+                                        } else {
+                                            sender
+                                                .send(Action::SetupMyPageSongs(
+                                                    section,
+                                                    request_id,
+                                                    Vec::new(),
+                                                ))
+                                                .await
+                                                .unwrap();
+                                        }
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
+                            }
+                            MyPageSection::FavoriteAlbums => {
+                                match ncmapi
+                                    .client
+                                    .album_sublist(0, MY_PAGE_COLLECTION_PREVIEW_LIMIT as u16)
+                                    .await
+                                {
+                                    Ok(albums) => {
+                                        sender
+                                            .send(Action::SetupMyPageCollections(
+                                                section,
+                                                request_id,
+                                                take_preview(
+                                                    albums,
+                                                    MY_PAGE_COLLECTION_PREVIEW_LIMIT,
+                                                ),
+                                            ))
+                                            .await
+                                            .unwrap();
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
+                            }
+                            MyPageSection::FavoriteSongLists => {
+                                match ncmapi
+                                    .client
+                                    .user_song_list(
+                                        uid,
+                                        0,
+                                        (MY_PAGE_COLLECTION_PREVIEW_LIMIT + 1) as u16,
+                                    )
+                                    .await
+                                {
+                                    Ok(songlists) => {
+                                        sender
+                                            .send(Action::SetupMyPageCollections(
+                                                section,
+                                                request_id,
+                                                skip_liked_playlist(
+                                                    songlists,
+                                                    Some(MY_PAGE_COLLECTION_PREVIEW_LIMIT),
+                                                ),
+                                            ))
+                                            .await
+                                            .unwrap();
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            Action::SetupMyPageSongs(section, request_id, songs) => {
+                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
+                    window.update_my_page_songs(section, songs);
+                }
+            }
+            Action::SetupMyPageCollections(section, request_id, items) => {
+                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
+                    window.update_my_page_collections(section, items);
+                }
+            }
+            Action::FailMyPageSection(section, request_id) => {
+                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
+                    window.fail_my_page_section(section);
+                    window.add_toast(gettext("Request for interface failed, please try again!"));
+                }
             }
             Action::ToPlayListLyricsPage(sis, si) => {
                 let sender = imp.sender.clone();
@@ -1515,4 +1712,42 @@ fn remove_all_file(path: PathBuf) -> anyhow::Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        LoginSessionGeneration, MY_PAGE_COLLECTION_PREVIEW_LIMIT, MY_PAGE_SONG_PREVIEW_LIMIT,
+        skip_liked_playlist, take_preview,
+    };
+
+    #[test]
+    fn login_session_generation_invalidates_older_work() {
+        let generation = LoginSessionGeneration::default();
+        let first = generation.begin();
+        assert!(generation.is_current(first));
+
+        let second = generation.begin();
+        assert!(!generation.is_current(first));
+        assert!(generation.is_current(second));
+    }
+
+    #[test]
+    fn preview_helpers_limit_and_preserve_order() {
+        assert_eq!(MY_PAGE_SONG_PREVIEW_LIMIT, 8);
+        assert_eq!(MY_PAGE_COLLECTION_PREVIEW_LIMIT, 10);
+        assert_eq!(take_preview(vec![1, 2, 3, 4], 3), vec![1, 2, 3]);
+        assert_eq!(take_preview(vec![1, 2], 3), vec![1, 2]);
+    }
+
+    #[test]
+    fn preview_helpers_skip_liked_playlist_safely() {
+        assert_eq!(
+            skip_liked_playlist::<i32>(vec![], Some(10)),
+            Vec::<i32>::new()
+        );
+        assert_eq!(skip_liked_playlist(vec![0], Some(10)), Vec::<i32>::new());
+        assert_eq!(skip_liked_playlist(vec![0, 1, 2, 3], Some(2)), vec![1, 2]);
+        assert_eq!(skip_liked_playlist(vec![0, 1, 2, 3], None), vec![1, 2, 3]);
+    }
 }

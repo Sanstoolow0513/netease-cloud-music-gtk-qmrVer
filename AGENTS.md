@@ -60,7 +60,7 @@ macOS 构建时根目录 `build.rs`（Cargo 自动识别）会设置 GStreamer f
 
 ## 测试
 
-- **Rust 代码目前没有单元测试 / 集成测试**（源码中无 `#[test]`，`Cargo.toml` 无 `[dev-dependencies]`），也未配置 CI 跑 cargo test。改动主要依靠编译通过 + 手工运行验证。
+- **Rust 代码目前只有少量内联单元测试**（位于 `src/application.rs` 与 `src/model.rs`，覆盖“我的”页预览截取及请求代次；`Cargo.toml` 仍无 `[dev-dependencies]`），CI 尚未配置 `cargo test`。UI 改动仍主要依靠编译通过 + 手工运行验证。
 - Meson 层面定义了数据文件校验测试（在 `_build` 中运行 `meson test` / `ninja test`，见 `data/meson.build`）：
   - `desktop-file-validate` 校验 desktop 文件
   - `appstreamcli validate` 校验 metainfo
@@ -98,7 +98,7 @@ src/
 
 data/
 ├── gtk/*.ui                 # GTK Builder 模板（与 gui 模块一一对应）
-├── themes/*.css             # 自定义样式；modern.css 为集中式现代化展示样式（歌曲行/卡片/详情页头部/发现页），由 window.rs 在启动时按资源路径加载
+├── themes/*.css             # 自定义样式；modern.css 为集中式现代化样式（页面骨架/歌曲行/卡片/详情页头部/发现页），由 window.rs 在启动时按资源路径加载
 ├── icons/hicolor/           # 应用图标
 ├── *.gschema.xml            # GSettings 模式（com.gitee.gmg137.NeteaseCloudMusicGtk4）
 ├── *.desktop.in / *.metainfo.xml.in   # 桌面文件与 AppStream 元数据模板

@@ -52,7 +52,7 @@ impl Discover {
         let sender = self.imp().sender.get().unwrap().clone();
         let top_picks = self.imp().top_picks.get();
 
-        SongListGridItem::box_update_songlist(top_picks.clone(), &song_list, 140, false, &sender);
+        SongListGridItem::box_update_songlist(top_picks.clone(), &song_list, 160, false, &sender);
 
         top_picks.connect_child_activated(move |_, child| {
             let index = child.index() as usize;
@@ -68,7 +68,7 @@ impl Discover {
         let sender = self.imp().sender.get().unwrap().clone();
         let new_albums = self.imp().new_albums.get();
 
-        SongListGridItem::box_update_songlist(new_albums.clone(), &song_list, 140, true, &sender);
+        SongListGridItem::box_update_songlist(new_albums.clone(), &song_list, 160, true, &sender);
 
         new_albums.connect_child_activated(move |_, child| {
             let index = child.index() as usize;
@@ -93,18 +93,14 @@ impl Discover {
 
         let sender = self.imp().sender.get().unwrap().clone();
         let image = Picture::new();
-        image.set_from_net(banner.pic.to_owned(), path, (730, 283), &sender);
+        // Banner 统一下载为 1200×465；discover.ui 的 GtkAspectFrame(ratio=2.5806) 依赖此固定比例实现零裁切
+        image.set_from_net(banner.pic.to_owned(), path, (1200, 465), &sender);
 
-        // 图片加载方式已验证，必须这样才能实现。
-        // let image = gtk::gdk_pixbuf::Pixbuf::from_file(path).unwrap();
-        // let image = image
-        //     .scale_simple(730, 283, gtk::gdk_pixbuf::InterpType::Bilinear)
-        //     .unwrap();
-        // let image = gtk::Picture::for_pixbuf(&image);
-        image.set_halign(gtk::Align::Center);
+        image.set_halign(gtk::Align::Fill);
         image.set_valign(gtk::Align::Fill);
-        image.set_width_request(730);
+        image.set_hexpand(true);
         image.set_can_shrink(true);
+        image.set_content_fit(gtk::ContentFit::Cover);
         image.add_css_class("banner-image");
         carousel.append(&image);
         self.imp().banners.borrow_mut().push(banner);
@@ -151,7 +147,6 @@ mod imp {
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
             klass.bind_template_callbacks();
-            load_css();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -281,17 +276,4 @@ mod imp {
     }
     impl WidgetImpl for Discover {}
     impl BoxImpl for Discover {}
-}
-
-fn load_css() {
-    // Load the CSS file and add it to the provider
-    let provider = CssProvider::new();
-    provider.load_from_resource("/com/gitee/gmg137/NeteaseCloudMusicGtk4/themes/discover.css");
-
-    // Add the provider to the default screen
-    style_context_add_provider_for_display(
-        &gdk::Display::default().expect("Could not connect to a display."),
-        &provider,
-        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
 }
