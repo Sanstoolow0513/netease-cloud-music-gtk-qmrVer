@@ -4,7 +4,7 @@
 
 **Goal:** 让「我的 / 发现 / 榜单」三个主页面在全屏宽窗口下内容收进 1280px 居中栏，修复卡片变形、Banner 裁切、榜单超宽三大痛点。
 
-**Architecture:** 三页统一用 `AdwClamp(maximum-size=1280)` 作为限宽层，套在滚动容器之内、页面内容之外；发现页 Banner 用 `AdwClamp(980)` + `GtkAspectFrame(ratio=0.3875)` 实现零裁切定比例显示；卡片类元素固定尺寸防拉伸。除发现页卡片尺寸外，几乎全部为 `.ui` 声明式改动。
+**Architecture:** 三页统一用 `AdwClamp(maximum-size=1280)` 作为限宽层，套在滚动容器之内、页面内容之外；发现页 Banner 用 `AdwClamp(980)` + `GtkAspectFrame(ratio=2.5806)` 实现零裁切定比例显示；卡片类元素固定尺寸防拉伸。除发现页卡片尺寸外，几乎全部为 `.ui` 声明式改动。
 
 **Tech Stack:** GTK4 + Libadwaita（Rust gtk4-rs，CompositeTemplate + .ui 模板）、Meson 构建。
 
@@ -101,7 +101,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: Task 1 的页面级 1280 Clamp（Banner 在栏内再限宽 980）
-- Produces: 新 CSS 类 `.banner-aspect`（仅本任务使用）；`discover.rs` 的 `add_carousel()` **不改**——`Picture` 仍按 (1200, 465) 下载、`ContentFit::Cover`，因容器比例与图片比例一致（465/1200 = 0.3875），Cover 不产生裁切。
+- Produces: 新 CSS 类 `.banner-aspect`（仅本任务使用）；`discover.rs` 的 `add_carousel()` **不改**——`Picture` 仍按 (1200, 465) 下载、`ContentFit::Cover`，因容器比例与图片比例一致（1200:465），Cover 不产生裁切。
 
 **原理：** Banner 图统一下载为 1200×465。`GtkAspectFrame(obey-child=false, ratio=2.5806)` 强制子项宽高比恒为 1200:465——GTK 的 ratio 是宽/高（1200/465≈2.5806）；外套 `AdwClamp(980)` 把宽度钳在 ≤980 → 高度 = 宽度 ÷ 2.5806（980 时恰为约 380），任何窗口宽度下图片完整显示、零裁切。`GtkAspectFrame` 继承自 `GtkFrame`，默认会画边框，需用 `.banner-aspect` CSS 去掉。
 
@@ -165,7 +165,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
                     <object class="AdwCarouselIndicatorDots">
 ```
 
-即最终结构：`Box(vertical) → [ AdwClamp(980) → GtkAspectFrame(0.3875) → GtkOverlay → (AdwCarousel + 两个切换按钮) ] + [ AdwCarouselIndicatorDots ]`。Overlay 内的 carousel、按钮等原有内容一行不动。
+即最终结构：`Box(vertical) → [ AdwClamp(980) → GtkAspectFrame(2.5806) → GtkOverlay → (AdwCarousel + 两个切换按钮) ] + [ AdwCarouselIndicatorDots ]`。Overlay 内的 carousel、按钮等原有内容一行不动。
 
 - [ ] **Step 2: modern.css 追加去边框规则**
 
