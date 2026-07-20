@@ -15,7 +15,7 @@ use crate::{
     APP_ID,
     application::Action,
     gui::{SongListGridItem, songlist_row::SonglistRow},
-    model::MyPageSection,
+    model::{MyPageRequestId, MyPageRequestTokens, MyPageSection},
 };
 
 glib::wrapper! {
@@ -35,6 +35,8 @@ impl MyPage {
 
     pub fn reset(&self) {
         let imp = self.imp();
+        imp.request_tokens.borrow_mut().invalidate_all();
+        self.clear_active_preview_row();
         for list in [
             imp.daily_left.get(),
             imp.daily_right.get(),
@@ -47,14 +49,26 @@ impl MyPage {
         SongListGridItem::box_clear(imp.songlists_grid.get());
         imp.albums.borrow_mut().clear();
         imp.songlists.borrow_mut().clear();
-        imp.active_preview_row.replace(None);
         for section in MyPageSection::ALL {
             self.set_section_state(section, "loading");
         }
     }
 
-    pub fn set_loading(&self, section: MyPageSection) {
+    pub fn invalidate_requests(&self) {
+        self.imp().request_tokens.borrow_mut().invalidate_all();
+    }
+
+    pub fn begin_request(&self, section: MyPageSection) -> MyPageRequestId {
+        let request_id = self.imp().request_tokens.borrow_mut().begin(section);
         self.set_section_state(section, "loading");
+        request_id
+    }
+
+    pub fn is_current_request(&self, section: MyPageSection, request_id: MyPageRequestId) -> bool {
+        self.imp()
+            .request_tokens
+            .borrow()
+            .is_current(section, request_id)
     }
 
     pub fn set_failed(&self, section: MyPageSection) {
@@ -72,6 +86,7 @@ impl MyPage {
             _ => return,
         };
 
+        self.clear_active_preview_row();
         Self::clear_listbox(&left);
         Self::clear_listbox(&right);
         if songs.is_empty() {
@@ -139,8 +154,10 @@ impl MyPage {
                     #[strong]
                     sender,
                     move |row| {
-                        page.activate_preview_row(row);
-                        sender.send_blocking(Action::AddPlay(song.clone())).unwrap();
+                        if row.is_activatable() || row.not_ignore_grey() {
+                            page.activate_preview_row(row);
+                            sender.send_blocking(Action::AddPlay(song.clone())).unwrap();
+                        }
                     }
                 ),
             );
@@ -160,6 +177,13 @@ impl MyPage {
         }
         row.switch_image(true);
         imp.active_preview_row.replace(Some(row.downgrade()));
+    }
+
+    fn clear_active_preview_row(&self) {
+        let active_row = self.imp().active_preview_row.borrow_mut().take();
+        if let Some(row) = active_row.and_then(|row| row.upgrade()) {
+            row.switch_image(false);
+        }
     }
 
     fn set_section_state(&self, section: MyPageSection, state: &str) {
@@ -231,6 +255,7 @@ mod imp {
         pub albums: RefCell<Vec<SongList>>,
         pub songlists: RefCell<Vec<SongList>>,
         pub active_preview_row: RefCell<Option<glib::WeakRef<SonglistRow>>>,
+        pub request_tokens: RefCell<MyPageRequestTokens>,
         pub sender: OnceCell<Sender<Action>>,
         pub settings: OnceCell<Settings>,
     }

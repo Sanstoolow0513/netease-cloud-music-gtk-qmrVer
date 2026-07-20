@@ -218,7 +218,7 @@ msgstr "暗黑"
 msgid "Top Picks"
 msgstr "热门推荐"
 
-#: data/gtk/discover.ui:134 data/gtk/discover.ui:201
+#: data/gtk/discover.ui:134 data/gtk/discover.ui:201 data/gtk/my-page.ui
 msgid "View More"
 msgstr "查看更多"
 

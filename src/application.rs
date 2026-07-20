@@ -95,9 +95,9 @@ pub enum Action {
     // my
     InitMyPage,
     LoadMyPageSection(MyPageSection),
-    SetupMyPageSongs(MyPageSection, Vec<SongInfo>),
-    SetupMyPageCollections(MyPageSection, Vec<SongList>),
-    FailMyPageSection(MyPageSection),
+    SetupMyPageSongs(MyPageSection, MyPageRequestId, Vec<SongInfo>),
+    SetupMyPageCollections(MyPageSection, MyPageRequestId, Vec<SongList>),
+    FailMyPageSection(MyPageSection, MyPageRequestId),
 
     // playlist
     ToPlayListLyricsPage(Vec<SongInfo>, SongInfo),
@@ -156,16 +156,12 @@ fn skip_liked_playlist<T>(items: Vec<T>, limit: Option<usize>) -> Vec<T> {
 fn fail_my_page_request(
     sender: &Sender<Action>,
     section: MyPageSection,
+    request_id: MyPageRequestId,
     err: impl std::fmt::Debug,
 ) {
     error!("{:?}", err);
     sender
-        .send_blocking(Action::FailMyPageSection(section))
-        .unwrap();
-    sender
-        .send_blocking(Action::AddToast(gettext(
-            "Request for interface failed, please try again!",
-        )))
+        .send_blocking(Action::FailMyPageSection(section, request_id))
         .unwrap();
 }
 
@@ -369,6 +365,7 @@ impl NeteaseCloudMusicGtk4Application {
                 });
             }
             Action::Logout => {
+                window.invalidate_my_page_requests();
                 let sender = imp.sender.clone();
                 let s = self.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
@@ -1311,105 +1308,139 @@ impl NeteaseCloudMusicGtk4Application {
                 }
             }
             Action::LoadMyPageSection(section) => {
-                window.set_my_page_section_loading(section);
-                let sender = imp.sender.clone();
-                MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
-                    match section {
-                        MyPageSection::DailyRec => match ncmapi.client.recommend_songs().await {
-                            Ok(songs) => {
-                                sender
-                                    .send(Action::SetupMyPageSongs(
-                                        section,
-                                        take_preview(songs, MY_PAGE_SONG_PREVIEW_LIMIT),
-                                    ))
-                                    .await
-                                    .unwrap();
-                            }
-                            Err(err) => fail_my_page_request(&sender, section, err),
-                        },
-                        MyPageSection::FavoriteSongs => {
-                            match ncmapi.client.user_song_list(window.get_uid(), 0, 1).await {
-                                Ok(songlists) => {
-                                    if let Some(songlist) = songlists.first() {
-                                        match ncmapi.client.song_list_detail(songlist.id).await {
-                                            Ok(detail) => {
-                                                sender
-                                                    .send(Action::SetupMyPageSongs(
-                                                        section,
-                                                        take_preview(
-                                                            detail.songs,
-                                                            MY_PAGE_SONG_PREVIEW_LIMIT,
-                                                        ),
-                                                    ))
-                                                    .await
-                                                    .unwrap();
-                                            }
-                                            Err(err) => fail_my_page_request(&sender, section, err),
-                                        }
-                                    } else {
+                if window.is_logined() {
+                    let uid = window.get_uid();
+                    let request_id = window.begin_my_page_request(section);
+                    let sender = imp.sender.clone();
+                    MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
+                        match section {
+                            MyPageSection::DailyRec => {
+                                match ncmapi.client.recommend_songs().await {
+                                    Ok(songs) => {
                                         sender
-                                            .send(Action::SetupMyPageSongs(section, Vec::new()))
+                                            .send(Action::SetupMyPageSongs(
+                                                section,
+                                                request_id,
+                                                take_preview(songs, MY_PAGE_SONG_PREVIEW_LIMIT),
+                                            ))
                                             .await
                                             .unwrap();
                                     }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
                                 }
-                                Err(err) => fail_my_page_request(&sender, section, err),
+                            }
+                            MyPageSection::FavoriteSongs => {
+                                match ncmapi.client.user_song_list(uid, 0, 1).await {
+                                    Ok(songlists) => {
+                                        if let Some(songlist) = songlists.first() {
+                                            match ncmapi.client.song_list_detail(songlist.id).await
+                                            {
+                                                Ok(detail) => {
+                                                    sender
+                                                        .send(Action::SetupMyPageSongs(
+                                                            section,
+                                                            request_id,
+                                                            take_preview(
+                                                                detail.songs,
+                                                                MY_PAGE_SONG_PREVIEW_LIMIT,
+                                                            ),
+                                                        ))
+                                                        .await
+                                                        .unwrap();
+                                                }
+                                                Err(err) => fail_my_page_request(
+                                                    &sender, section, request_id, err,
+                                                ),
+                                            }
+                                        } else {
+                                            sender
+                                                .send(Action::SetupMyPageSongs(
+                                                    section,
+                                                    request_id,
+                                                    Vec::new(),
+                                                ))
+                                                .await
+                                                .unwrap();
+                                        }
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
+                            }
+                            MyPageSection::FavoriteAlbums => {
+                                match ncmapi
+                                    .client
+                                    .album_sublist(0, MY_PAGE_COLLECTION_PREVIEW_LIMIT as u16)
+                                    .await
+                                {
+                                    Ok(albums) => {
+                                        sender
+                                            .send(Action::SetupMyPageCollections(
+                                                section,
+                                                request_id,
+                                                take_preview(
+                                                    albums,
+                                                    MY_PAGE_COLLECTION_PREVIEW_LIMIT,
+                                                ),
+                                            ))
+                                            .await
+                                            .unwrap();
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
+                            }
+                            MyPageSection::FavoriteSongLists => {
+                                match ncmapi
+                                    .client
+                                    .user_song_list(
+                                        uid,
+                                        0,
+                                        (MY_PAGE_COLLECTION_PREVIEW_LIMIT + 1) as u16,
+                                    )
+                                    .await
+                                {
+                                    Ok(songlists) => {
+                                        sender
+                                            .send(Action::SetupMyPageCollections(
+                                                section,
+                                                request_id,
+                                                skip_liked_playlist(
+                                                    songlists,
+                                                    Some(MY_PAGE_COLLECTION_PREVIEW_LIMIT),
+                                                ),
+                                            ))
+                                            .await
+                                            .unwrap();
+                                    }
+                                    Err(err) => {
+                                        fail_my_page_request(&sender, section, request_id, err)
+                                    }
+                                }
                             }
                         }
-                        MyPageSection::FavoriteAlbums => {
-                            match ncmapi
-                                .client
-                                .album_sublist(0, MY_PAGE_COLLECTION_PREVIEW_LIMIT as u16)
-                                .await
-                            {
-                                Ok(albums) => {
-                                    sender
-                                        .send(Action::SetupMyPageCollections(
-                                            section,
-                                            take_preview(albums, MY_PAGE_COLLECTION_PREVIEW_LIMIT),
-                                        ))
-                                        .await
-                                        .unwrap();
-                                }
-                                Err(err) => fail_my_page_request(&sender, section, err),
-                            }
-                        }
-                        MyPageSection::FavoriteSongLists => {
-                            match ncmapi
-                                .client
-                                .user_song_list(
-                                    window.get_uid(),
-                                    0,
-                                    (MY_PAGE_COLLECTION_PREVIEW_LIMIT + 1) as u16,
-                                )
-                                .await
-                            {
-                                Ok(songlists) => {
-                                    sender
-                                        .send(Action::SetupMyPageCollections(
-                                            section,
-                                            skip_liked_playlist(
-                                                songlists,
-                                                Some(MY_PAGE_COLLECTION_PREVIEW_LIMIT),
-                                            ),
-                                        ))
-                                        .await
-                                        .unwrap();
-                                }
-                                Err(err) => fail_my_page_request(&sender, section, err),
-                            }
-                        }
-                    }
-                });
+                    });
+                }
             }
-            Action::SetupMyPageSongs(section, songs) => {
-                window.update_my_page_songs(section, songs);
+            Action::SetupMyPageSongs(section, request_id, songs) => {
+                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
+                    window.update_my_page_songs(section, songs);
+                }
             }
-            Action::SetupMyPageCollections(section, items) => {
-                window.update_my_page_collections(section, items);
+            Action::SetupMyPageCollections(section, request_id, items) => {
+                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
+                    window.update_my_page_collections(section, items);
+                }
             }
-            Action::FailMyPageSection(section) => {
-                window.fail_my_page_section(section);
+            Action::FailMyPageSection(section, request_id) => {
+                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
+                    window.fail_my_page_section(section);
+                    window.add_toast(gettext("Request for interface failed, please try again!"));
+                }
             }
             Action::ToPlayListLyricsPage(sis, si) => {
                 let sender = imp.sender.clone();

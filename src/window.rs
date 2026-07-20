@@ -815,8 +815,20 @@ impl NeteaseCloudMusicGtk4Window {
         self.imp().my_page.reset();
     }
 
-    pub fn set_my_page_section_loading(&self, section: MyPageSection) {
-        self.imp().my_page.set_loading(section);
+    pub fn invalidate_my_page_requests(&self) {
+        self.imp().my_page.invalidate_requests();
+    }
+
+    pub fn begin_my_page_request(&self, section: MyPageSection) -> MyPageRequestId {
+        self.imp().my_page.begin_request(section)
+    }
+
+    pub fn is_current_my_page_request(
+        &self,
+        section: MyPageSection,
+        request_id: MyPageRequestId,
+    ) -> bool {
+        self.imp().my_page.is_current_request(section, request_id)
     }
 
     pub fn update_my_page_songs(&self, section: MyPageSection, songs: Vec<SongInfo>) {
