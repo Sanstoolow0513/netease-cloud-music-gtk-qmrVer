@@ -244,7 +244,6 @@
                 <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <property name="hexpand">true</property>
-                <property name="vexpand">true</property>
                 <child>
                     <object class="GtkBox">
                         <property name="orientation">horizontal</property>
@@ -272,23 +271,14 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkScrolledWindow">
-                        <property name="vexpand">true</property>
-                        <child>
-                            <object class="GtkViewport">
-                                <child>
-                                    <object class="GtkFlowBox" id="rec_grid">
-                                        <property name="hexpand">True</property>
-                                        <property name="valign">start</property>
-                                        <property name="max-children-per-line">12</property>
-                                        <property name="min-children-per-line">3</property>
-                                        <property name="homogeneous">False</property>
-                                        <property name="selection-mode">none</property>
-                                        <property name="activate-on-single-click">True</property>
-                                    </object>
-                                </child>
-                            </object>
-                        </child>
+                    <object class="GtkFlowBox" id="rec_grid">
+                        <property name="hexpand">True</property>
+                        <property name="valign">start</property>
+                        <property name="max-children-per-line">12</property>
+                        <property name="min-children-per-line">3</property>
+                        <property name="homogeneous">False</property>
+                        <property name="selection-mode">none</property>
+                        <property name="activate-on-single-click">True</property>
                     </object>
                 </child>
             </object>
