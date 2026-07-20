@@ -14,9 +14,10 @@
                 <child>
                     <object class="AdwClamp">
                         <property name="maximum-size">980</property>
+                        <property name="tightening-threshold">0</property>
                         <child>
                             <object class="GtkAspectFrame">
-                                <property name="ratio">0.3875</property>
+                                <property name="ratio">2.5806</property>
                                 <property name="obey-child">False</property>
                                 <style>
                                     <class name="banner-aspect" />
@@ -79,7 +80,7 @@
                                 </style>
                             </object>
                         </child>
-                    </object>
+                                    </object>
                                 </child>
                             </object>
                         </child>

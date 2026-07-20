@@ -93,6 +93,7 @@ impl Discover {
 
         let sender = self.imp().sender.get().unwrap().clone();
         let image = Picture::new();
+        // Banner 统一下载为 1200×465；discover.ui 的 GtkAspectFrame(ratio=2.5806) 依赖此固定比例实现零裁切
         image.set_from_net(banner.pic.to_owned(), path, (1200, 465), &sender);
 
         image.set_halign(gtk::Align::Fill);
