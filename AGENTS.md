@@ -60,7 +60,7 @@ macOS 构建时根目录 `build.rs`（Cargo 自动识别）会设置 GStreamer f
 
 ## 测试
 
-- **Rust 代码目前没有单元测试 / 集成测试**（源码中无 `#[test]`，`Cargo.toml` 无 `[dev-dependencies]`），也未配置 CI 跑 cargo test。改动主要依靠编译通过 + 手工运行验证。
+- **Rust 代码目前只有少量内联单元测试**（位于 `src/application.rs` 与 `src/model.rs`，覆盖“我的”页预览截取及请求代次；`Cargo.toml` 仍无 `[dev-dependencies]`），CI 尚未配置 `cargo test`。UI 改动仍主要依靠编译通过 + 手工运行验证。
 - Meson 层面定义了数据文件校验测试（在 `_build` 中运行 `meson test` / `ninja test`，见 `data/meson.build`）：
   - `desktop-file-validate` 校验 desktop 文件
   - `appstreamcli validate` 校验 metainfo
