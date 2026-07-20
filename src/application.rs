@@ -10,7 +10,13 @@ use ncm_api::{
     SongInfo, SongList, TargetType, TopList,
 };
 use once_cell::sync::OnceCell;
-use std::{cell::RefCell, fs, path::PathBuf, sync::Arc, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    fs,
+    path::PathBuf,
+    sync::Arc,
+    time::Duration,
+};
 
 use crate::{
     MAINCONTEXT, NeteaseCloudMusicGtk4Window, audio::MprisController, config::VERSION,
@@ -33,6 +39,26 @@ impl<Targ> std::fmt::Debug for dyn ActionCallbackTr<Targ> {
 //   unique id for sender object, and store a map
 //   sender object create new (sender, receiver) and attach, then action send back
 pub type ActionCallback<Targ = ()> = Arc<dyn ActionCallbackTr<Targ>>;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct LoginSessionId(u64);
+
+#[derive(Debug, Default)]
+struct LoginSessionGeneration {
+    current: Cell<u64>,
+}
+
+impl LoginSessionGeneration {
+    fn begin(&self) -> LoginSessionId {
+        let next = self.current.get().wrapping_add(1);
+        self.current.set(next);
+        LoginSessionId(next)
+    }
+
+    fn is_current(&self, session_id: LoginSessionId) -> bool {
+        self.current.get() == session_id.0
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Action {
@@ -64,10 +90,9 @@ pub enum Action {
     // login
     CheckLogin(UserMenuChild, CookieJar),
     Logout,
-    InitUserInfo(LoginInfo),
+    InitUserInfo(LoginSessionId, LoginInfo),
     SwitchUserMenuToPhone,
     SwitchUserMenuToQr,
-    SwitchUserMenuToUser(LoginInfo, UserMenuChild),
     GetCaptcha(String, String),
     CaptchaLogin(String, String, String),
 
@@ -177,6 +202,7 @@ mod imp {
         pub receiver: RefCell<Option<Receiver<Action>>>,
         pub unikey: Arc<RwLock<String>>,
         pub ncmapi: RefCell<Option<NcmClient>>,
+        pub(super) login_session: LoginSessionGeneration,
     }
 
     #[glib::object_subclass]
@@ -190,6 +216,7 @@ mod imp {
             let window = OnceCell::new();
             let unikey = Arc::new(RwLock::new(String::new()));
             let ncmapi = RefCell::new(None);
+            let login_session = LoginSessionGeneration::default();
 
             Self {
                 window,
@@ -197,6 +224,7 @@ mod imp {
                 receiver,
                 unikey,
                 ncmapi,
+                login_session,
             }
         }
     }
@@ -322,54 +350,64 @@ impl NeteaseCloudMusicGtk4Application {
 
         match action {
             Action::CheckLogin(user_menu, logined_cookie_jar) => {
+                if window.is_logined() {
+                    return glib::ControlFlow::Continue;
+                }
+
+                let login_session = imp.login_session.begin();
                 let sender = imp.sender.clone();
                 let ncmapi = self.init_ncmapi(NcmClient::from_cookie_jar(logined_cookie_jar));
                 let s = self.clone();
 
                 MAINCONTEXT.spawn_local_with_priority(Priority::HIGH_IDLE, async move {
-                    if !window.is_logined() {
-                        match ncmapi.client.login_status().await {
-                            Ok(login_info) => {
-                                debug!("获取用户信息成功: {:?}", login_info);
-                                window.set_uid(login_info.uid);
+                    let login_result = ncmapi.client.login_status().await;
+                    if !s.imp().login_session.is_current(login_session) {
+                        return;
+                    }
 
-                                ncmapi.save_cookie_jar_to_file();
-                                s.imp().ncmapi.replace(Some(ncmapi));
+                    match login_result {
+                        Ok(login_info) => {
+                            debug!("获取用户信息成功: {:?}", login_info);
+                            window.set_uid(login_info.uid);
 
-                                window.prepare_my_page();
-                                sender
-                                    .send(Action::InitUserInfo(login_info.to_owned()))
-                                    .await
-                                    .unwrap();
-                                sender
-                                    .send(Action::SwitchUserMenuToUser(login_info, user_menu))
-                                    .await
-                                    .unwrap();
-                                sender
-                                    .send(Action::AddToast(gettext("Login successful!")))
-                                    .await
-                                    .unwrap();
-                            }
-                            Err(err) => {
-                                error!("获取用户信息失败！{:?}", err);
-                                sender
-                                    .send(Action::AddToast(gettext("Login failed!")))
-                                    .await
-                                    .unwrap();
+                            ncmapi.save_cookie_jar_to_file();
+                            s.imp().ncmapi.replace(Some(ncmapi));
 
-                                s.imp().ncmapi.replace(None);
-                                NcmClient::clean_cookie_file();
-                            }
+                            window.prepare_my_page();
+                            sender
+                                .send_blocking(Action::InitUserInfo(
+                                    login_session,
+                                    login_info.to_owned(),
+                                ))
+                                .unwrap();
+
+                            window.switch_user_menu_to_user(login_info.clone(), user_menu);
+                            let avatar_url = login_info.avatar_url;
+                            let mut path = CACHE.clone();
+                            path.push("avatar.jpg");
+                            window.set_avatar(avatar_url, path);
+                            window.add_toast(gettext("Login successful!"));
+                        }
+                        Err(err) => {
+                            error!("获取用户信息失败！{:?}", err);
+                            window.add_toast(gettext("Login failed!"));
+
+                            s.imp().ncmapi.replace(None);
+                            NcmClient::clean_cookie_file();
                         }
                     }
                 });
             }
             Action::Logout => {
+                let login_session = imp.login_session.begin();
                 window.invalidate_my_page_requests();
                 let sender = imp.sender.clone();
                 let s = self.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
                     ncmapi.client.logout().await;
+                    if !s.imp().login_session.is_current(login_session) {
+                        return;
+                    }
 
                     s.imp().ncmapi.replace(None);
                     NcmClient::clean_cookie_file();
@@ -383,15 +421,20 @@ impl NeteaseCloudMusicGtk4Application {
                         .unwrap();
                 });
             }
-            Action::InitUserInfo(login_info) => {
+            Action::InitUserInfo(login_session, login_info) => {
                 let sender = imp.sender.clone();
+                let s = self.clone();
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
-                    match ncmapi.client.user_song_id_list(login_info.uid).await {
-                        Ok(song_ids) => window.set_user_like_songs(&song_ids),
-                        Err(err) => error!("{:?}", err),
-                    }
-                    if window.is_logined() {
-                        sender.send(Action::InitMyPage).await.unwrap();
+                    let song_ids = ncmapi.client.user_song_id_list(login_info.uid).await;
+                    if s.imp().login_session.is_current(login_session)
+                        && window.is_logined()
+                        && window.get_uid() == login_info.uid
+                    {
+                        match song_ids {
+                            Ok(song_ids) => window.set_user_like_songs(&song_ids),
+                            Err(err) => error!("{:?}", err),
+                        }
+                        sender.send_blocking(Action::InitMyPage).unwrap();
                     }
                 });
             }
@@ -535,13 +578,6 @@ impl NeteaseCloudMusicGtk4Application {
                             .unwrap();
                     }
                 });
-            }
-            Action::SwitchUserMenuToUser(login_info, menu) => {
-                window.switch_user_menu_to_user(login_info.clone(), menu);
-                let avatar_url = login_info.avatar_url;
-                let mut path = CACHE.clone();
-                path.push("avatar.jpg");
-                window.set_avatar(avatar_url, path);
             }
             Action::AddToast(mes) => {
                 window.add_toast(mes);
@@ -1677,9 +1713,20 @@ fn remove_all_file(path: PathBuf) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        MY_PAGE_COLLECTION_PREVIEW_LIMIT, MY_PAGE_SONG_PREVIEW_LIMIT, skip_liked_playlist,
-        take_preview,
+        LoginSessionGeneration, MY_PAGE_COLLECTION_PREVIEW_LIMIT, MY_PAGE_SONG_PREVIEW_LIMIT,
+        skip_liked_playlist, take_preview,
     };
+
+    #[test]
+    fn login_session_generation_invalidates_older_work() {
+        let generation = LoginSessionGeneration::default();
+        let first = generation.begin();
+        assert!(generation.is_current(first));
+
+        let second = generation.begin();
+        assert!(!generation.is_current(first));
+        assert!(generation.is_current(second));
+    }
 
     #[test]
     fn preview_helpers_limit_and_preserve_order() {
