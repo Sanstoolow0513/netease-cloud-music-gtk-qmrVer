@@ -71,7 +71,7 @@ make run                 # 启动应用手工验证（终端留意 Gtk-CRITICAL 
                                                                                 </child>
 ```
 
-（其余行不动；`AdwClamp` 不加 margin、不加 tightening-threshold——clamp 自身无 margin 时该阈值无作用，24px 内边距由 `Discover` 根上的 `.page-content` 提供。）
+（其余行不动；`AdwClamp` 不加 margin、不加 tightening-threshold。AdwClamp 默认 tightening-threshold=400，即可用宽度超过 maximum-size+400 时才收紧——页面级 clamp 保持该默认：窗口 ≥1680 才出现两侧留白，与批准的"1280~1920 之间贴满"一致，故此处不显式设置。24px 内边距由 `Discover` 根上的 `.page-content` 提供。）
 
 - [ ] **Step 2: 重建并运行验证**
 
@@ -103,7 +103,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: Task 1 的页面级 1280 Clamp（Banner 在栏内再限宽 980）
 - Produces: 新 CSS 类 `.banner-aspect`（仅本任务使用）；`discover.rs` 的 `add_carousel()` **不改**——`Picture` 仍按 (1200, 465) 下载、`ContentFit::Cover`，因容器比例与图片比例一致（465/1200 = 0.3875），Cover 不产生裁切。
 
-**原理：** Banner 图统一下载为 1200×465。`GtkAspectFrame(obey-child=false, ratio=0.3875)` 强制子项宽高比恒为 1200:465，外套 `AdwClamp(980)` 把宽度钳在 ≤980 → 高度恒为 宽度×0.3875（980 时恰为 380），任何窗口宽度下图片完整显示、零裁切。`GtkAspectFrame` 继承自 `GtkFrame`，默认会画边框，需用 `.banner-aspect` CSS 去掉。
+**原理：** Banner 图统一下载为 1200×465。`GtkAspectFrame(obey-child=false, ratio=2.5806)` 强制子项宽高比恒为 1200:465——GTK 的 ratio 是宽/高（1200/465≈2.5806）；外套 `AdwClamp(980)` 把宽度钳在 ≤980 → 高度 = 宽度 ÷ 2.5806（980 时恰为约 380），任何窗口宽度下图片完整显示、零裁切。`GtkAspectFrame` 继承自 `GtkFrame`，默认会画边框，需用 `.banner-aspect` CSS 去掉。
 
 - [ ] **Step 1: 修改 discover.ui 的 Banner 结构**
 
@@ -129,9 +129,10 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
                 <child>
                     <object class="AdwClamp">
                         <property name="maximum-size">980</property>
+                        <property name="tightening-threshold">0</property>
                         <child>
                             <object class="GtkAspectFrame">
-                                <property name="ratio">0.3875</property>
+                                <property name="ratio">2.5806</property>
                                 <property name="obey-child">False</property>
                                 <style>
                                     <class name="banner-aspect" />
