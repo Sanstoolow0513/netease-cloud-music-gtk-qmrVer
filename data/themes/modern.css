@@ -93,6 +93,13 @@ gridview > child:hover .card-play-badge {
     box-shadow: 0 2px 8px alpha(black, 0.18);
 }
 
+/* Banner 比例锁容器：去掉 GtkAspectFrame 默认边框（布局规则，不涉及颜色） */
+.banner-aspect,
+.banner-aspect > border {
+    border: none;
+    box-shadow: none;
+}
+
 /* FlowBox 卡片间距（从 discover.css 迁入，统一管理；规则内容不变） */
 flowboxchild {
   margin: 12px;

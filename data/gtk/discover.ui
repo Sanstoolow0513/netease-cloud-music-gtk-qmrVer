@@ -12,8 +12,17 @@
                 <property name="orientation">vertical</property>
                 <property name="spacing">12</property>
                 <child>
-                    <object class="GtkOverlay">
-                        <property name="height-request">320</property>
+                    <object class="AdwClamp">
+                        <property name="maximum-size">980</property>
+                        <child>
+                            <object class="GtkAspectFrame">
+                                <property name="ratio">0.3875</property>
+                                <property name="obey-child">False</property>
+                                <style>
+                                    <class name="banner-aspect" />
+                                </style>
+                                <child>
+                                    <object class="GtkOverlay">
                         <child>
                             <object class="AdwCarousel" id="carousel">
                                 <property name="allow-scroll-wheel">false</property>
@@ -68,6 +77,10 @@
                                     <class name="image-button" />
                                     <class name="hover-button" />
                                 </style>
+                            </object>
+                        </child>
+                    </object>
+                                </child>
                             </object>
                         </child>
                     </object>
