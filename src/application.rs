@@ -136,13 +136,17 @@ pub enum Action {
     ShowPlayerBar,
 }
 
+#[allow(dead_code)]
 const MY_PAGE_SONG_PREVIEW_LIMIT: usize = 8;
+#[allow(dead_code)]
 const MY_PAGE_COLLECTION_PREVIEW_LIMIT: usize = 10;
 
+#[allow(dead_code)]
 fn take_preview<T>(items: Vec<T>, limit: usize) -> Vec<T> {
     items.into_iter().take(limit).collect()
 }
 
+#[allow(dead_code)]
 fn skip_liked_playlist<T>(items: Vec<T>, limit: Option<usize>) -> Vec<T> {
     match limit {
         Some(limit) => items.into_iter().skip(1).take(limit).collect(),
