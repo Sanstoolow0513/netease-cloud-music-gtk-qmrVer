@@ -16,8 +16,7 @@ use glib::{
 use gtk::{
     CompositeTemplate, CssProvider,
     gio::{self, SettingsBindFlags},
-    glib,
-    style_context_add_provider_for_display,
+    glib, style_context_add_provider_for_display,
 };
 use log::*;
 use ncm_api::{BannersInfo, LoginInfo, SongInfo, SongList, TopList};
@@ -811,8 +810,26 @@ impl NeteaseCloudMusicGtk4Window {
         imp.my_stack.set_visible_child_name("my_no_login");
     }
 
-    pub fn init_my_page(&self, sls: Vec<SongList>) {
-        self.imp().my_page.init_page(sls);
+    pub fn prepare_my_page(&self) {
+        self.switch_my_page_to_login();
+        self.imp().my_page.reset();
+    }
+
+    pub fn set_my_page_section_loading(&self, section: MyPageSection) {
+        self.imp().my_page.set_loading(section);
+    }
+
+    pub fn update_my_page_songs(&self, section: MyPageSection, songs: Vec<SongInfo>) {
+        let likes = self.get_song_likes(&songs);
+        self.imp().my_page.update_songs(section, &songs, &likes);
+    }
+
+    pub fn update_my_page_collections(&self, section: MyPageSection, items: Vec<SongList>) {
+        self.imp().my_page.update_collections(section, items);
+    }
+
+    pub fn fail_my_page_section(&self, section: MyPageSection) {
+        self.imp().my_page.set_failed(section);
     }
 
     pub fn init_playlist_lyrics_page(&self, sis: Vec<SongInfo>, si: SongInfo) {

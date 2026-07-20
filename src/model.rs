@@ -160,6 +160,23 @@ impl SongListDetail {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum MyPageSection {
+    DailyRec,
+    FavoriteSongs,
+    FavoriteAlbums,
+    FavoriteSongLists,
+}
+
+impl MyPageSection {
+    pub const ALL: [Self; 4] = [
+        Self::DailyRec,
+        Self::FavoriteSongs,
+        Self::FavoriteAlbums,
+        Self::FavoriteSongLists,
+    ];
+}
+
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, glib::Enum)]
 #[repr(i32)]
 #[enum_type(name = "SearchType")]
