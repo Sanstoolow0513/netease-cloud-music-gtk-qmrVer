@@ -136,6 +136,20 @@ pub enum Action {
     ShowPlayerBar,
 }
 
+const MY_PAGE_SONG_PREVIEW_LIMIT: usize = 8;
+const MY_PAGE_COLLECTION_PREVIEW_LIMIT: usize = 10;
+
+fn take_preview<T>(items: Vec<T>, limit: usize) -> Vec<T> {
+    items.into_iter().take(limit).collect()
+}
+
+fn skip_liked_playlist<T>(items: Vec<T>, limit: Option<usize>) -> Vec<T> {
+    match limit {
+        Some(limit) => items.into_iter().skip(1).take(limit).collect(),
+        None => items.into_iter().skip(1).collect(),
+    }
+}
+
 mod imp {
 
     use std::sync::{Arc, RwLock};
@@ -1515,4 +1529,34 @@ fn remove_all_file(path: PathBuf) -> anyhow::Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        MY_PAGE_COLLECTION_PREVIEW_LIMIT, MY_PAGE_SONG_PREVIEW_LIMIT, skip_liked_playlist,
+        take_preview,
+    };
+
+    #[test]
+    fn preview_helpers_limit_and_preserve_order() {
+        assert_eq!(MY_PAGE_SONG_PREVIEW_LIMIT, 8);
+        assert_eq!(MY_PAGE_COLLECTION_PREVIEW_LIMIT, 10);
+        assert_eq!(take_preview(vec![1, 2, 3, 4], 3), vec![1, 2, 3]);
+        assert_eq!(take_preview(vec![1, 2], 3), vec![1, 2]);
+    }
+
+    #[test]
+    fn preview_helpers_skip_liked_playlist_safely() {
+        assert_eq!(skip_liked_playlist::<i32>(vec![], Some(10)), Vec::<i32>::new());
+        assert_eq!(skip_liked_playlist(vec![0], Some(10)), Vec::<i32>::new());
+        assert_eq!(
+            skip_liked_playlist(vec![0, 1, 2, 3], Some(2)),
+            vec![1, 2]
+        );
+        assert_eq!(
+            skip_liked_playlist(vec![0, 1, 2, 3], None),
+            vec![1, 2, 3]
+        );
+    }
 }
