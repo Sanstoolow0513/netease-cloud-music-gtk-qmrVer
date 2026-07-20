@@ -113,7 +113,12 @@
                                                                             <object class="GtkViewport" id="discover_view">
                                                                                 <property name="scroll-to-focus">False</property>
                                                                                 <child>
-                                                                                    <object class="Discover" id="discover" />
+                                                                                    <object class="AdwClamp">
+                                                                                        <property name="maximum-size">1280</property>
+                                                                                        <child>
+                                                                                            <object class="Discover" id="discover" />
+                                                                                        </child>
+                                                                                    </object>
                                                                                 </child>
                                                                             </object>
                                                                         </child>
