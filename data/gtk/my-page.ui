@@ -42,7 +42,6 @@
                 <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="daily_state">
-                        <property name="visible-child-name">loading</property>
                         <child>
                             <object class="GtkStackPage">
                                 <property name="name">loading</property>
@@ -161,7 +160,6 @@
                 <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="favorite_songs_state">
-                        <property name="visible-child-name">loading</property>
                         <child>
                             <object class="GtkStackPage">
                                 <property name="name">loading</property>
@@ -280,7 +278,6 @@
                 <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="albums_state">
-                        <property name="visible-child-name">loading</property>
                         <child>
                             <object class="GtkStackPage">
                                 <property name="name">loading</property>
@@ -385,7 +382,6 @@
                 <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="songlists_state">
-                        <property name="visible-child-name">loading</property>
                         <child>
                             <object class="GtkStackPage">
                                 <property name="name">loading</property>
