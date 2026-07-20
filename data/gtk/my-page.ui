@@ -19,6 +19,7 @@
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
+                        <property name="halign">center</property>
                         <child>
                             <object class="GtkBox">
                                 <property name="width-request">140</property>
@@ -56,6 +57,7 @@
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
+                        <property name="halign">center</property>
                         <child>
                             <object class="GtkBox">
                                 <property name="width-request">140</property>
@@ -93,6 +95,7 @@
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
+                        <property name="halign">center</property>
                         <child>
                             <object class="GtkBox">
                                 <property name="width-request">140</property>
@@ -130,6 +133,7 @@
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
+                        <property name="halign">center</property>
                         <child>
                             <object class="GtkBox">
                                 <property name="width-request">140</property>
@@ -167,6 +171,7 @@
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
+                        <property name="halign">center</property>
                         <child>
                             <object class="GtkBox">
                                 <property name="width-request">140</property>
@@ -204,6 +209,7 @@
                     <object class="GtkBox">
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
+                        <property name="halign">center</property>
                         <child>
                             <object class="GtkBox">
                                 <property name="width-request">140</property>
