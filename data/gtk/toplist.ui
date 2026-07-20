@@ -27,10 +27,13 @@
                     </object>
                 </child>
                 <child>
-                    <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">12</property>
+                    <object class="AdwClamp">
+                        <property name="maximum-size">1280</property>
                         <child>
+                            <object class="GtkBox">
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">12</property>
+                                <child>
                             <object class="GtkBox">
                                 <property name="orientation">horizontal</property>
                                 <property name="spacing">16</property>
@@ -106,11 +109,13 @@
                         </child>
                         <child>
                             <object class="SongListView" id="songs_list">
-                                <property name="clamp-maximum-size">100000</property>
+                                <property name="clamp-maximum-size">1280</property>
                                 <property name="clamp-margin-top">12</property>
                                 <property name="clamp-margin-bottom">12</property>
                                 <property name="clamp-margin-start">24</property>
                                 <property name="clamp-margin-end">24</property>
+                            </object>
+                        </child>
                             </object>
                         </child>
                     </object>
