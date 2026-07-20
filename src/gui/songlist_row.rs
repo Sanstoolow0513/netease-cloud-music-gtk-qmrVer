@@ -84,6 +84,12 @@ impl SonglistRow {
         imp.remove_button.set_visible(visible);
     }
 
+    pub fn set_my_page_preview_mode(&self) {
+        self.imp().album_label.set_visible(false);
+        self.set_album_button_visible(false);
+        self.set_remove_button_visible(false);
+    }
+
     fn set_name(&self, label: &str) {
         let imp = self.imp();
         imp.title_label.set_label(label);
