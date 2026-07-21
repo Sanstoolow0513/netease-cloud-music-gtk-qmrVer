@@ -36,7 +36,7 @@ ninja -C _build test
 - **页面导航**：`src/model.rs` 的 `PageStack` 包装 `gtk::Stack` 管理页面栈。
 - **UI 构建方式**：所有页面/控件是 `CompositeTemplate` 子类（`src/gui/*.rs`）+ `data/gtk/*.ui` 模板一一对应；资源路径前缀 `/com/gitee/gmg137/NeteaseCloudMusicGtk4/`。
 - **集中式样式**：`data/themes/modern.css` 是现代化样式集中地（页面骨架/歌曲行/卡片等），由 `window.rs` 启动时加载。其头注约定：**只允许 Libadwaita 命名色，禁止硬编码颜色值**（图片遮罩/阴影等主题无关场景除外，可用 white/black 关键字）。
-- **持久化**：GSettings（主题/代理/音质/歌词等）；用户数据目录下的 `cookies.json`（登录 cookie，敏感，勿入日志/提交）；平台缓存目录；`~/.lyrics` 仅用于 Linux 外部桌面歌词。
+- **持久化**：GSettings（主题/代理/音质/歌词等）；用户数据目录下的 `cookies.json`（登录 cookie，敏感，勿入日志/提交）；平台缓存目录；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 
 ## 改动时的硬性约定
 

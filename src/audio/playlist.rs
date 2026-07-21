@@ -11,8 +11,15 @@ use mpris_server::LoopStatus;
 use ncm_api::SongInfo;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::io;
+#[cfg(target_os = "windows")]
+use std::os::windows::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+#[cfg(target_os = "windows")]
+use windows_sys::Win32::Storage::FileSystem::{
+    MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH, MoveFileExW,
+};
 
 use crate::path::CONFIG;
 
@@ -54,16 +61,45 @@ fn playlist_file_path() -> PathBuf {
     CONFIG.join("playlist.json")
 }
 
+#[cfg(not(target_os = "windows"))]
+fn replace_file(source: &Path, destination: &Path) -> io::Result<()> {
+    fs::rename(source, destination)
+}
+
+#[cfg(target_os = "windows")]
+fn replace_file(source: &Path, destination: &Path) -> io::Result<()> {
+    let source = source
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<_>>();
+    let destination = destination
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<_>>();
+
+    // SAFETY: both paths are valid, NUL-terminated UTF-16 buffers and remain
+    // alive for the duration of the call.
+    let replaced = unsafe {
+        MoveFileExW(
+            source.as_ptr(),
+            destination.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+    if replaced == 0 {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 // 原子写入文件，防止写入过程中崩溃导致数据损坏
 fn atomic_write(path: &Path, data: &[u8]) -> std::io::Result<()> {
     let tmp_path = path.with_extension("json.tmp");
     fs::write(&tmp_path, data)?;
-    // Windows 的 rename 不会覆盖现有文件；先删除旧文件以保证重复保存可用。
-    #[cfg(target_os = "windows")]
-    if path.exists() {
-        fs::remove_file(path)?;
-    }
-    fs::rename(&tmp_path, path)?;
+    replace_file(&tmp_path, path)?;
     Ok(())
 }
 
@@ -526,17 +562,45 @@ impl std::fmt::Display for LoopsState {
 mod tests {
     use super::atomic_write;
 
+    fn test_path(name: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!(
+            "netease-cloud-music-gtk4-playlist-{}-{name}.json",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn atomic_write_creates_new_playlist() {
+        let path = test_path("new");
+        let _ = std::fs::remove_file(&path);
+
+        atomic_write(&path, b"first").unwrap();
+
+        assert_eq!(std::fs::read(&path).unwrap(), b"first");
+        assert!(!path.with_extension("json.tmp").exists());
+        let _ = std::fs::remove_file(path);
+    }
+
     #[test]
     fn atomic_write_replaces_existing_playlist() {
-        let path = std::env::temp_dir().join(format!(
-            "netease-cloud-music-gtk4-playlist-{}.json",
-            std::process::id()
-        ));
+        let path = test_path("replace");
 
         atomic_write(&path, b"first").unwrap();
         atomic_write(&path, b"second").unwrap();
-        assert_eq!(std::fs::read(&path).unwrap(), b"second");
 
+        assert_eq!(std::fs::read(&path).unwrap(), b"second");
+        assert!(!path.with_extension("json.tmp").exists());
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn atomic_write_supports_unicode_paths() {
+        let path = test_path("测试");
+
+        atomic_write(&path, b"lyrics").unwrap();
+
+        assert_eq!(std::fs::read(&path).unwrap(), b"lyrics");
+        assert!(!path.with_extension("json.tmp").exists());
         let _ = std::fs::remove_file(path);
     }
 }

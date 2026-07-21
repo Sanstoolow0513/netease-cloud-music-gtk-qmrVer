@@ -74,9 +74,6 @@ impl PlayerControls {
     }
 
     pub fn setup_mpris(&self) {
-        if !crate::platform::HAS_MPRIS {
-            return;
-        }
         let imp = self.imp();
         let sender = imp.sender.get().unwrap().clone();
         crate::MAINCONTEXT.spawn_local_with_priority(Priority::LOW, async move {

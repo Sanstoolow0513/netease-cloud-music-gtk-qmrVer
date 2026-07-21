@@ -4,7 +4,7 @@
 // Distributed under terms of the GPL-3.0-or-later license.
 //
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use ncm_api::SongInfo;
 
 use crate::gui::PlayerControls;
@@ -23,7 +23,7 @@ pub struct MprisController;
 
 impl MprisController {
     pub async fn new() -> Result<Self> {
-        Err(anyhow!("MPRIS is only available on Linux"))
+        Ok(Self)
     }
 
     pub async fn update_metadata(&self, _song: &SongInfo) -> Result<()> {

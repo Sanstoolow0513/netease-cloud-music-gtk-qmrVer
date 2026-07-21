@@ -47,9 +47,7 @@ pub fn init() -> std::io::Result<()> {
     fs::create_dir_all(DATA.to_owned())?;
     fs::create_dir_all(CONFIG.to_owned())?;
     fs::create_dir_all(CACHE.to_owned())?;
-    if crate::platform::HAS_DESKTOP_LYRICS {
-        fs::create_dir_all(LYRICS.to_owned())?;
-    }
+    fs::create_dir_all(LYRICS.to_owned())?;
     Ok(())
 }
 

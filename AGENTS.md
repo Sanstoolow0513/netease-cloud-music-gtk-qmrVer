@@ -90,8 +90,8 @@ src/
 ├── window.rs        # 主窗口（CompositeTemplate，绑定 gtk/window.ui），页面栈与全局状态（~1200 行）
 ├── model.rs         # 共享数据结构：UserInfo、PageStack（页面导航栈）、图片加载工具等
 ├── ncmapi.rs        # NcmClient：封装 ncm-api MusicApi，cookie 持久化、音质/码率映射
-├── path.rs          # DATA/CONFIG/CACHE；LYRICS（~/.lyrics）仅 Linux 创建
-├── platform/mod.rs  # HAS_MPRIS/TRAY/DESKTOP_LYRICS；Windows 相对 exe 的运行时路径
+├── path.rs          # DATA/CONFIG/CACHE；全平台歌词缓存 LYRICS（~/.lyrics）
+├── platform/mod.rs  # 托盘/外部歌词能力；Windows 相对 exe 的运行时路径
 ├── utils.rs         # 工具函数
 ├── config.rs.in     # Meson 生成 config.rs 的模板
 ├── audio/
@@ -136,9 +136,9 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
 - **持久化**：
   - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词等。
-  - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`，Windows 为 AppData 对应路径）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；`~/.lyrics` 仅 Linux 外部桌面歌词。
+  - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`，Windows 为 AppData 对应路径）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 - **MPRIS 名称**（仅 Linux）：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
-- **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux 用 stub。业务层通过 `platform::HAS_*` 判断，不直接假定桌面环境。
+- **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux stub 负责保持相同 API 形状，Action 消息不按平台拆分。`platform::HAS_*` 只用于设置显隐、关窗行为和外部桌面歌词等确实不同的用户行为；可由 stub 吸收的 MPRIS/托盘调用保持统一路径。
 
 ## 代码风格与约定
 

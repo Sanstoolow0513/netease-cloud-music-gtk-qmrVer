@@ -36,17 +36,31 @@ impl NeteaseCloudMusicGtk4Preferences {
         self.imp().settings.get().expect("Could not get settings.")
     }
 
-    fn bind_settings(&self) {
-        let switch = self.imp().exit_switch.get();
-        if crate::platform::HAS_SYSTEM_TRAY {
+    fn bind_optional_switch(
+        &self,
+        supported: bool,
+        key: &str,
+        switch: &Switch,
+        row: &adw::ActionRow,
+    ) {
+        if supported {
             self.settings()
-                .bind("exit-switch", &switch, "active")
+                .bind(key, switch, "active")
                 .flags(SettingsBindFlags::DEFAULT)
                 .build();
         } else {
             switch.set_active(false);
-            self.imp().exit_row.get().set_visible(false);
+            row.set_visible(false);
         }
+    }
+
+    fn bind_settings(&self) {
+        self.bind_optional_switch(
+            crate::platform::HAS_SYSTEM_TRAY,
+            "exit-switch",
+            &self.imp().exit_switch.get(),
+            &self.imp().exit_row.get(),
+        );
 
         let mute_start_switch = self.imp().mute_start_switch.get();
         self.settings()
@@ -78,16 +92,12 @@ impl NeteaseCloudMusicGtk4Preferences {
             .flags(SettingsBindFlags::DEFAULT)
             .build();
 
-        let desktop_lyrics = self.imp().desktop_lyrics.get();
-        if crate::platform::HAS_DESKTOP_LYRICS {
-            self.settings()
-                .bind("desktop-lyrics", &desktop_lyrics, "active")
-                .flags(SettingsBindFlags::DEFAULT)
-                .build();
-        } else {
-            desktop_lyrics.set_active(false);
-            self.imp().desktop_lyrics_row.get().set_visible(false);
-        }
+        self.bind_optional_switch(
+            crate::platform::HAS_DESKTOP_LYRICS,
+            "desktop-lyrics",
+            &self.imp().desktop_lyrics.get(),
+            &self.imp().desktop_lyrics_row.get(),
+        );
     }
 
     pub fn set_cache_size_label(&self, size: f64, unit: String) {
