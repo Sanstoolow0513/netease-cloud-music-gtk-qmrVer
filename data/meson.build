@@ -8,6 +8,7 @@ gnome.compile_resources('netease-cloud-music-gtk4',
   install_dir: pkgdatadir,
 )
 
+if host_system == 'linux'
 desktop_file = i18n.merge_file(
   input: 'com.gitee.gmg137.NeteaseCloudMusicGtk4.desktop.in',
   output: 'com.gitee.gmg137.NeteaseCloudMusicGtk4.desktop',
@@ -35,6 +36,7 @@ appstream_file = i18n.merge_file(
 appstreamcli = find_program('appstreamcli', required: false, disabler: true)
 test('Validate appstream file', appstreamcli,
      args: ['validate', '--no-net', '--explain', appstream_file])
+endif
 
 install_data('com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml',
   install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')

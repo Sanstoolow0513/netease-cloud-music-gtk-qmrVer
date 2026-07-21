@@ -5,13 +5,14 @@ mod gui;
 mod model;
 mod ncmapi;
 mod path;
+mod platform;
 mod utils;
 mod window;
 
 use self::application::NeteaseCloudMusicGtk4Application;
 use self::window::NeteaseCloudMusicGtk4Window;
 
-use config::{GETTEXT_PACKAGE, LOCALEDIR, PKGDATADIR};
+use config::GETTEXT_PACKAGE;
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, textdomain};
 use gtk::gio;
 use gtk::glib;
@@ -22,6 +23,7 @@ use once_cell::sync::Lazy;
 
 const APP_ID: &str = "com.gitee.gmg137.NeteaseCloudMusicGtk4";
 const APP_NAME: &str = "NetEase Cloud Music Gtk4";
+#[cfg(target_os = "linux")]
 const MPRIS_NAME: &str = "NeteaseCloudMusicGtk4";
 
 pub static MAINCONTEXT: Lazy<glib::MainContext> = Lazy::new(glib::MainContext::default);
@@ -30,21 +32,22 @@ fn main() {
     // Initialize log
     env_logger::Builder::from_env(Env::default().default_filter_or("off")).init();
 
+    // Resolve platform-specific runtime data before native libraries initialize.
+    let runtime = platform::initialize_runtime().expect("Unable to initialize runtime paths");
+
     // Initialize gstreamer
     gstreamer::init().expect("Error initializing gstreamer");
 
     // Initialize paths
     path::init().expect("Unable to create paths.");
     // Set up gettext translations
-    bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR).expect("Unable to bind the text domain");
+    bindtextdomain(GETTEXT_PACKAGE, &runtime.locale_dir).expect("Unable to bind the text domain");
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8")
         .expect("Unable to set the text domain encoding");
     textdomain(GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
 
     // Load resources
-    let resources =
-        gio::Resource::load(PKGDATADIR.to_owned() + "/netease-cloud-music-gtk4.gresource")
-            .expect("Could not load resources");
+    let resources = gio::Resource::load(&runtime.resource_file).expect("Could not load resources");
     gio::resources_register(&resources);
 
     glib::set_application_name(&gettextrs::gettext(APP_NAME));

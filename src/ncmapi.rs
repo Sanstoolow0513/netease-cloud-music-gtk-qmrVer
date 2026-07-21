@@ -195,6 +195,7 @@ impl NcmClient {
     }
 
     pub async fn get_lyrics(&self, si: SongInfo) -> Result<Vec<(u64, String)>> {
+        fs::create_dir_all(LYRICS.as_path())?;
         // 歌词文件位置
         let mut lyric_path = LYRICS.clone();
         lyric_path.push(format!(

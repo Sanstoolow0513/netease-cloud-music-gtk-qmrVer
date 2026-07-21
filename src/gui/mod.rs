@@ -16,7 +16,10 @@ mod songlist_grid_item;
 mod songlist_page;
 mod songlist_row;
 mod songlist_view;
+#[cfg(target_os = "linux")]
 mod system_tray;
+#[cfg(not(target_os = "linux"))]
+mod system_tray_stub;
 mod theme_selector;
 mod toplist;
 mod user_menus;
@@ -31,7 +34,10 @@ pub use search_song_page::*;
 pub use search_songlist_page::*;
 pub use songlist_grid_item::*;
 pub use songlist_page::*;
+#[cfg(target_os = "linux")]
 pub use system_tray::*;
+#[cfg(not(target_os = "linux"))]
+pub use system_tray_stub::*;
 pub use theme_selector::*;
 pub use toplist::*;
 pub use user_menus::*;

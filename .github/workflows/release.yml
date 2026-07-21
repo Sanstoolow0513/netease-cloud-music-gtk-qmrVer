@@ -92,8 +92,25 @@ jobs:
           name: ${{ matrix.artifact-name }}
           path: ${{ steps.build.outputs.build-dir }}/target/release/bundle
 
+  windows-build:
+    runs-on: windows-2022
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build Windows portable package
+        id: windows
+        uses: ./.github/actions/windows-portable
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-windows-x64
+          path: ${{ steps.windows.outputs.package }}
+
   release:
-    needs: [linux-build, macos-build]
+    needs: [linux-build, macos-build, windows-build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -132,3 +149,4 @@ jobs:
             release-ubuntu-latest/*.rpm
             release-macos-15-intel/*.dmg
             release-macos-latest/*.dmg
+            release-windows-x64/*.zip

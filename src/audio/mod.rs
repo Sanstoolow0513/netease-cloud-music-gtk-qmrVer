@@ -4,8 +4,14 @@
 // Distributed under terms of the GPL-3.0-or-later license.
 //
 
+#[cfg(target_os = "linux")]
 mod mpris;
+#[cfg(not(target_os = "linux"))]
+mod mpris_stub;
 mod playlist;
 
+#[cfg(target_os = "linux")]
 pub use mpris::*;
+#[cfg(not(target_os = "linux"))]
+pub use mpris_stub::*;
 pub use playlist::*;

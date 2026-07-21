@@ -1,5 +1,5 @@
 data/com.gitee.gmg137.NeteaseCloudMusicGtk4.desktop.in
-data/com.gitee.gmg137.NeteaseCloudMusicGtk4.appdata.xml.in
+data/com.gitee.gmg137.NeteaseCloudMusicGtk4.metainfo.xml.in
 data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml
 data/gtk/window.ui
 data/gtk/preferences.ui

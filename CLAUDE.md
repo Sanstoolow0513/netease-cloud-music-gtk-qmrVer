@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目简介
 
-netease-cloud-music-gtk4：基于 **GTK4 + Libadwaita 的 Rust 网易云音乐第三方播放器**（edition 2024，GPL-3.0-or-later），面向 Linux。文档与用户可见字符串以中文为主（gettext，目前仅 `zh_CN`）。
+netease-cloud-music-gtk4：基于 **GTK4 + Libadwaita 的 Rust 网易云音乐第三方播放器**（edition 2024，GPL-3.0-or-later），支持 Linux、Windows x64 与 macOS。文档与用户可见字符串以中文为主（gettext，目前仅 `zh_CN`）。
 
 ## 常用命令
 
@@ -24,8 +24,10 @@ cargo build          # 或 cargo check / cargo clippy / cargo fmt
 ninja -C _build test
 ```
 
+- Windows MSVC：`build-aux/windows/bootstrap.ps1`（默认前缀 `C:\ncm-gtk`）→ `build.ps1 -Package`；细节见 `build-aux/windows/README.md`。运行便携包目录中的 exe，勿直接打开 `_windows/install/bin` 裸 exe。
+- Linux-only MPRIS/ksni/dbus 与 Windows 原生依赖必须按 target 隔离，禁止在 Windows 包中混入 MinGW DLL。
 - 日志默认关闭，用 `RUST_LOG=debug` 开启。
-- **已有少量 Rust 纯逻辑单元测试**（当前覆盖“我的”页预览截取与请求代次）；UI 改动仍主要依靠编译通过、手工运行验证和上述 Meson 数据校验。
+- **已有少量 Rust 纯逻辑单元测试**（“我的”页预览/请求代次、播放列表与 Windows 运行时路径）；UI 改动仍主要靠编译通过、手工运行和 Meson 数据校验。
 
 ## 架构要点（big picture）
 
@@ -34,7 +36,7 @@ ninja -C _build test
 - **页面导航**：`src/model.rs` 的 `PageStack` 包装 `gtk::Stack` 管理页面栈。
 - **UI 构建方式**：所有页面/控件是 `CompositeTemplate` 子类（`src/gui/*.rs`）+ `data/gtk/*.ui` 模板一一对应；资源路径前缀 `/com/gitee/gmg137/NeteaseCloudMusicGtk4/`。
 - **集中式样式**：`data/themes/modern.css` 是现代化样式集中地（页面骨架/歌曲行/卡片等），由 `window.rs` 启动时加载。其头注约定：**只允许 Libadwaita 命名色，禁止硬编码颜色值**（图片遮罩/阴影等主题无关场景除外，可用 white/black 关键字）。
-- **持久化**：GSettings（主题/代理/音质/歌词等）；`~/.local/share/netease-cloud-music-gtk4/cookies.json`（登录 cookie，敏感，勿入日志/提交）；`~/.cache/...`（缓存）；`~/.lyrics`（歌词）。
+- **持久化**：GSettings（主题/代理/音质/歌词等）；用户数据目录下的 `cookies.json`（登录 cookie，敏感，勿入日志/提交）；平台缓存目录；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 
 ## 改动时的硬性约定
 

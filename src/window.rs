@@ -387,10 +387,14 @@ impl NeteaseCloudMusicGtk4Window {
             })
             .build();
 
-        self.settings()
-            .bind("exit-switch", self, "hide-on-close")
-            .flags(SettingsBindFlags::DEFAULT)
-            .build();
+        if crate::platform::HAS_SYSTEM_TRAY {
+            self.settings()
+                .bind("exit-switch", self, "hide-on-close")
+                .flags(SettingsBindFlags::DEFAULT)
+                .build();
+        } else {
+            self.set_hide_on_close(false);
+        }
     }
 
     fn setup_widget(&self) {

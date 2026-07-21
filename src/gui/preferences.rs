@@ -36,12 +36,31 @@ impl NeteaseCloudMusicGtk4Preferences {
         self.imp().settings.get().expect("Could not get settings.")
     }
 
+    fn bind_optional_switch(
+        &self,
+        supported: bool,
+        key: &str,
+        switch: &Switch,
+        row: &adw::ActionRow,
+    ) {
+        if supported {
+            self.settings()
+                .bind(key, switch, "active")
+                .flags(SettingsBindFlags::DEFAULT)
+                .build();
+        } else {
+            switch.set_active(false);
+            row.set_visible(false);
+        }
+    }
+
     fn bind_settings(&self) {
-        let switch = self.imp().exit_switch.get();
-        self.settings()
-            .bind("exit-switch", &switch, "active")
-            .flags(SettingsBindFlags::DEFAULT)
-            .build();
+        self.bind_optional_switch(
+            crate::platform::HAS_SYSTEM_TRAY,
+            "exit-switch",
+            &self.imp().exit_switch.get(),
+            &self.imp().exit_row.get(),
+        );
 
         let mute_start_switch = self.imp().mute_start_switch.get();
         self.settings()
@@ -73,11 +92,12 @@ impl NeteaseCloudMusicGtk4Preferences {
             .flags(SettingsBindFlags::DEFAULT)
             .build();
 
-        let desktop_lyrics = self.imp().desktop_lyrics.get();
-        self.settings()
-            .bind("desktop-lyrics", &desktop_lyrics, "active")
-            .flags(SettingsBindFlags::DEFAULT)
-            .build();
+        self.bind_optional_switch(
+            crate::platform::HAS_DESKTOP_LYRICS,
+            "desktop-lyrics",
+            &self.imp().desktop_lyrics.get(),
+            &self.imp().desktop_lyrics_row.get(),
+        );
     }
 
     pub fn set_cache_size_label(&self, size: f64, unit: String) {
@@ -198,6 +218,8 @@ mod imp {
         pub settings: OnceCell<Settings>,
         pub page_rows: RefCell<Vec<adw::ActionRow>>,
         #[template_child]
+        pub exit_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
         pub exit_switch: TemplateChild<Switch>,
         #[template_child]
         pub mute_start_switch: TemplateChild<Switch>,
@@ -209,6 +231,8 @@ mod imp {
         pub switch_rate: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub cache_clear: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub desktop_lyrics_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub desktop_lyrics: TemplateChild<Switch>,
         #[template_child]

@@ -131,8 +131,27 @@ jobs:
           name: ${{ matrix.artifact-name }}
           path: ${{ steps.build.outputs.build-dir }}/target/release/bundle
 
+  windows-build:
+    needs: check-changes
+    if: needs.check-changes.outputs.has-changes == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build Windows portable package
+        id: windows
+        uses: ./.github/actions/windows-portable
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-windows-x64
+          path: ${{ steps.windows.outputs.package }}
+
   release:
-    needs: [check-changes, linux-build, macos-build]
+    needs: [check-changes, linux-build, macos-build, windows-build]
     if: needs.check-changes.outputs.has-changes == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -171,3 +190,4 @@ jobs:
             nightly-ubuntu-latest/*.rpm
             nightly-macos-15-intel/*.dmg
             nightly-macos-latest/*.dmg
+            nightly-windows-x64/*.zip
