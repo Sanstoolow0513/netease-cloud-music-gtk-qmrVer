@@ -33,6 +33,7 @@ $prefix = .\build-aux\windows\bootstrap.ps1 | Select-Object -Last 1
 | `MSVCR120.dll` / Perl Configure 闪退 | 安装 VC++ 2013 x64 运行库 |
 | `cargo-c` 要求更新的 rustc | 脚本会重置 gvsbuild 私有 rustup 到 stable-msvc |
 | `libvpx` tlog 被占用 | 结束残留 `MSBuild`/`cl`/`gvsbuild` 后重跑 |
+| `libvpx`：`/tmp/vpx-conf-*.c` 找不到 / `vpxmd.lib` 缺失 | Git Bash 与 MSYS2 抢 PATH（常见于 GitHub `windows-*` runner）。`bootstrap.ps1` 会优先 `C:\msys64\usr\bin` 并传 `--use-env`；本地请确保已装 MSYS2 |
 | `webrtc` / abseil `C1083` Invalid argument | 使用默认短路径 `C:\ncm-gtk`，勿把 BuildRoot 放在 Desktop 深目录 |
 
 生成 release 便携包：
