@@ -1,0 +1,65 @@
+name: Build Windows portable package
+description: Build and package the application with the MSVC dependency stack
+
+outputs:
+  package:
+    description: Path to the Windows portable zip
+    value: ${{ steps.package.outputs.package }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+
+    - name: Set up Visual Studio environment
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          _windows/build/target
+        key: windows-msvc-cargo-${{ hashFiles('Cargo.toml') }}
+        restore-keys: |
+          windows-msvc-cargo-
+
+    - name: Cache gvsbuild dependencies
+      uses: actions/cache@v5
+      with:
+        path: C:\ncm-gtk
+        key: windows-gvsbuild-2026.4.1-${{ hashFiles('build-aux/windows/bootstrap.ps1') }}
+
+    - name: Install build tools
+      shell: pwsh
+      run: |
+        uv tool install meson
+        uv tool install ninja
+
+    - name: Bootstrap MSVC dependencies
+      id: bootstrap
+      shell: pwsh
+      run: |
+        $result = & "${{ github.workspace }}\build-aux\windows\bootstrap.ps1"
+        $prefix = $result[-1]
+        "prefix=$prefix" >> $env:GITHUB_OUTPUT
+
+    - name: Build and package
+      id: package
+      shell: pwsh
+      run: |
+        & "${{ github.workspace }}\build-aux\windows\build.ps1" `
+          -DependencyPrefix "${{ steps.bootstrap.outputs.prefix }}" `
+          -BuildType release `
+          -Package
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+        $package = Get-ChildItem "${{ github.workspace }}\_windows\dist\*.zip" |
+          Sort-Object LastWriteTime -Descending |
+          Select-Object -First 1
+        "package=$($package.FullName)" >> $env:GITHUB_OUTPUT

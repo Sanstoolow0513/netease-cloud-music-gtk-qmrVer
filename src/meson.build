@@ -12,9 +12,13 @@ configure_file(
     configuration: conf
 )
 
-# Copy the config.rs output to the source directory.
+# Cargo compiles modules from the source tree, so copy the generated config
+# using Meson's Python runtime instead of the Unix-only `cp` command.
+python = import('python').find_installation()
 run_command(
-  'cp',
+  python,
+  '-c',
+  'import shutil, sys; shutil.copyfile(sys.argv[1], sys.argv[2])',
   join_paths(meson.project_build_root(), 'src', 'config.rs'),
   join_paths(meson.project_source_root(), 'src', 'config.rs'),
   check: true
@@ -28,9 +32,11 @@ rust_sources = files(
   'model.rs',
   'ncmapi.rs',
   'path.rs',
+  'platform/mod.rs',
   'utils.rs',
   'audio/mod.rs',
   'audio/mpris.rs',
+  'audio/mpris_stub.rs',
   'audio/playlist.rs',
   'gui/mod.rs',
   'gui/discover.rs',
@@ -46,6 +52,7 @@ rust_sources = files(
   'gui/songlist_row.rs',
   'gui/songlist_view.rs',
   'gui/system_tray.rs',
+  'gui/system_tray_stub.rs',
   'gui/theme_selector.rs',
   'gui/toplist.rs',
   'gui/user_menus.rs',
@@ -53,17 +60,31 @@ rust_sources = files(
 
 sources = [cargo_sources, rust_sources]
 
-cargo_script = find_program(join_paths(meson.project_source_root(), 'build-aux/cargo.sh'))
+if host_system == 'windows'
+  cargo_output = meson.project_name() + '.exe'
+  powershell = find_program('pwsh', 'powershell')
+  cargo_script = join_paths(meson.project_source_root(), 'build-aux/windows/cargo.ps1')
+  cargo_command = [
+    powershell,
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', cargo_script,
+  ]
+else
+  cargo_output = meson.project_name()
+  cargo_script = find_program(join_paths(meson.project_source_root(), 'build-aux/cargo.sh'))
+  cargo_command = [cargo_script]
+endif
+
 cargo_release = custom_target(
   'cargo-build',
   build_by_default: true,
   input: sources,
-  output: meson.project_name(),
+  output: cargo_output,
   console: true,
   install: true,
   install_dir: get_option('bindir'),
-  command: [
-    cargo_script,
+  command: cargo_command + [
     meson.project_build_root(),
     meson.project_source_root(),
     '@OUTPUT@',

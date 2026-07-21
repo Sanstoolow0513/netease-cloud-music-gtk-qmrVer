@@ -6,6 +6,7 @@
 
 use gtk::glib;
 use log::*;
+#[cfg(target_os = "linux")]
 use mpris_server::LoopStatus;
 use ncm_api::SongInfo;
 use serde::{Deserialize, Serialize};
@@ -57,6 +58,11 @@ fn playlist_file_path() -> PathBuf {
 fn atomic_write(path: &Path, data: &[u8]) -> std::io::Result<()> {
     let tmp_path = path.with_extension("json.tmp");
     fs::write(&tmp_path, data)?;
+    // Windows 的 rename 不会覆盖现有文件；先删除旧文件以保证重复保存可用。
+    #[cfg(target_os = "windows")]
+    if path.exists() {
+        fs::remove_file(path)?;
+    }
     fs::rename(&tmp_path, path)?;
     Ok(())
 }
@@ -494,6 +500,7 @@ impl FromStr for LoopsState {
     }
 }
 
+#[cfg(target_os = "linux")]
 impl From<LoopStatus> for LoopsState {
     fn from(status: LoopStatus) -> Self {
         match status {
@@ -512,5 +519,24 @@ impl std::fmt::Display for LoopsState {
             LoopsState::Playlist => write!(f, "loop"),
             LoopsState::Shuffle => write!(f, "shuffle"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::atomic_write;
+
+    #[test]
+    fn atomic_write_replaces_existing_playlist() {
+        let path = std::env::temp_dir().join(format!(
+            "netease-cloud-music-gtk4-playlist-{}.json",
+            std::process::id()
+        ));
+
+        atomic_write(&path, b"first").unwrap();
+        atomic_write(&path, b"second").unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), b"second");
+
+        let _ = std::fs::remove_file(path);
     }
 }

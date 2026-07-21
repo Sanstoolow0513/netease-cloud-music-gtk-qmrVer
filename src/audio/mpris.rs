@@ -8,7 +8,8 @@ use adw::prelude::GtkWindowExt;
 use glib::clone;
 use gtk::glib;
 use gtk::prelude::Cast;
-use mpris_server::{Time, TrackId, zbus::Result, *};
+pub use mpris_server::PlaybackStatus;
+use mpris_server::{LoopStatus, Metadata, Player, Time, TrackId, zbus::Result};
 
 use ncm_api::SongInfo;
 use std::rc::Rc;

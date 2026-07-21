@@ -1,6 +1,7 @@
 /target
 /build
 /_local
+/_windows
 /worktrees
 **/*.rs.bk
 /src/config.rs

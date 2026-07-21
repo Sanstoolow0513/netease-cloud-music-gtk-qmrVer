@@ -14,7 +14,6 @@ use gst::{ClockTime, prelude::ObjectExt};
 use gstreamer_play::{prelude::ElementExt, *};
 use gtk::{CompositeTemplate, GestureClick, glib, prelude::*, subclass::prelude::*, *};
 use log::*;
-use mpris_server::PlaybackStatus;
 use ncm_api::{SongInfo, SongList};
 use once_cell::sync::*;
 
@@ -75,6 +74,9 @@ impl PlayerControls {
     }
 
     pub fn setup_mpris(&self) {
+        if !crate::platform::HAS_MPRIS {
+            return;
+        }
         let imp = self.imp();
         let sender = imp.sender.get().unwrap().clone();
         crate::MAINCONTEXT.spawn_local_with_priority(Priority::LOW, async move {

@@ -1,11 +1,10 @@
-
 name: Build on multi platforms
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -17,22 +16,40 @@ jobs:
     timeout-minutes: 60
 
     steps:
-    - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
-    - name: Build application
-      id: build
-      uses: ./.github/actions/build
+      - name: Build application
+        id: build
+        uses: ./.github/actions/build
 
-    - name: Bundle AppImage
-      if: runner.os == 'Linux'
-      uses: ./.github/actions/appimage
-      with:
-        build-dir: ${{ steps.build.outputs.build-dir }}
-        appdir: ${{ steps.build.outputs.appdir }}
+      - name: Bundle AppImage
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/appimage
+        with:
+          build-dir: ${{ steps.build.outputs.build-dir }}
+          appdir: ${{ steps.build.outputs.appdir }}
 
-    - name: Upload artifacts
-      if: github.event_name == 'push'
-      uses: actions/upload-artifact@v7
-      with:
-        name: netease-cloud-music_${{ github.run_id }}
-        path: ${{ steps.build.outputs.build-dir }}/target/release/bundle
+      - name: Upload artifacts
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: netease-cloud-music_${{ github.run_id }}
+          path: ${{ steps.build.outputs.build-dir }}/target/release/bundle
+
+  windows-build:
+    runs-on: windows-2022
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build Windows portable package
+        id: windows
+        uses: ./.github/actions/windows-portable
+
+      - name: Upload Windows artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: netease-cloud-music-windows-${{ github.run_id }}
+          path: ${{ steps.windows.outputs.package }}

@@ -38,10 +38,15 @@ impl NeteaseCloudMusicGtk4Preferences {
 
     fn bind_settings(&self) {
         let switch = self.imp().exit_switch.get();
-        self.settings()
-            .bind("exit-switch", &switch, "active")
-            .flags(SettingsBindFlags::DEFAULT)
-            .build();
+        if crate::platform::HAS_SYSTEM_TRAY {
+            self.settings()
+                .bind("exit-switch", &switch, "active")
+                .flags(SettingsBindFlags::DEFAULT)
+                .build();
+        } else {
+            switch.set_active(false);
+            self.imp().exit_row.get().set_visible(false);
+        }
 
         let mute_start_switch = self.imp().mute_start_switch.get();
         self.settings()
@@ -74,10 +79,15 @@ impl NeteaseCloudMusicGtk4Preferences {
             .build();
 
         let desktop_lyrics = self.imp().desktop_lyrics.get();
-        self.settings()
-            .bind("desktop-lyrics", &desktop_lyrics, "active")
-            .flags(SettingsBindFlags::DEFAULT)
-            .build();
+        if crate::platform::HAS_DESKTOP_LYRICS {
+            self.settings()
+                .bind("desktop-lyrics", &desktop_lyrics, "active")
+                .flags(SettingsBindFlags::DEFAULT)
+                .build();
+        } else {
+            desktop_lyrics.set_active(false);
+            self.imp().desktop_lyrics_row.get().set_visible(false);
+        }
     }
 
     pub fn set_cache_size_label(&self, size: f64, unit: String) {
@@ -198,6 +208,8 @@ mod imp {
         pub settings: OnceCell<Settings>,
         pub page_rows: RefCell<Vec<adw::ActionRow>>,
         #[template_child]
+        pub exit_row: TemplateChild<adw::ActionRow>,
+        #[template_child]
         pub exit_switch: TemplateChild<Switch>,
         #[template_child]
         pub mute_start_switch: TemplateChild<Switch>,
@@ -209,6 +221,8 @@ mod imp {
         pub switch_rate: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub cache_clear: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub desktop_lyrics_row: TemplateChild<adw::ActionRow>,
         #[template_child]
         pub desktop_lyrics: TemplateChild<Switch>,
         #[template_child]

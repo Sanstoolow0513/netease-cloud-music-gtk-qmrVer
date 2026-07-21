@@ -13,7 +13,7 @@ use once_cell::sync::OnceCell;
 use std::{
     cell::{Cell, RefCell},
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
 };
@@ -166,6 +166,10 @@ pub enum Action {
 
 const MY_PAGE_SONG_PREVIEW_LIMIT: usize = 8;
 const MY_PAGE_COLLECTION_PREVIEW_LIMIT: usize = 10;
+
+fn local_file_uri(path: &Path) -> String {
+    gio::File::for_path(path).uri().to_string()
+}
 
 fn take_preview<T>(items: Vec<T>, limit: usize) -> Vec<T> {
     items.into_iter().take(limit).collect()
@@ -821,7 +825,7 @@ impl NeteaseCloudMusicGtk4Application {
                     });
                 } else {
                     let song_info = SongInfo {
-                        song_url: format!("file://{}", path.to_str().unwrap().to_owned()),
+                        song_url: local_file_uri(&path),
                         ..song_info
                     };
                     sender.send_blocking(Action::PlayStart(song_info)).unwrap();
@@ -829,7 +833,9 @@ impl NeteaseCloudMusicGtk4Application {
             }
             Action::PlayStart(song_info) => {
                 // 启用桌面歌词
-                if window.settings().boolean("desktop-lyrics") {
+                if crate::platform::HAS_DESKTOP_LYRICS
+                    && window.settings().boolean("desktop-lyrics")
+                {
                     let sender = imp.sender.clone();
                     sender
                         .send_blocking(Action::UpdateLyrics(song_info.to_owned(), 0))
@@ -915,7 +921,7 @@ impl NeteaseCloudMusicGtk4Application {
                     });
                 } else {
                     let song_info = SongInfo {
-                        song_url: format!("file://{}", path.to_str().unwrap().to_owned()),
+                        song_url: local_file_uri(&path),
                         ..song_info
                     };
                     window.set_song_url(song_info);
@@ -1718,7 +1724,7 @@ fn remove_all_file(path: PathBuf) -> anyhow::Result<()> {
 mod tests {
     use super::{
         LoginSessionGeneration, MY_PAGE_COLLECTION_PREVIEW_LIMIT, MY_PAGE_SONG_PREVIEW_LIMIT,
-        skip_liked_playlist, take_preview,
+        local_file_uri, skip_liked_playlist, take_preview,
     };
 
     #[test]
@@ -1749,5 +1755,13 @@ mod tests {
         assert_eq!(skip_liked_playlist(vec![0], Some(10)), Vec::<i32>::new());
         assert_eq!(skip_liked_playlist(vec![0, 1, 2, 3], Some(2)), vec![1, 2]);
         assert_eq!(skip_liked_playlist(vec![0, 1, 2, 3], None), vec![1, 2, 3]);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn local_file_uri_handles_windows_paths() {
+        let uri = local_file_uri(std::path::Path::new(r"C:\Music Cache\测试.mp3"));
+        assert!(uri.starts_with("file:///C:/"));
+        assert!(uri.contains("Music%20Cache"));
     }
 }

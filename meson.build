@@ -10,9 +10,12 @@ project('netease-cloud-music-gtk4', 'rust',
 i18n = import('i18n')
 
 gnome = import('gnome')
+host_system = host_machine.system()
 
 dependency('openssl', version: '>= 1.0')
-dependency('dbus-1')
+if host_system == 'linux'
+  dependency('dbus-1')
+endif
 
 dependency('glib-2.0', version: '>= 2.66')
 dependency('gio-2.0', version: '>= 2.66')
@@ -24,9 +27,13 @@ dependency('gstreamer-1.0', version: '>= 1.16')
 dependency('gstreamer-base-1.0', version: '>= 1.16')
 dependency('gstreamer-audio-1.0', version: '>= 1.16')
 dependency('gstreamer-play-1.0', version: '>= 1.16')
-dependency('gstreamer-plugins-base-1.0', version: '>= 1.16')
-dependency('gstreamer-plugins-bad-1.0', version: '>= 1.16')
-dependency('gstreamer-bad-audio-1.0', version: '>= 1.16')
+# Plugin package .pc files are mainly useful on Linux distro packaging.
+# Windows portable builds ship plugins via the MSVC prefix instead.
+if host_system == 'linux'
+  dependency('gstreamer-plugins-base-1.0', version: '>= 1.16')
+  dependency('gstreamer-plugins-bad-1.0', version: '>= 1.16')
+  dependency('gstreamer-bad-audio-1.0', version: '>= 1.16')
+endif
 
 cargo_sources = files(
   'Cargo.toml',
@@ -36,8 +43,10 @@ subdir('data')
 subdir('src')
 subdir('po')
 
-gnome.post_install(
-  glib_compile_schemas: true,
-  gtk_update_icon_cache: true,
-  update_desktop_database: true,
-)
+if host_system == 'linux'
+  gnome.post_install(
+    glib_compile_schemas: true,
+    gtk_update_icon_cache: true,
+    update_desktop_database: true,
+  )
+endif

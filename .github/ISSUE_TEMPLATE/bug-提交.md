@@ -24,8 +24,9 @@ assignees: ''
 如果适用，请添加相关截图.
 
 **运行环境:**
- - 操作系统/版本: [如：openSUSE 16, ubuntu25.04, archlinux]
- - 桌面环境/版本: [如：GNOME 47,KDE 5.1]
+ - 操作系统/版本: [如：Windows 11 24H2、openSUSE 16、Ubuntu 25.04]
+ - 系统架构: [如：x64、arm64]
+ - 桌面环境/版本（Linux）: [如：GNOME 47、KDE 5.1]
  - 应用版本 [如： 2.5.1]
 
 **其他信息**

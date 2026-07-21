@@ -4,10 +4,11 @@
 
 ## 项目概览
 
-**netease-cloud-music-gtk4** 是基于 **GTK4 + Libadwaita** 的网易云音乐第三方桌面播放器，使用 **Rust**（edition 2024）编写，主要面向 Linux（在 openSUSE Tumbleweed + GNOME 下测试），也支持 macOS。当前版本 **2.5.3**，许可证 GPL-3.0-or-later。
+**netease-cloud-music-gtk4** 是基于 **GTK4 + Libadwaita** 的网易云音乐第三方桌面播放器，使用 **Rust**（edition 2024）编写，支持 Linux、Windows x64 与 macOS。Linux 在 openSUSE Tumbleweed + GNOME 下测试；Windows 使用 MSVC 便携包。当前版本 **2.5.3**，许可证 GPL-3.0-or-later。
 
 - 应用 ID：`com.gitee.gmg137.NeteaseCloudMusicGtk4`
-- 风格仿 GNOME Music，支持发现页、榜单、歌单、搜索、"我的"页、播放栏、歌词（含桌面歌词）、扫码/验证码登录、MPRIS2、系统托盘等。
+- 风格仿 GNOME Music，支持发现页、榜单、歌单、搜索、"我的"页、播放栏、应用内歌词、扫码/验证码登录等。
+- **Linux 专属桌面集成**：MPRIS2、ksni 托盘、外部桌面歌词（osdlyrics / desktop-lyric）。Windows 首版不提供这些能力，关闭窗口即退出。
 - 上游仓库：https://github.com/gmg137/netease-cloud-music-gtk（gitee 镜像同名）。
 - 文档（README、Issue 模板）以中文为主；代码注释中英混用，用户可见字符串通过 gettext 翻译（目前仅提供中文 `zh_CN`）。
 
@@ -18,11 +19,11 @@
 - **网络 API**：`ncm-api` crate（`netease-cloud-music-api`，锁定 gitee 仓库 tag 2.0.0；GitHub dev 分支以注释形式保留在 `Cargo.toml` 中）。
 - **桌面集成**：`mpris-server`（MPRIS2 D-Bus 接口）、`ksni`（系统托盘）、`qrcode-generator`（扫码登录）。
 - **其他**：`async-channel`（内部消息分发）、`once_cell`、`gettext-rs`（i18n）、`cookie_store`（登录 cookie 持久化）、`serde/serde_json`、`anyhow`、`regex`、`chrono`、`fastrand`、`log` + `env_logger`。
-- 系统依赖（见根 `meson.build`）：openssl、dbus-1、glib-2.0/gio-2.0 (≥2.66)、gdk-pixbuf、gtk4 (≥4.10)、libadwaita-1 (≥1.5)、gstreamer 1.0 系列 (≥1.16，含 base/bad/plugins)。运行时还需 gstreamer-plugins-good/ugly。
+- 系统依赖（见根 `meson.build`）：openssl、glib-2.0/gio-2.0 (≥2.66)、gdk-pixbuf、gtk4 (≥4.10)、libadwaita-1 (≥1.5)、gstreamer 1.0 系列 (≥1.16，含 base/bad/plugins)；dbus-1、MPRIS 与 ksni 仅用于 Linux。Windows 原生依赖由单一 gvsbuild MSVC 前缀提供。
 
 ## 构建与运行
 
-项目使用 **Meson + Cargo** 双重构建：Meson 负责安装数据文件、编译 gresource、生成 `src/config.rs`（由 `src/config.rs.in` 生成，提供 `VERSION`/`PKGDATADIR`/`LOCALEDIR`/`GETTEXT_PACKAGE`），并通过 `build-aux/cargo.sh` 调用 `cargo build`（`CARGO_TARGET_DIR` 指向 `_build/target`，release/debug 由 Meson buildtype 决定，默认为 release）。
+项目使用 **Meson + Cargo** 双重构建：Meson 负责安装数据文件、编译 gresource、生成 `src/config.rs`（由 `src/config.rs.in` 生成，提供 `VERSION`/`PKGDATADIR`/`LOCALEDIR`/`GETTEXT_PACKAGE`），并通过平台包装器调用 `cargo build`：Linux/macOS 使用 `build-aux/cargo.sh`，Windows 使用 `build-aux/windows/cargo.ps1`。
 
 ```bash
 # 编译
@@ -32,8 +33,8 @@ cd _build && ninja
 # 安装（需要 root）
 sudo ninja install
 
-# 运行构建出的二进制（未安装时 gresource 等资源文件可能加载失败，
-# 因为 main.rs 按 PKGDATADIR 绝对路径加载 .gresource）
+# 运行构建出的二进制（Linux/macOS 未安装时 gresource 可能失败：
+# 非 Windows 仍按 meson 生成的绝对 PKGDATADIR 加载；Windows 便携包则相对 exe 解析）
 ./_build/src/netease-cloud-music-gtk4
 ```
 
@@ -54,13 +55,26 @@ make build   # 只构建并安装到 _local/prefix
 make clean   # 删除 _local
 ```
 
+Windows 在 VS 2022 Developer PowerShell 中构建；详细依赖和命令见 `build-aux/windows/README.md`：
+
+```powershell
+$prefix = .\build-aux\windows\bootstrap.ps1 | Select-Object -Last 1
+.\build-aux\windows\build.ps1 -DependencyPrefix $prefix -BuildType release -Package
+```
+
+- 依赖默认建在短路径 `C:\ncm-gtk`（避免 Desktop 长路径触发 MSVC `C1083`）；仓库内 `_windows\gvsbuild` 可为指向该前缀的联接。
+- 只允许 `x86_64-pc-windows-msvc` 与同一 gvsbuild 前缀，禁止混入 MinGW/MSYS2 DLL。
+- **运行**：使用 `_windows\dist\netease-cloud-music-gtk4-<ver>-windows-x64\`（或对应 zip）中的 exe。Meson install 树 `_windows\install\bin\` 的裸 exe 缺 DLL/资源，不能直接双击。
+- 便携包运行时从 exe 相对目录加载 gresource、locale、schema、图标和 GStreamer 插件；`src/platform/mod.rs` 在 Windows 上于 `gstreamer::init` 前设置相关环境变量。
+- MVP bootstrap 跳过 `webrtc-audio-processing`，暂不编 `gst-libav`/`ffmpeg`（解码依赖 good/ugly 等插件；缺格式时可再启用）。
+
 查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。
 
 macOS 构建时根目录 `build.rs`（Cargo 自动识别）会设置 GStreamer framework 的 pkg-config / rpath 路径；`Cargo.toml` 中 `[package.metadata.bundle]` 供 cargo-bundle 打包 macOS dmg 使用。仓库根部的 `.buildconfig` 是 GNOME Builder 的配置文件，与构建脚本无关。
 
 ## 测试
 
-- **Rust 代码目前只有少量内联单元测试**（位于 `src/application.rs` 与 `src/model.rs`，覆盖“我的”页预览截取及请求代次；`Cargo.toml` 仍无 `[dev-dependencies]`），CI 尚未配置 `cargo test`。UI 改动仍主要依靠编译通过 + 手工运行验证。
+- **Rust 代码目前只有少量内联单元测试**（`application.rs` / `model.rs` 的“我的”页预览与请求代次；`playlist.rs` 与 `platform/mod.rs` 另有少量路径相关测试；`Cargo.toml` 仍无 `[dev-dependencies]`），CI 尚未配置 `cargo test`。UI 改动仍主要依靠编译通过 + 手工运行验证。
 - Meson 层面定义了数据文件校验测试（在 `_build` 中运行 `meson test` / `ninja test`，见 `data/meson.build`）：
   - `desktop-file-validate` 校验 desktop 文件
   - `appstreamcli validate` 校验 metainfo
@@ -76,13 +90,15 @@ src/
 ├── window.rs        # 主窗口（CompositeTemplate，绑定 gtk/window.ui），页面栈与全局状态（~1200 行）
 ├── model.rs         # 共享数据结构：UserInfo、PageStack（页面导航栈）、图片加载工具等
 ├── ncmapi.rs        # NcmClient：封装 ncm-api MusicApi，cookie 持久化、音质/码率映射
-├── path.rs          # DATA/CONFIG/CACHE/LYRICS 目录（glib 用户目录下，歌词在 ~/.lyrics）
+├── path.rs          # DATA/CONFIG/CACHE；LYRICS（~/.lyrics）仅 Linux 创建
+├── platform/mod.rs  # HAS_MPRIS/TRAY/DESKTOP_LYRICS；Windows 相对 exe 的运行时路径
 ├── utils.rs         # 工具函数
 ├── config.rs.in     # Meson 生成 config.rs 的模板
 ├── audio/
-│   ├── mod.rs       # 播放核心：基于 gstreamer-play 的播放器封装（在 playlist.rs 中）
-│   ├── playlist.rs  # 播放列表与播放状态管理（循环/单曲/随机等 LoopsState）
-│   └── mpris.rs     # MprisController：MPRIS2 D-Bus 服务
+│   ├── mod.rs       # 按 target 选用 mpris 或 mpris_stub
+│   ├── playlist.rs  # 播放列表与 LoopsState（不依赖 mpris_server 类型）
+│   ├── mpris.rs     # Linux：MprisController（MPRIS2）
+│   └── mpris_stub.rs # 非 Linux：no-op
 └── gui/             # 各页面/控件，均为 CompositeTemplate 子类 + data/gtk/*.ui
     ├── discover.rs  # 发现页（轮播、推荐歌单、新专辑）
     ├── toplist.rs   # 榜单页
@@ -91,9 +107,10 @@ src/
     ├── playlist_lyrics.rs   # 播放列表 + 歌词页
     ├── search_song_page.rs / search_songlist_page.rs / search_singer_page.rs  # 搜索页
     ├── songlist_page.rs / songlist_view.rs / songlist_row.rs / songlist_grid_item.rs  # 歌单相关组件
-    ├── preferences.rs       # 首选项对话框（绑定 GSettings）
+    ├── preferences.rs       # 首选项；按平台能力隐藏托盘/桌面歌词相关项
     ├── user_menus.rs        # 用户菜单/登录（二维码、验证码）
-    ├── system_tray.rs       # 系统托盘（ksni）
+    ├── system_tray.rs       # Linux：ksni 托盘
+    ├── system_tray_stub.rs  # 非 Linux：no-op
     └── theme_selector.rs    # 主题切换组件
 
 data/
@@ -106,7 +123,8 @@ data/
 └── netease_cloud_music_gtk4.gresource.xml  # 资源清单（新增 .ui/.css 需登记）
 
 po/                          # gettext 翻译（POTFILES 登记需翻译的源文件，目前仅 zh_CN）
-build-aux/cargo.sh           # Meson 调用 cargo 的包装脚本
+build-aux/cargo.sh           # Linux Meson 调用 cargo 的包装脚本
+build-aux/windows/           # Windows MSVC 依赖、构建和便携打包脚本
 build.rs                     # macOS GStreamer framework 路径设置
 com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform 45）
 ```
@@ -118,8 +136,9 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
 - **持久化**：
   - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词等。
-  - 文件系统：`~/.cache/netease-cloud-music-gtk4`（音乐/图片缓存）、`~/.local/share/netease-cloud-music-gtk4`（登录 cookie `cookies.json` 等数据，见 `src/ncmapi.rs` 的 `cookie_file_path()`）、`~/.lyrics`（歌词文件，供 osdlyrics/desktop-lyric 读取）。
-- **MPRIS 名称**：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
+  - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`，Windows 为 AppData 对应路径）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；`~/.lyrics` 仅 Linux 外部桌面歌词。
+- **MPRIS 名称**（仅 Linux）：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
+- **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux 用 stub。业务层通过 `platform::HAS_*` 判断，不直接假定桌面环境。
 
 ## 代码风格与约定
 
@@ -137,21 +156,23 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - 用户可见字符串使用 `gettextrs::gettext(...)` 包裹，并把源文件加入 `po/POTFILES`。
 - 新增 `.ui` / `.css` 文件时：放入 `data/gtk/` 或 `data/themes/`，登记到 `data/netease_cloud_music_gtk4.gresource.xml`；新增 `.rs` 文件需登记到 `src/meson.build` 的 `rust_sources`。
 - 依赖版本统一用 `~x.y` 形式写在 `Cargo.toml`；系统库版本约束在根 `meson.build` 中声明，两者需保持同步。
-- `Cargo.lock` 与 `src/config.rs` 均被 gitignore（另有 `/target`、`/build`、`/worktrees`），不要提交。
+- `Cargo.lock` 与 `src/config.rs` 均被 gitignore（另有 `/target`、`/build`、`/_local`、`/_windows`、`/worktrees`），不要提交。
+- Windows 构建细节以 [`build-aux/windows/README.md`](build-aux/windows/README.md) 为准；`CLAUDE.md` 仅作快速索引，冲突时以本文件为准。
 
-### 已知的文档/配置不一致（改动时注意）
+### 已知注意点（改动时注意）
 
-- `po/POTFILES` 中登记的 `data/com.gitee.gmg137.NeteaseCloudMusicGtk4.appdata.xml.in` 已改名为 `metainfo.xml.in`，属于陈旧条目（重新生成 pot 时会报错）。
-- README FAQ 称"不打算实现托盘功能"已过时：代码中 `src/gui/system_tray.rs` 已基于 ksni 实现了系统托盘。
+- Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
+- Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于应用已打包：须再跑 `build.ps1 -Package`。
+- `docs/superpowers/` 下的 dated plans/specs 是历史设计记录，不作为现役构建/平台能力合同。
 
 ## 发布与部署流程
 
 - **版本号三处同步**：`Cargo.toml` 的 `version`、根 `meson.build` 的 `project(version)`、Flatpak manifest 中的 git `tag`。
-- **CI**（`.github/workflows/` + 本地 composite actions `.github/actions/{build,deb,rpm,appimage,dmg}`）：
-  - `meson.yml`：push/PR 到 master 时在 Ubuntu 上构建（`.github/actions/build` 安装依赖，Linux 侧通过 linuxbrew 安装 gtk4/gstreamer/libadwaita/openssl），并打包 AppImage。
+- **CI**（`.github/workflows/` + 本地 composite actions）：
+  - `meson.yml`：push/PR 到 master 时分别执行 Linux 与 Windows MSVC 构建；Linux 打包 AppImage，Windows 打包便携 zip。
   - `nightly.yml`：每日定时检查变更后触发 nightly 构建。
-  - `release.yml`：推送 `x.y.z` 格式 tag 触发。Linux 构建 .deb / .rpm / AppImage，macOS（Intel + ARM）构建 dmg，最后汇总创建 GitHub Release。
-- **分发渠道**：openSUSE (zypper)、Arch AUR/archlinuxcn、Ubuntu PPA (`ppa:gmg137/ncm`)、Debian 中文社区源、Flathub Flatpak、Nix、Gentoo gentoo-zh 源——这些包由各渠道维护，仓库内只直接产出 AppImage/deb/rpm/dmg。
+  - `release.yml`：推送 `x.y.z` 格式 tag 触发。Linux 构建 .deb / .rpm / AppImage，macOS（Intel + ARM）构建 dmg，Windows 构建 x64 便携 zip，最后汇总创建 GitHub Release。
+- **分发渠道**：openSUSE (zypper)、Arch AUR/archlinuxcn、Ubuntu PPA (`ppa:gmg137/ncm`)、Debian 中文社区源、Flathub Flatpak、Nix、Gentoo gentoo-zh 源——这些包由各渠道维护；仓库直接产出 AppImage/deb/rpm/dmg，以及（本分支合入并走 release/nightly 后）Windows zip。现役 GitHub Release `2.5.3` 目前仅有 AppImage。
 
 ## 安全注意事项
 
