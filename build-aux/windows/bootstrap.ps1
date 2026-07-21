@@ -176,12 +176,25 @@ if (Test-Path -LiteralPath $webrtcBuildDir) {
     Remove-Item -LiteralPath $webrtcBuildDir -Recurse -Force
 }
 
+# GitHub Windows runners ship both Git Bash and MSYS2; Git's usr\bin often wins
+# on PATH. libvpx's configure then probes /tmp with Git's cat/mv against a
+# different tmp root and fails before producing vpxmd.lib (wingtk/gvsbuild#1723).
+# Prefer system MSYS2 and pass --use-env so gvsbuild keeps that PATH.
+$msysUsrBin = "C:\msys64\usr\bin"
+if (Test-Path -LiteralPath $msysUsrBin) {
+    $env:Path = "$msysUsrBin;$env:Path"
+    Write-Host "Preferring MSYS2 tools at $msysUsrBin for gvsbuild"
+} else {
+    Write-Warning "C:\msys64\usr\bin not found; libvpx may fail if Git Bash tools shadow MSYS2."
+}
+
 & uvx --from "gvsbuild==$GvsbuildVersion" gvsbuild build `
     --build-dir $BuildRoot `
     --platform x64 `
     --configuration release `
     --vs-ver vs2022 `
     --fast-build `
+    --use-env `
     --skip webrtc-audio-processing `
     --extra-opts "gst-plugins-bad:-Dwebrtcdsp=disabled" `
     @projects
