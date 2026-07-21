@@ -45,3 +45,4 @@ ninja -C _build test
 - 用户可见字符串 → `gettextrs::gettext(...)` 包裹 + 登记 `po/POTFILES`。
 - `Cargo.lock` 与 `src/config.rs` 被 gitignore，不要提交。
 - 版本号三处同步：`Cargo.toml`、根 `meson.build`、Flatpak manifest 的 git tag。
+- **禁止对上游写入**：默认只操作 fork `origin`（`Sanstoolow0513/netease-cloud-music-gtk-qmrVer`）。未经用户明确授权，禁止 `git remote add upstream`、`git push upstream`、以及对 `gmg137/netease-cloud-music-gtk` 的 `gh pr`/`issue` 等写入；`gh` 写操作须显式 `--repo` 指向该 fork。细节见 AGENTS.md「远程与上游红线」。

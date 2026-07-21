@@ -10,6 +10,7 @@
 - 风格仿 GNOME Music，支持发现页、榜单、歌单、搜索、"我的"页、播放栏、应用内歌词、扫码/验证码登录等。
 - **Linux 专属桌面集成**：MPRIS2、ksni 托盘、外部桌面歌词（osdlyrics / desktop-lyric）。Windows 首版不提供这些能力，关闭窗口即退出。
 - 上游仓库：https://github.com/gmg137/netease-cloud-music-gtk（gitee 镜像同名）。
+- **本 fork 协作目标**：`origin` → `Sanstoolow0513/netease-cloud-music-gtk-qmrVer`。日常 push / PR / Issue / Actions 一律针对该 fork，不以 upstream 为默认目标。
 - 文档（README、Issue 模板）以中文为主；代码注释中英混用，用户可见字符串通过 gettext 翻译（目前仅提供中文 `zh_CN`）。
 
 ## 技术栈与关键依赖
@@ -159,10 +160,29 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - `Cargo.lock` 与 `src/config.rs` 均被 gitignore（另有 `/target`、`/build`、`/_local`、`/_windows`、`/worktrees`），不要提交。
 - Windows 构建细节以 [`build-aux/windows/README.md`](build-aux/windows/README.md) 为准；`CLAUDE.md` 仅作快速索引，冲突时以本文件为准。
 
+### 远程与上游红线（Agent 必守）
+
+本仓库允许只读跟踪上游，**禁止对上游做任何“添加/写入”类操作**，除非用户在当次对话里明确点名 upstream / `gmg137/netease-cloud-music-gtk` 并授权。
+
+| 允许 | 禁止（默认） |
+|------|----------------|
+| `git fetch upstream`、只读 `git log`/`diff` 对比 | `git push upstream`、任何向 upstream 推送的 ref |
+| 文档中引用上游 URL | `git remote add upstream`（未授权时新建或改写 upstream remote） |
+| `gh ... --repo Sanstoolow0513/netease-cloud-music-gtk-qmrVer` | 对 `gmg137/netease-cloud-music-gtk`：`gh pr create` / `merge` / `close` / `comment`、开 Issue、改 Discussions |
+| | 给 upstream 设置 `remote.*.gh-resolved=base`（会让裸 `gh pr create` 打到上游） |
+| | 未显式 `--repo` 时依赖可能指向上游的默认仓库 |
+
+执行约定：
+
+1. 开 PR / 查 Actions / 留评论前，先确认目标是 **fork**；`gh` 写操作一律带 `--repo Sanstoolow0513/netease-cloud-music-gtk-qmrVer`（或等价地确认 `gh repo view` 指向该 fork）。
+2. 若发现 `git config` 里 `remote.upstream.gh-resolved=base`，视为配置污染：报告给用户，**不要擅自改 git config**；在修复前不要发裸 `gh pr create`。
+3. 误开到上游的 PR/Issue：立即停止继续写入；告知用户，仅在用户确认后关闭/说明。
+
 ### 已知注意点（改动时注意）
 
 - Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
 - Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于应用已打包：须再跑 `build.ps1 -Package`。
+- GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已优先 `C:\msys64\usr\bin` 并传 `--use-env`（详见 `build-aux/windows/README.md`）。
 - `docs/superpowers/` 下的 dated plans/specs 是历史设计记录，不作为现役构建/平台能力合同。
 
 ## 发布与部署流程
