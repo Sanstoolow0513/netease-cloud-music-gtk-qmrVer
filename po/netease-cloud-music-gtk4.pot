@@ -270,6 +270,11 @@ msgctxt "shortcut window"
 msgid "Back"
 msgstr ""
 
+#: data/gtk/help-overlay.ui:38
+msgctxt "shortcut window"
+msgid "Fullscreen"
+msgstr ""
+
 #: data/gtk/help-overlay.ui:40
 msgctxt "shortcut window"
 msgid "Playback"

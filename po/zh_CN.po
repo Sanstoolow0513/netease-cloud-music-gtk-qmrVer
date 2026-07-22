@@ -279,6 +279,10 @@ msgctxt "shortcut window"
 msgid "Back"
 msgstr "返回"
 
+msgctxt "shortcut window"
+msgid "Fullscreen"
+msgstr "全屏"
+
 #: data/gtk/help-overlay.ui:40
 msgctxt "shortcut window"
 msgid "Playback"
