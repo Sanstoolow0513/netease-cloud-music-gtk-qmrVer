@@ -135,9 +135,12 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **单线程 GLib MainContext 架构**：应用不是多线程 tokio 运行时，而是基于 GLib 主循环。全局 `MAINCONTEXT`（`main.rs` 中的 `Lazy<glib::MainContext>`）用于 `spawn_local` 派生异步任务。
 - **Action 消息总线**：UI 与后端通过 `async-channel` 解耦。`application.rs` 定义了庞大的 `Action` 枚举（播放、登录、页面路由、发现页、榜单、歌词等约百种消息）和 `ActionCallback` 回调类型；各 GUI 组件持有 `Sender<Action>` 发送请求，Application 集中处理后再通过 Action 回投结果。新增功能时遵循"GUI 发 Action → Application 处理 → 回发 Action 更新 UI"的模式。
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
+- **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，300→170）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。
 - **持久化**：
-  - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词等。
-  - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`，Windows 为 AppData 对应路径）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
+  - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
+  - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`；Windows 上 `glib::user_cache_dir()` 指向 `AppData\Local\Microsoft\Windows\INetCache`，排查图片缓存时注意不是 `AppData\Local`）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
+- **快捷键**：`<primary>f`/`/` 搜索、`<primary>BackSpace`/`Escape` 返回、`F11` 全屏切换（win.fullscreen，注册于 window.rs）、`<primary>q` 退出。
+- **UI 可视化开发回路**（不入库，`_windows/` 被 gitignore）：`_windows/dev/` 下 `Start-App.ps1`（启动便携包）、`Capture-AppWindow.ps1`（改尺寸/最大化并截图）、`Send-Input.ps1`（窗口相对坐标合成输入；注入前强制校验前台窗口，防误点其它窗口）、`Sync-BuildToDist.ps1`（把 `_windows/install` 的 exe/gresource/locale/gschema 同步进 dist 并重启）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。
 - **MPRIS 名称**（仅 Linux）：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
 - **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux stub 负责保持相同 API 形状，Action 消息不按平台拆分。`platform::HAS_*` 只用于设置显隐、关窗行为和外部桌面歌词等确实不同的用户行为；可由 stub 吸收的 MPRIS/托盘调用保持统一路径。
 

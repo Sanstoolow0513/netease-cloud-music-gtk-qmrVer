@@ -243,6 +243,7 @@ mod imp {
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
             obj.set_accels_for_action("win.search-button", &["<primary>f", "slash"]);
             obj.set_accels_for_action("win.back-button", &["<primary>BackSpace", "Escape"]);
+            obj.set_accels_for_action("win.fullscreen", &["F11"]);
         }
     }
 
@@ -649,12 +650,13 @@ impl NeteaseCloudMusicGtk4Application {
             }
             Action::DownloadImage(url, path, width, height, callback) => {
                 MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
-                    if ncmapi
+                    debug!("下载图片: {} -> {:?}", url, path);
+                    let result = ncmapi
                         .client
-                        .download_img(url, path, width, height)
-                        .await
-                        .is_ok()
-                    {
+                        .download_img(url, path.clone(), width, height)
+                        .await;
+                    debug!("下载图片结果: {:?} ({:?})", result, path);
+                    if result.is_ok() {
                         if let Some(cb) = callback {
                             cb(());
                         }
