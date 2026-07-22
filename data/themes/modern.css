@@ -90,20 +90,31 @@ gridview > child:hover .card-play-badge {
 
 .banner-image {
     border-radius: 16px;
-    box-shadow: 0 2px 8px alpha(black, 0.18);
 }
 
-/* Banner 比例锁容器：去掉 GtkAspectFrame 默认边框（布局规则，不涉及颜色） */
-.banner-aspect,
-.banner-aspect > border {
-    border: none;
-    box-shadow: none;
+/* Banner 容器：固定高度档（断点切换 300/170），图片加载完成前显示占位底色，
+   替代原 GtkAspectFrame 比例锁（与异步图片尺寸协商坍缩导致 banner 空白） */
+.banner-box {
+    background-color: alpha(@theme_fg_color, 0.05);
+    border-radius: 16px;
+}
+
+/* 播放栏封面圆角 */
+.player-cover {
+    border-radius: 8px;
+}
+
+/* 榜单页分栏拖拽分隔线 */
+paned > separator {
+    min-width: 1px;
+    background-color: alpha(@theme_fg_color, 0.08);
 }
 
 /* FlowBox 卡片间距（从 discover.css 迁入，统一管理；规则内容不变） */
 flowboxchild {
-  margin: 12px;
+  margin: 8px;
   padding: 4px;
+  border-radius: 12px;
 }
 
 flowboxchild:hover {

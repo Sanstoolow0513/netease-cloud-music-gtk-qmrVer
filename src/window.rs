@@ -367,9 +367,40 @@ impl NeteaseCloudMusicGtk4Window {
         action_back.connect_activate(move |_, _| {
             sender.send_blocking(Action::PageBack).unwrap();
         });
+
+        // F11 全屏切换
+        let win_weak = self.downgrade();
+        let action_fullscreen = SimpleAction::new("fullscreen", None);
+        action_fullscreen.connect_activate(move |_, _| {
+            if let Some(win) = win_weak.upgrade() {
+                if win.is_fullscreen() {
+                    win.unfullscreen();
+                } else {
+                    win.fullscreen();
+                }
+            }
+        });
+        self.add_action(&action_fullscreen);
     }
 
     fn bind_settings(&self) {
+        // 恢复上次的窗口尺寸与最大化状态
+        let settings = self.settings();
+        self.set_default_size(settings.int("window-width"), settings.int("window-height"));
+        if settings.boolean("window-maximized") {
+            self.maximize();
+        }
+
+        // 关闭时保存窗口几何（default_size 返回非最大化下的尺寸）
+        let settings = self.settings().clone();
+        self.connect_close_request(move |win| {
+            let (width, height) = win.default_size();
+            let _ = settings.set_int("window-width", width);
+            let _ = settings.set_int("window-height", height);
+            let _ = settings.set_boolean("window-maximized", win.is_maximized());
+            glib::Propagation::Proceed
+        });
+
         let style = StyleManager::default();
         self.settings()
             .bind("style-variant", &style, "color-scheme")

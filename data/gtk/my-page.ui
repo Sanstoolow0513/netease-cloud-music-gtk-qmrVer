@@ -299,7 +299,7 @@
                                         <property name="hexpand">true</property>
                                         <property name="valign">start</property>
                                         <property name="max-children-per-line">12</property>
-                                        <property name="min-children-per-line">3</property>
+                                        <property name="min-children-per-line">2</property>
                                         <property name="selection-mode">none</property>
                                         <property name="activate-on-single-click">true</property>
                                     </object>
@@ -403,7 +403,7 @@
                                         <property name="hexpand">true</property>
                                         <property name="valign">start</property>
                                         <property name="max-children-per-line">12</property>
-                                        <property name="min-children-per-line">3</property>
+                                        <property name="min-children-per-line">2</property>
                                         <property name="selection-mode">none</property>
                                         <property name="activate-on-single-click">true</property>
                                     </object>

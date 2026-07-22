@@ -77,15 +77,17 @@
                                 <property name="ellipsize">end</property>
                                 <property name="max_width_chars">90</property>
                                 <property name="justify">fill</property>
+                                <property name="margin-end">4</property>
                             </object>
                         </child>
                         <child>
                             <object class="GtkLabel" id="duration_label">
                                 <property name="focusable">False</property>
                                 <property name="halign">end</property>
-                                <property name="hexpand">True</property>
+                                <property name="width-chars">5</property>
                                 <property name="single_line_mode">True</property>
-                                <property name="margin-end">12</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">6</property>
                                 <attributes>
                                     <attribute name="font-features" value="tnum=1" />
                                 </attributes>
