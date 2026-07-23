@@ -3,11 +3,8 @@
 // Copyright (C) 2022 gmg137 <gmg137 AT live.com>
 // Distributed under terms of the GPL-3.0-or-later license.
 //
-use crate::{
-    application::Action, gui::songlist_view::SongListView, model::ImageDownloadImpl, path::CACHE,
-    utils::*,
-};
-use adw::{ActionRow, prelude::ActionRowExt, subclass::prelude::BinImpl};
+use crate::{application::Action, gui::songlist_view::SongListView, utils::*};
+use adw::{ActionRow, subclass::prelude::BinImpl};
 use async_channel::Sender;
 use gettextrs::gettext;
 use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
@@ -39,7 +36,6 @@ impl TopListView {
     pub fn init_sidebar(&self, list: Vec<TopList>) {
         let imp = self.imp();
         let sidebar = imp.sidebar.get();
-        let sender = imp.sender.get().unwrap();
 
         let mut select = false;
         for t in &list {
@@ -49,29 +45,10 @@ impl TopListView {
                 .title_lines(1)
                 .subtitle(&t.update)
                 .build();
-            let mut path = CACHE.clone();
-            path.push(format!("{}-toplist-200.jpg", t.id));
-            let image = gtk::Image::from_icon_name("image-missing-symbolic");
-
-            // download cover
-            if !path.exists() {
-                image.set_from_net(t.cover.to_owned(), path, (200, 200), sender);
-            } else {
-                image.set_from_file(Some(&path));
-            }
-
-            image.set_pixel_size(40);
-            action.add_prefix(&image);
             sidebar.append(&action);
             if !select {
                 sidebar.select_row(Some(&action));
                 select = true;
-
-                // 加载初始选中的榜单封面
-                let mut path = CACHE.clone();
-                path.push(format!("{}-toplist-200.jpg", t.id));
-                imp.cover_image
-                    .set_from_net(t.cover.to_owned(), path, (200, 200), sender);
             }
         }
         imp.data.set(list).unwrap();
@@ -103,8 +80,6 @@ mod imp {
     pub struct TopListView {
         #[template_child]
         pub sidebar: TemplateChild<ListBox>,
-        #[template_child]
-        pub cover_image: TemplateChild<Image>,
         #[template_child]
         pub title_label: TemplateChild<Label>,
         #[template_child]
@@ -171,10 +146,6 @@ mod imp {
                     .unwrap()
                     .send_blocking(Action::GetToplistSongsList(info.id))
                     .unwrap();
-                let mut path = CACHE.clone();
-
-                path.push(format!("{}-toplist-200.jpg", info.id));
-                self.cover_image.set_from_file(Some(path));
 
                 let title = self.title_label.get();
                 title.set_label(&info.name);

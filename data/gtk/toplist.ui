@@ -36,88 +36,73 @@
                                 <property name="orientation">vertical</property>
                                 <property name="spacing">12</property>
                                 <child>
-                            <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">16</property>
-                                <property name="hexpand">true</property>
-                                <style>
-                                    <class name="page-header" />
-                                </style>
-                                <child>
-                                    <object class="GtkFrame">
+                                    <object class="GtkBox">
+                                        <property name="orientation">horizontal</property>
+                                        <property name="spacing">16</property>
+                                        <property name="hexpand">true</property>
+                                        <property name="valign">center</property>
                                         <style>
-                                            <class name="songlist-cover-frame" />
+                                            <class name="page-header" />
                                         </style>
                                         <child>
-                                            <object class="GtkImage" id="cover_image">
-                                                <property name="pixel-size">200</property>
-                                                <property name="icon-name">image-missing-symbolic</property>
-                                            </object>
-                                        </child>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkBox">
-                                        <property name="orientation">vertical</property>
-                                        <property name="halign">fill</property>
-                                        <property name="valign">end</property>
-                                        <property name="hexpand">true</property>
-                                        <property name="spacing">8</property>
-                                        <child>
-                                            <object class="GtkLabel" id="title_label">
-                                                <property name="label">Title</property>
-                                                <property name="halign">start</property>
-                                                <property name="wrap">True</property>
-                                                <property name="lines">2</property>
-                                                <property name="ellipsize">end</property>
-                                                <style>
-                                                    <class name="title-1" />
-                                                </style>
-                                            </object>
-                                        </child>
-                                        <child>
                                             <object class="GtkBox">
-                                                <property name="orientation">horizontal</property>
-                                                <property name="spacing">8</property>
+                                                <property name="orientation">vertical</property>
+                                                <property name="halign">start</property>
+                                                <property name="valign">center</property>
+                                                <property name="hexpand">true</property>
+                                                <property name="spacing">4</property>
+                                                <child>
+                                                    <object class="GtkLabel" id="title_label">
+                                                        <property name="label">Title</property>
+                                                        <property name="halign">start</property>
+                                                        <property name="wrap">True</property>
+                                                        <property name="lines">2</property>
+                                                        <property name="ellipsize">end</property>
+                                                        <style>
+                                                            <class name="title-1" />
+                                                        </style>
+                                                    </object>
+                                                </child>
                                                 <child>
                                                     <object class="GtkLabel" id="num_label">
                                                         <property name="label">0 songs</property>
                                                         <property name="halign">start</property>
-                                                    </object>
-                                                </child>
-                                                <child>
-                                                    <object class="GtkButton" id="play_button">
-                                                        <property name="halign">end</property>
-                                                        <property name="hexpand">true</property>
-                                                        <property name="tooltip-text" translatable="yes">Play songs list</property>
-                                                        <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
-                                                        <child>
-                                                            <object class="AdwButtonContent">
-                                                                <property name="icon-name">media-playback-start-symbolic</property>
-                                                                <property name="label" translatable="yes">Play All</property>
-                                                            </object>
-                                                        </child>
                                                         <style>
-                                                            <class name="suggested-action" />
-                                                            <class name="pill" />
+                                                            <class name="dim-label" />
                                                         </style>
                                                     </object>
                                                 </child>
                                             </object>
                                         </child>
+                                        <child>
+                                            <object class="GtkButton" id="play_button">
+                                                <property name="halign">end</property>
+                                                <property name="valign">center</property>
+                                                <property name="tooltip-text" translatable="yes">Play songs list</property>
+                                                <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
+                                                <child>
+                                                    <object class="AdwButtonContent">
+                                                        <property name="icon-name">media-playback-start-symbolic</property>
+                                                        <property name="label" translatable="yes">Play All</property>
+                                                    </object>
+                                                </child>
+                                                <style>
+                                                    <class name="suggested-action" />
+                                                    <class name="pill" />
+                                                </style>
+                                            </object>
+                                        </child>
                                     </object>
                                 </child>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="SongListView" id="songs_list">
-                                <property name="clamp-maximum-size">1280</property>
-                                <property name="clamp-margin-top">12</property>
-                                <property name="clamp-margin-bottom">12</property>
-                                <property name="clamp-margin-start">24</property>
-                                <property name="clamp-margin-end">24</property>
-                            </object>
-                        </child>
+                                <child>
+                                    <object class="SongListView" id="songs_list">
+                                        <property name="clamp-maximum-size">1280</property>
+                                        <property name="clamp-margin-top">12</property>
+                                        <property name="clamp-margin-bottom">12</property>
+                                        <property name="clamp-margin-start">24</property>
+                                        <property name="clamp-margin-end">24</property>
+                                    </object>
+                                </child>
                             </object>
                         </child>
                     </object>

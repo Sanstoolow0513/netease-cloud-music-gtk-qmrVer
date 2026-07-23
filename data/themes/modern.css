@@ -11,11 +11,11 @@
 
 /* ===== 歌曲列表行 ===== */
 
-/* 行高由原模板写死 59px 改为 padding 控制，提高列表密度 */
+/* 紧凑单行表：歌名弹性占位，歌手/专辑固定窄列贴右，避免等分拉伸造成割裂 */
 .song_row {
-    padding-top: 6px;
-    padding-bottom: 6px;
-    border-radius: 8px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
 }
 
 .song_row:hover {
@@ -31,13 +31,28 @@
     color: @accent_bg_color;
 }
 
-/* 无版权置灰（从 discover.css 迁入，行为不变） */
+/* 无版权置灰：整行变淡 */
 .song_row label {
     opacity: 0.5;
 }
 
-.song_row.activatable label {
+/* 有版权：歌名主信息；歌手/专辑次级；时长更弱 */
+.song_row.activatable .song-title {
     opacity: 1;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.song_row.activatable .song-meta {
+    opacity: 0.58;
+    font-size: 0.8em;
+    font-weight: 400;
+}
+
+.song_row.activatable .song-duration {
+    opacity: 0.45;
+    font-size: 0.75em;
+    font-weight: 400;
 }
 
 /* 行尾操作按钮：默认隐藏，悬停淡入 */
