@@ -77,15 +77,18 @@ impl SongListGridItem {
 
         boxs.append(&overlay);
 
+        // Margins use multiples of 4 so common DPI scales (125%/150%) stay on
+        // whole device pixels; fractional offsets make multiline labels uneven.
         let label = Label::builder()
             .lines(2)
-            .margin_start(10)
-            .margin_end(10)
+            .margin_start(8)
+            .margin_end(8)
             .width_chars(1)
             .max_width_chars(1)
             .ellipsize(pango::EllipsizeMode::End)
             .wrap(true)
-            .margin_top(6)
+            .margin_top(8)
+            .css_classes(vec!["songlist-card-title".to_string()])
             .build();
 
         let label_author = Label::builder()
@@ -93,7 +96,7 @@ impl SongListGridItem {
             .max_width_chars(1)
             .ellipsize(pango::EllipsizeMode::Middle)
             .wrap(true)
-            .margin_top(6)
+            .margin_top(4)
             .css_classes(
                 ["label-album-grid-artist", "dim-label"]
                     .map(String::from)

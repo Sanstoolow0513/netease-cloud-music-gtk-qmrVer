@@ -80,5 +80,42 @@
             <default>true</default>
             <summary>Show Toplist page in header</summary>
         </key>
+        <key name="ui-font-preset" type="s">
+            <choices>
+                <choice value='system' />
+                <choice value='sans' />
+                <choice value='serif' />
+                <choice value='mono' />
+                <choice value='cjk-sans' />
+                <choice value='source-han' />
+            </choices>
+            <default>'system'</default>
+            <summary>UI font family preset</summary>
+        </key>
+        <key name="ui-font-scale" type="d">
+            <range min="0.8" max="1.5"/>
+            <default>1.0</default>
+            <summary>Global UI font scale</summary>
+        </key>
+        <key name="list-title-font-scale" type="d">
+            <range min="0.8" max="1.5"/>
+            <default>1.0</default>
+            <summary>List title font scale</summary>
+        </key>
+        <key name="list-meta-font-scale" type="d">
+            <range min="0.8" max="1.5"/>
+            <default>1.0</default>
+            <summary>List secondary text font scale</summary>
+        </key>
+        <key name="player-font-scale" type="d">
+            <range min="0.8" max="1.5"/>
+            <default>1.0</default>
+            <summary>Player bar font scale</summary>
+        </key>
+        <key name="lyrics-font-scale" type="d">
+            <range min="0.8" max="1.5"/>
+            <default>1.0</default>
+            <summary>In-app lyrics font scale</summary>
+        </key>
     </schema>
 </schemalist>

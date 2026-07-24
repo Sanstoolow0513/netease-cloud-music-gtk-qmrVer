@@ -9,6 +9,7 @@
                 <property name="content">
                     <object class="SongListView" id="songs_list">
                         <property name="width-request">500</property>
+                        <property name="max-columns">1</property>
                         <property name="clamp-maximum-size">1000</property>
                         <property name="clamp-tightening-threshold">730</property>
                     </object>
@@ -41,6 +42,9 @@
                                         <property name="bottom_margin">18</property>
                                         <property name="cursor-visible">False</property>
                                         <property name="accepts-tab">False</property>
+                                        <style>
+                                            <class name="ncm-lyrics" />
+                                        </style>
                                         <property name="buffer">
                                             <object class="GtkTextBuffer" id="buffer">
                                                 <property name="tag_table">
@@ -56,7 +60,6 @@
                                                                 id="highlight_text_tag">
                                                                 <property name="foreground">#3584e4</property>
                                                                 <property name="weight">700</property>
-                                                                <property name="size">13312</property>
                                                             </object>
                                                         </child>
                                                     </object>

@@ -24,7 +24,17 @@ $prefix = .\build-aux\windows\bootstrap.ps1 | Select-Object -Last 1
 
 `bootstrap.ps1` 默认把依赖建在 `C:\ncm-gtk`。仓库内旧的 `_windows\gvsbuild` 若仍存在，脚本会自动迁过去；并会创建 `_windows\gvsbuild` → `C:\ncm-gtk` 联接以兼容旧绝对路径。源码预取（cairo 与 GStreamer 核心/插件包）放在该目录的 `src` 下。中断后可直接重跑：已成功项目会被 `--fast-build` 跳过。MVP 用 `--skip webrtc-audio-processing`（播放不需要 webrtcdsp），并暂时不编 `gst-libav`/`ffmpeg`（可后续再启用）。若报缺少 `gstreamer-play-1.0.pc`，说明 `gst-plugins-bad` 尚未编完，继续重跑 bootstrap 即可。
 
-**运行注意**：`build.ps1` 不带 `-Package` 时只写入 `_windows\install`；请再执行带 `-Package` 的打包，或打开 `_windows\dist\...` 目录中的 exe。直接双击 `_windows\install\bin\*.exe` 会缺 DLL/gresource。
+**日常开发（推荐）**：依赖前缀就绪后，在仓库根目录执行：
+
+```powershell
+make dev
+# 或等价地：
+.\build-aux\windows\dev.ps1
+```
+
+`dev.ps1` 会：`build.ps1`（默认 debug）→ 若便携包已存在则只同步 exe/gresource/locale/gschema，否则完整 `package.ps1` → 从 `_windows\dist\...\`（含 DLL）启动。可用 `-NoStart` 只构建不启动，`-Repackage` 强制重打包，`make BUILDTYPE=release dev` 切 release。
+
+**运行注意**：`build.ps1` 不带 `-Package` 时只写入 `_windows\install`；请再执行带 `-Package` 的打包、`make dev`，或打开 `_windows\dist\...` 目录中的 exe。直接双击 `_windows\install\bin\*.exe` 会缺 DLL/gresource。
 
 常见失败对照：
 

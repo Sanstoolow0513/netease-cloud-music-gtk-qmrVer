@@ -33,9 +33,9 @@
 
 | 档位 | 宽度 | 导航形态 | 内容网格 | 播放栏 |
 |------|------|----------|----------|--------|
-| 窄 | < 760px | 底部 ViewSwitcherBar | 2 列卡片 | 简化：隐去音量/心动/歌手行 |
-| 标准 | 760–1400px | Header 内 ViewSwitcher | 4–5 列 | 完整三段式 |
-| 宽/全屏 | > 1400px | Header 内 ViewSwitcher | 内容 clamp 1280 居中 | 完整三段式，进度条最长化 |
+| 窄 | < 760px | 底部 ViewSwitcherBar | 2 列卡片；歌曲列表单列 | 简化：隐去音量/心动/歌手行 |
+| 标准 | 760–1400px | Header 内 ViewSwitcher | 4–5 列；歌曲列表约 ≥900sp 起双列 | 完整三段式 |
+| 宽/全屏 | > 1400px | Header 内 ViewSwitcher | 发现/我的等页面级 clamp 1280 居中；**榜单歌曲列表双列铺满右栏**（不再对列表套 1280 clamp） | 完整三段式，进度条最长化 |
 
 窗口最小宽度从 750 降为 420（窄档真正可用）。
 
@@ -63,10 +63,10 @@
 - **现状**：FlowBox `homogeneous=false` + 固定 160px 卡片 + 每子项 12px 外边距 → 1160px 窗口只排 4 列且缝隙不均。
 - **对策**：`homogeneous=true`，列数按档走（窄 2 / 标准 4–6），间距统一进 spacing token（卡片间 16px、section 间 24px、页面边距 24/12）。
 
-### 2.5 歌曲行列碰撞
+### 2.5 歌曲行列碰撞与超宽留白
 
-- **现状**：专辑列与时长列共用一盒且都 hexpand → 长专辑名把时长顶出列（截图可见"天赐的声音第七季 第…04:55"粘连）。
-- **对策**：时长列固定宽（tabular numbers）、专辑列 hexpand + ellipsize。
+- **曾有问题**：专辑列与时长列共用一盒且都 hexpand → 长专辑名把时长顶出列；榜单单列取消限宽后歌名↔时长过远，再限宽 1280 又两侧大留白。
+- **现役对策（2026-07-24）**：`SongListView` 宽屏双列交错、窄屏单列；双列紧凑隐藏专辑列。榜单右栏去掉列表外层 1280 clamp，靠双列铺满；播放列表+歌词页 `max-columns=1`。发现/我的等页的页面级 1280 clamp 仍保留。
 
 ### 2.6 窗口几何不持久化、无全屏
 
@@ -94,9 +94,9 @@
 
 ## 5. 验证方式
 
-`build.ps1`（debug）→ `Sync-BuildToDist.ps1` → 截图矩阵：
+`make dev`（或 `build-aux/windows/dev.ps1`：构建 → 同步/打包带 DLL 的便携包 → 启动）→ 截图矩阵：
 500×800（窄）、800×800、1160×820（标准）、最大化（1920×1080）、全屏，明/暗两色，
-覆盖发现/榜单/详情/播放中四个状态。截图工具见 `_windows/dev/`（含前台窗口安全断言）。
+覆盖发现/榜单/详情/播放中四个状态。额外截图/注入工具可放在不入库的 `_windows/dev/`（含前台窗口安全断言）。
 
 ## 6. 实施记录（已验证的坑）
 
@@ -110,5 +110,7 @@
   不是 `AppData\Local`；banner "下载失败"假象源于此。
 - **banner 空白根因**：`GtkAspectFrame(obey-child=false)` + 异步加载的 `GtkPicture` 在
   `AdwClamp` 内尺寸协商坍缩；固定高度档后彻底解决，全屏不再被比例锁撑成巨幕。
-- gschema 新增 key 后必须同步重编译 dist 的 `gschemas.compiled`（`Sync-BuildToDist.ps1` 已处理），
+- gschema 新增 key 后必须同步重编译 dist 的 `gschemas.compiled`（`make dev` / `dev.ps1` 同步路径已处理），
   否则读取新 key 时启动即崩。
+- **榜单歌曲列表**：勿再给 `toplist.ui` 右侧套 1280 clamp 或把 `SongListView` 改回单列无限宽；
+  现役是组件内双列 + 断点重排（见 `songlist_view.rs` / AGENTS.md）。

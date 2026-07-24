@@ -51,21 +51,31 @@ cargo run
 **本地免安装运行**：根目录 `Makefile` 提供了无需 root、不写入系统目录的运行方式。它使用独立构建目录 `_local`，将 meson `prefix` 指向项目内 `_local/prefix`（使编译期写入 `src/config.rs` 的 `PKGDATADIR`/`LOCALEDIR` 均为本地路径），`meson install` 到该本地前缀后直接运行（GSettings schema 通过 `GSETTINGS_SCHEMA_DIR` 指向本地编译产物）。
 
 ```bash
-make run     # 构建并运行（默认 debug 构建，可用 make BUILDTYPE=release 覆盖）
-make build   # 只构建并安装到 _local/prefix
+make run     # Linux/macOS：构建并运行（默认 debug，可用 make BUILDTYPE=release 覆盖）
+make build   # Linux/macOS：只构建并安装到 _local/prefix
 make clean   # 删除 _local
+make dev     # Windows：构建 → 同步/打包便携包（含 DLL）→ 启动；非 Windows 同 make run
 ```
 
 Windows 在 VS 2022 Developer PowerShell 中构建；详细依赖和命令见 `build-aux/windows/README.md`：
 
 ```powershell
+# 首次：引导依赖
 $prefix = .\build-aux\windows\bootstrap.ps1 | Select-Object -Last 1
+
+# 日常开发（推荐）：构建并启动带 DLL 的便携包
+make dev
+# 等价：.\build-aux\windows\dev.ps1
+# 只构建不启动：.\build-aux\windows\dev.ps1 -NoStart
+# 强制完整重打包：.\build-aux\windows\dev.ps1 -Repackage
+
+# 正式便携包（含 zip）
 .\build-aux\windows\build.ps1 -DependencyPrefix $prefix -BuildType release -Package
 ```
 
 - 依赖默认建在短路径 `C:\ncm-gtk`（避免 Desktop 长路径触发 MSVC `C1083`）；仓库内 `_windows\gvsbuild` 可为指向该前缀的联接。
 - 只允许 `x86_64-pc-windows-msvc` 与同一 gvsbuild 前缀，禁止混入 MinGW/MSYS2 DLL。
-- **运行**：使用 `_windows\dist\netease-cloud-music-gtk4-<ver>-windows-x64\`（或对应 zip）中的 exe。Meson install 树 `_windows\install\bin\` 的裸 exe 缺 DLL/资源，不能直接双击。
+- **运行**：`make dev` 会从 `_windows\dist\netease-cloud-music-gtk4-<ver>-windows-x64\` 启动（DLL 与 exe 同目录）。Meson install 树 `_windows\install\bin\` 的裸 exe 缺 DLL/资源，不能直接双击。
 - 便携包运行时从 exe 相对目录加载 gresource、locale、schema、图标和 GStreamer 插件；`src/platform/mod.rs` 在 Windows 上于 `gstreamer::init` 前设置相关环境变量。
 - MVP bootstrap 跳过 `webrtc-audio-processing`，暂不编 `gst-libav`/`ffmpeg`（解码依赖 good/ugly 等插件；缺格式时可再启用）。
 
@@ -136,11 +146,12 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **Action 消息总线**：UI 与后端通过 `async-channel` 解耦。`application.rs` 定义了庞大的 `Action` 枚举（播放、登录、页面路由、发现页、榜单、歌词等约百种消息）和 `ActionCallback` 回调类型；各 GUI 组件持有 `Sender<Action>` 发送请求，Application 集中处理后再通过 Action 回投结果。新增功能时遵循"GUI 发 Action → Application 处理 → 回发 Action 更新 UI"的模式。
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
 - **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，300→170）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。
+- **歌曲列表 `SongListView`**：共享组件（榜单 / 歌单详情 / 搜索歌曲 / 播放列表+歌词）。宽屏（组件内断点约 `max-width: 900sp`）默认双列交错排布（左偶右奇），窄屏收回单列；`max-columns=1` 可强制单列（播放列表+歌词页已如此）。双列时行进入紧凑模式（隐藏专辑列）。榜单页右侧**不再**套 1280 `AdwClamp` 限宽列表——用双列铺满内容区；发现页 / 我的页页面级 1280 clamp 仍在。勿把 `docs/superpowers/` 里「榜单列表 clamp 1280 / 单列全宽」的旧结论当现役合同。
 - **持久化**：
   - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
   - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`；Windows 上 `glib::user_cache_dir()` 指向 `AppData\Local\Microsoft\Windows\INetCache`，排查图片缓存时注意不是 `AppData\Local`）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 - **快捷键**：`<primary>f`/`/` 搜索、`<primary>BackSpace`/`Escape` 返回、`F11` 全屏切换（win.fullscreen，注册于 window.rs）、`<primary>q` 退出。
-- **UI 可视化开发回路**（不入库，`_windows/` 被 gitignore）：`_windows/dev/` 下 `Start-App.ps1`（启动便携包）、`Capture-AppWindow.ps1`（改尺寸/最大化并截图）、`Send-Input.ps1`（窗口相对坐标合成输入；注入前强制校验前台窗口，防误点其它窗口）、`Sync-BuildToDist.ps1`（把 `_windows/install` 的 exe/gresource/locale/gschema 同步进 dist 并重启）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。
+- **UI 可视化开发回路**：日常用入库的 `make dev` / `build-aux/windows/dev.ps1`（构建并启动带 DLL 的便携包）。额外截图/注入脚本可放在不入库的 `_windows/dev/`（`Start-App.ps1`、`Capture-AppWindow.ps1`、`Send-Input.ps1`、`Sync-BuildToDist.ps1`）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。
 - **MPRIS 名称**（仅 Linux）：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
 - **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux stub 负责保持相同 API 形状，Action 消息不按平台拆分。`platform::HAS_*` 只用于设置显隐、关窗行为和外部桌面歌词等确实不同的用户行为；可由 stub 吸收的 MPRIS/托盘调用保持统一路径。
 
@@ -184,7 +195,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 ### 已知注意点（改动时注意）
 
 - Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
-- Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于应用已打包：须再跑 `build.ps1 -Package`。
+- Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于可运行应用：日常用 `make dev`（缺包时会 package），正式 zip 用 `build.ps1 -Package`。
 - GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已优先 `C:\msys64\usr\bin` 并传 `--use-env`（详见 `build-aux/windows/README.md`）。
 - `docs/superpowers/` 下的 dated plans/specs 是历史设计记录，不作为现役构建/平台能力合同。
 
