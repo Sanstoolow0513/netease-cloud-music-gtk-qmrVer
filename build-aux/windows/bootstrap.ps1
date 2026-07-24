@@ -240,17 +240,29 @@ if (Test-Path -LiteralPath $msysUsrBin) {
 if ($LASTEXITCODE -ne 0) {
     throw "Unable to prime the gvsbuild $GvsbuildVersion environment."
 }
+# setup-uv on GitHub Actions sets UV_CACHE_DIR (e.g. D:\a\_temp\setup-uv-cache);
+# uvx then extracts there, not under %LOCALAPPDATA%\uv\cache.
 $ffmpegBuildSh = $null
-$uvArchiveCache = Join-Path $env:LOCALAPPDATA "uv\cache\archive-v0"
+$uvCacheRoot = if ($env:UV_CACHE_DIR) { $env:UV_CACHE_DIR } else { Join-Path $env:LOCALAPPDATA "uv\cache" }
+$uvArchiveCache = Join-Path $uvCacheRoot "archive-v0"
 if (Test-Path -LiteralPath $uvArchiveCache) {
     $ffmpegBuildSh = Get-ChildItem -LiteralPath $uvArchiveCache -Directory |
         Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "Lib\site-packages\gvsbuild-$GvsbuildVersion.dist-info") } |
         ForEach-Object { Join-Path $_.FullName "Lib\site-packages\gvsbuild\patches\ffmpeg\build\build.sh" } |
         Where-Object { Test-Path -LiteralPath $_ } |
         Select-Object -First 1
+    # uv also keeps a flat wheel extract (no Lib\site-packages); prefer the
+    # environment copy above, but fall back so CI/local layouts both work.
+    if (-not $ffmpegBuildSh) {
+        $ffmpegBuildSh = Get-ChildItem -LiteralPath $uvArchiveCache -Directory |
+            Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "gvsbuild-$GvsbuildVersion.dist-info") } |
+            ForEach-Object { Join-Path $_.FullName "gvsbuild\patches\ffmpeg\build\build.sh" } |
+            Where-Object { Test-Path -LiteralPath $_ } |
+            Select-Object -First 1
+    }
 }
 if (-not $ffmpegBuildSh) {
-    throw "Unable to locate gvsbuild $GvsbuildVersion ffmpeg build.sh in the uv cache; cannot apply the decoder/locale fixes."
+    throw "Unable to locate gvsbuild $GvsbuildVersion ffmpeg build.sh under $uvArchiveCache; cannot apply the decoder/locale fixes."
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "ffmpeg-build.sh") -Destination $ffmpegBuildSh -Force
 if (-not (Select-String -LiteralPath $ffmpegBuildSh -Pattern "netease-cloud-music-gtk4" -Quiet)) {
