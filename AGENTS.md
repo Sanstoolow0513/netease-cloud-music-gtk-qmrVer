@@ -77,7 +77,7 @@ make dev
 - 只允许 `x86_64-pc-windows-msvc` 与同一 gvsbuild 前缀，禁止混入 MinGW/MSYS2 DLL。
 - **运行**：`make dev` 会从 `_windows\dist\netease-cloud-music-gtk4-<ver>-windows-x64\` 启动（DLL 与 exe 同目录）。Meson install 树 `_windows\install\bin\` 的裸 exe 缺 DLL/资源，不能直接双击。
 - 便携包运行时从 exe 相对目录加载 gresource、locale、schema、图标和 GStreamer 插件；`src/platform/mod.rs` 在 Windows 上于 `gstreamer::init` 前设置相关环境变量。
-- MVP bootstrap 跳过 `webrtc-audio-processing`，暂不编 `gst-libav`/`ffmpeg`（解码依赖 good/ugly 等插件；缺格式时可再启用）。
+- bootstrap 跳过 `webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路必需 `glib-networking`（TLS）+ `libsoup3`（→ `souphttpsrc` 拉流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码），bootstrap 会强制重编 `gst-plugins-good` 直到 `gstsoup.dll` 产出。
 
 查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。
 
