@@ -2,6 +2,9 @@
 <interface>
     <requires lib="gtk" version="4.0" />
     <template class="PlayerControls" parent="GtkBox">
+        <style>
+            <class name="ncm-player-controls" />
+        </style>
         <child>
             <object class="AdwBreakpointBin">
                 <property name="height-request">60</property>

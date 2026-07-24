@@ -144,6 +144,13 @@ mod imp {
             self.toast.replace(Some(Toast::new("")));
 
             obj.setup_settings();
+            #[cfg(target_os = "windows")]
+            {
+                if let Some(gtk_settings) = gtk::Settings::default() {
+                    gtk_settings.set_gtk_hint_font_metrics(true);
+                }
+            }
+            crate::gui::typography::init_and_apply(obj.settings());
             obj.bind_settings();
 
             // 窗口关闭时保存播放列表并清理系统托盘

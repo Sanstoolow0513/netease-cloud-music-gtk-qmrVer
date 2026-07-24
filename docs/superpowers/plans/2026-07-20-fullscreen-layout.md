@@ -1,5 +1,7 @@
 # 三主页面全屏 1280px 限宽居中改造 Implementation Plan
 
+> **历史实现计划**。Task 6「榜单页右侧 1280 Clamp」结论已被 2026-07-24 的 `SongListView` 双列布局取代；勿按该 Task 回退代码。现役见 `AGENTS.md` / `docs/ui-redesign-2026-07.md`。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 让「我的 / 发现 / 榜单」三个主页面在全屏宽窗口下内容收进 1280px 居中栏，修复卡片变形、Banner 裁切、榜单超宽三大痛点。

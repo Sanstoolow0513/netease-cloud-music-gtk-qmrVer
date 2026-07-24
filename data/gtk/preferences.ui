@@ -89,6 +89,137 @@
                 </child>
                 <child>
                     <object class="AdwPreferencesGroup">
+                        <property name="title" translatable="yes">Font and Size</property>
+                        <property name="description" translatable="yes">Takes effect immediately</property>
+                        <child>
+                            <object class="AdwComboRow" id="font_preset">
+                                <property name="title" translatable="yes">UI Font</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="AdwActionRow">
+                                <property name="title" translatable="yes">Global UI</property>
+                                <property name="subtitle" translatable="yes">Base font size for the whole window</property>
+                                <child>
+                                    <object class="GtkScale" id="ui_font_scale">
+                                        <property name="valign">center</property>
+                                        <property name="width-request">160</property>
+                                        <property name="draw-value">True</property>
+                                        <property name="digits">2</property>
+                                        <property name="hexpand">True</property>
+                                        <property name="adjustment">
+                                            <object class="GtkAdjustment">
+                                                <property name="lower">0.8</property>
+                                                <property name="upper">1.5</property>
+                                                <property name="step-increment">0.05</property>
+                                                <property name="page-increment">0.1</property>
+                                                <property name="value">1.0</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="AdwActionRow">
+                                <property name="title" translatable="yes">List titles</property>
+                                <property name="subtitle" translatable="yes">Song titles and section headings</property>
+                                <child>
+                                    <object class="GtkScale" id="list_title_font_scale">
+                                        <property name="valign">center</property>
+                                        <property name="width-request">160</property>
+                                        <property name="draw-value">True</property>
+                                        <property name="digits">2</property>
+                                        <property name="hexpand">True</property>
+                                        <property name="adjustment">
+                                            <object class="GtkAdjustment">
+                                                <property name="lower">0.8</property>
+                                                <property name="upper">1.5</property>
+                                                <property name="step-increment">0.05</property>
+                                                <property name="page-increment">0.1</property>
+                                                <property name="value">1.0</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="AdwActionRow">
+                                <property name="title" translatable="yes">Secondary text</property>
+                                <property name="subtitle" translatable="yes">Artists, albums, and captions</property>
+                                <child>
+                                    <object class="GtkScale" id="list_meta_font_scale">
+                                        <property name="valign">center</property>
+                                        <property name="width-request">160</property>
+                                        <property name="draw-value">True</property>
+                                        <property name="digits">2</property>
+                                        <property name="hexpand">True</property>
+                                        <property name="adjustment">
+                                            <object class="GtkAdjustment">
+                                                <property name="lower">0.8</property>
+                                                <property name="upper">1.5</property>
+                                                <property name="step-increment">0.05</property>
+                                                <property name="page-increment">0.1</property>
+                                                <property name="value">1.0</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="AdwActionRow">
+                                <property name="title" translatable="yes">Player bar</property>
+                                <property name="subtitle" translatable="yes">Bottom playback controls</property>
+                                <child>
+                                    <object class="GtkScale" id="player_font_scale">
+                                        <property name="valign">center</property>
+                                        <property name="width-request">160</property>
+                                        <property name="draw-value">True</property>
+                                        <property name="digits">2</property>
+                                        <property name="hexpand">True</property>
+                                        <property name="adjustment">
+                                            <object class="GtkAdjustment">
+                                                <property name="lower">0.8</property>
+                                                <property name="upper">1.5</property>
+                                                <property name="step-increment">0.05</property>
+                                                <property name="page-increment">0.1</property>
+                                                <property name="value">1.0</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="AdwActionRow">
+                                <property name="title" translatable="yes">Lyrics</property>
+                                <property name="subtitle" translatable="yes">In-app lyrics panel</property>
+                                <child>
+                                    <object class="GtkScale" id="lyrics_font_scale">
+                                        <property name="valign">center</property>
+                                        <property name="width-request">160</property>
+                                        <property name="draw-value">True</property>
+                                        <property name="digits">2</property>
+                                        <property name="hexpand">True</property>
+                                        <property name="adjustment">
+                                            <object class="GtkAdjustment">
+                                                <property name="lower">0.8</property>
+                                                <property name="upper">1.5</property>
+                                                <property name="step-increment">0.05</property>
+                                                <property name="page-increment">0.1</property>
+                                                <property name="value">1.0</property>
+                                            </object>
+                                        </property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="AdwPreferencesGroup">
                         <property name="title" translatable="yes">Music</property>
                         <child>
                             <object class="AdwComboRow" id="switch_rate">

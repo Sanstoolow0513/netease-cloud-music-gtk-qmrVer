@@ -54,6 +54,34 @@ if (-not (Get-Command rustup -ErrorAction SilentlyContinue)) {
     throw "rustup was not found."
 }
 
+# icu (pulled in by libpsl -> libsoup3) builds its test data via `py -3`, which
+# only exists with the python.org launcher. On uv-managed Python setups there is
+# no `py`, so register a shim that forwards to a uv interpreter.
+if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
+    $uvPython = (& uv python find 3 2>$null | Select-Object -First 1)
+    if ($uvPython -and (Test-Path -LiteralPath $uvPython)) {
+        $pyShimDir = Join-Path $BuildRoot "tools\py-shim"
+        New-Item -ItemType Directory -Path $pyShimDir -Force | Out-Null
+        $pyShim = Join-Path $pyShimDir "py.cmd"
+        @"
+@echo off
+setlocal EnableDelayedExpansion
+set "ARGS="
+:pick
+if "%~1"=="" goto run
+if /I not "%~1"=="-3" set ARGS=!ARGS! "%~1"
+shift
+goto pick
+:run
+"$uvPython" !ARGS!
+"@ | Set-Content -LiteralPath $pyShim -Encoding ASCII
+        $env:Path = "$pyShimDir;$env:Path"
+        Write-Host "Registered py shim at $pyShim -> $uvPython"
+    } else {
+        Write-Warning "No py launcher or uv-managed Python 3 found; the icu build may fail."
+    }
+}
+
 rustup target add x86_64-pc-windows-msvc
 if ($LASTEXITCODE -ne 0) {
     throw "Unable to install the Rust MSVC target."
@@ -161,11 +189,16 @@ $projects = @(
     "openssl"
     "gstreamer"
     "gst-plugins-base"
+    # glib-networking + libsoup3 must precede gst-plugins-good: its soup plugin
+    # (souphttpsrc) is an auto feature and is silently skipped without libsoup3.
+    "glib-networking"
+    "libsoup3"
     "gst-plugins-good"
     "gst-plugins-bad"
     "gst-plugins-ugly"
-    # gst-libav (ffmpeg) is optional for the MVP. Enable later once ffmpeg
-    # builds cleanly under this MSVC prefix.
+    # gst-libav (ffmpeg) provides mp3/flac/aac decoders; without it only the
+    # Media Foundation mp3 decoder is available and flac/hires cannot play.
+    "gst-libav"
 )
 
 # Skip webrtc-audio-processing: only used by webrtcdsp, and its abseil tree is a
@@ -174,6 +207,16 @@ $webrtcBuildDir = Join-Path $BuildRoot "build\x64\release\webrtc-audio-processin
 if (Test-Path -LiteralPath $webrtcBuildDir) {
     Write-Host "Cleaning incomplete webrtc-audio-processing build at $webrtcBuildDir"
     Remove-Item -LiteralPath $webrtcBuildDir -Recurse -Force
+}
+
+# --fast-build skips projects that already completed. gst-plugins-good was first
+# built without libsoup3, so force a rebuild until gstsoup.dll shows up; without
+# souphttpsrc the player cannot open any http(s) stream.
+$soupPlugin = Join-Path $BuildRoot "gtk\x64\release\lib\gstreamer-1.0\gstsoup.dll"
+$goodBuildDir = Join-Path $BuildRoot "build\x64\release\gst-plugins-good"
+if ((Test-Path -LiteralPath $goodBuildDir) -and -not (Test-Path -LiteralPath $soupPlugin)) {
+    Write-Host "Rebuilding gst-plugins-good so the soup plugin picks up libsoup3..."
+    Remove-Item -LiteralPath $goodBuildDir -Recurse -Force
 }
 
 # GitHub Windows runners ship both Git Bash and MSYS2; Git's usr\bin often wins
@@ -188,6 +231,53 @@ if (Test-Path -LiteralPath $msysUsrBin) {
     Write-Warning "C:\msys64\usr\bin not found; libvpx may fail if Git Bash tools shadow MSYS2."
 }
 
+# gvsbuild's stock ffmpeg build.sh cannot produce the decoders we need and its
+# configure probe breaks on non-English VS installs (localized cl banner ->
+# "Unknown C compiler" -> MSVC ignores the resulting `-o` flag). Swap in the
+# repo-maintained ffmpeg-build.sh before building. uvx runs gvsbuild straight
+# from the uv cache, so overwrite the cached patch file.
+& uvx --from "gvsbuild==$GvsbuildVersion" gvsbuild --help | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to prime the gvsbuild $GvsbuildVersion environment."
+}
+# setup-uv on GitHub Actions sets UV_CACHE_DIR (e.g. D:\a\_temp\setup-uv-cache);
+# uvx then extracts there, not under %LOCALAPPDATA%\uv\cache.
+$ffmpegBuildSh = $null
+$uvCacheRoot = if ($env:UV_CACHE_DIR) { $env:UV_CACHE_DIR } else { Join-Path $env:LOCALAPPDATA "uv\cache" }
+$uvArchiveCache = Join-Path $uvCacheRoot "archive-v0"
+if (Test-Path -LiteralPath $uvArchiveCache) {
+    $ffmpegBuildSh = Get-ChildItem -LiteralPath $uvArchiveCache -Directory |
+        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "Lib\site-packages\gvsbuild-$GvsbuildVersion.dist-info") } |
+        ForEach-Object { Join-Path $_.FullName "Lib\site-packages\gvsbuild\patches\ffmpeg\build\build.sh" } |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
+    # uv also keeps a flat wheel extract (no Lib\site-packages); prefer the
+    # environment copy above, but fall back so CI/local layouts both work.
+    if (-not $ffmpegBuildSh) {
+        $ffmpegBuildSh = Get-ChildItem -LiteralPath $uvArchiveCache -Directory |
+            Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "gvsbuild-$GvsbuildVersion.dist-info") } |
+            ForEach-Object { Join-Path $_.FullName "gvsbuild\patches\ffmpeg\build\build.sh" } |
+            Where-Object { Test-Path -LiteralPath $_ } |
+            Select-Object -First 1
+    }
+}
+if (-not $ffmpegBuildSh) {
+    throw "Unable to locate gvsbuild $GvsbuildVersion ffmpeg build.sh under $uvArchiveCache; cannot apply the decoder/locale fixes."
+}
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "ffmpeg-build.sh") -Destination $ffmpegBuildSh -Force
+if (-not (Select-String -LiteralPath $ffmpegBuildSh -Pattern "netease-cloud-music-gtk4" -Quiet)) {
+    throw "Failed to install the customized ffmpeg build.sh at $ffmpegBuildSh"
+}
+Write-Host "Patched gvsbuild ffmpeg build.sh at $ffmpegBuildSh"
+
+# The patches directory is only copied on fresh extraction; an already
+# extracted ffmpeg tree keeps its old build.sh, so overwrite that copy too.
+$extractedBuildSh = Join-Path $BuildRoot "build\x64\release\ffmpeg\build\build.sh"
+if (Test-Path -LiteralPath $extractedBuildSh) {
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "ffmpeg-build.sh") -Destination $extractedBuildSh -Force
+    Write-Host "Patched extracted ffmpeg build.sh at $extractedBuildSh"
+}
+
 & uvx --from "gvsbuild==$GvsbuildVersion" gvsbuild build `
     --build-dir $BuildRoot `
     --platform x64 `
@@ -197,6 +287,7 @@ if (Test-Path -LiteralPath $msysUsrBin) {
     --use-env `
     --skip webrtc-audio-processing `
     --extra-opts "gst-plugins-bad:-Dwebrtcdsp=disabled" `
+    --extra-opts "gst-plugins-good:-Dsoup=enabled" `
     @projects
 if ($LASTEXITCODE -ne 0) {
     throw "gvsbuild failed with exit code $LASTEXITCODE"
@@ -242,6 +333,36 @@ if ($missingPkgConfig.Count -gt 0) {
 Dependency prefix is incomplete at $dependencyPrefix
 Missing pkg-config files: $($missingPkgConfig -join ', ')
 Re-run this script after fixing the failed gvsbuild project. Completed projects are skipped with --fast-build.
+"@
+}
+
+# Playback-critical plugins: souphttpsrc fetches the stream, libav decodes
+# mp3/flac/aac. Their meson features auto-disable silently when a dependency is
+# missing, so verify the artifacts instead of trusting a green build.
+$requiredPlugins = @("gstsoup.dll", "gstlibav.dll")
+$pluginDir = Join-Path $dependencyPrefix "lib\gstreamer-1.0"
+$missingPlugins = @()
+foreach ($plugin in $requiredPlugins) {
+    if (-not (Test-Path -LiteralPath (Join-Path $pluginDir $plugin))) {
+        $missingPlugins += $plugin
+    }
+}
+if ($missingPlugins.Count -gt 0) {
+    throw @"
+Dependency prefix is missing playback plugins: $($missingPlugins -join ', ')
+Audio playback will fail without them. Delete the matching project directory under
+$BuildRoot\build\x64\release and re-run this script.
+"@
+}
+
+# Without the glib-networking OpenSSL GIO module, https streams cannot be opened.
+$gioModuleDir = Join-Path $dependencyPrefix "lib\gio\modules"
+$gioModule = Get-ChildItem -LiteralPath $gioModuleDir -Filter "*gioopenssl.dll" -ErrorAction SilentlyContinue
+if (-not $gioModule) {
+    throw @"
+Dependency prefix is missing the glib-networking TLS module under $gioModuleDir
+https playback will fail without it. Delete $BuildRoot\build\x64\release\glib-networking
+and re-run this script.
 "@
 }
 
