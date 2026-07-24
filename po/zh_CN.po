@@ -70,9 +70,33 @@ msgid "Always try to play grey song"
 msgstr "总是尝试播放灰色歌曲"
 
 #: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:57
-#: data/gtk/preferences.ui:107
+#: data/gtk/preferences.ui:245
 msgid "Desktop Lyrics"
 msgstr "桌面歌词"
+
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:93
+msgid "UI font family preset"
+msgstr "界面字体族预设"
+
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:98
+msgid "Global UI font scale"
+msgstr "全局界面字号缩放"
+
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:103
+msgid "List title font scale"
+msgstr "列表标题字号缩放"
+
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:108
+msgid "List secondary text font scale"
+msgstr "列表次要文字字号缩放"
+
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:113
+msgid "Player bar font scale"
+msgstr "播放栏字号缩放"
+
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml:118
+msgid "In-app lyrics font scale"
+msgstr "应用内歌词字号缩放"
 
 #: data/gtk/window.ui:83 data/gtk/window.ui:297
 msgid "Songs"
@@ -146,6 +170,54 @@ msgstr "顶栏页面"
 msgid "Takes effect after restart"
 msgstr "重启后生效"
 
+#: data/gtk/preferences.ui:92
+msgid "Font and Size"
+msgstr "字体与字号"
+
+#: data/gtk/preferences.ui:93
+msgid "Takes effect immediately"
+msgstr "立即生效"
+
+#: data/gtk/preferences.ui:96
+msgid "UI Font"
+msgstr "界面字体"
+
+#: data/gtk/preferences.ui:101
+msgid "Global UI"
+msgstr "全局界面"
+
+#: data/gtk/preferences.ui:102
+msgid "Base font size for the whole window"
+msgstr "整个窗口的基础字号"
+
+#: data/gtk/preferences.ui:125
+msgid "List titles"
+msgstr "列表标题"
+
+#: data/gtk/preferences.ui:126
+msgid "Song titles and section headings"
+msgstr "歌曲名与分区标题"
+
+#: data/gtk/preferences.ui:149
+msgid "Secondary text"
+msgstr "次要文字"
+
+#: data/gtk/preferences.ui:150
+msgid "Artists, albums, and captions"
+msgstr "歌手、专辑与说明文字"
+
+#: data/gtk/preferences.ui:173
+msgid "Player bar"
+msgstr "播放栏"
+
+#: data/gtk/preferences.ui:174
+msgid "Bottom playback controls"
+msgstr "底部播放控制"
+
+#: data/gtk/preferences.ui:198
+msgid "In-app lyrics panel"
+msgstr "应用内歌词面板"
+
 #: data/gtk/preferences.ui:15
 msgid "Exit to the background"
 msgstr "退出到后台"
@@ -190,15 +262,15 @@ msgstr "每周"
 msgid "Monthly"
 msgstr "每月"
 
-#: data/gtk/preferences.ui:88
+#: data/gtk/preferences.ui:223
 msgid "Music"
 msgstr "音乐"
 
-#: data/gtk/preferences.ui:91
+#: data/gtk/preferences.ui:226
 msgid "Sound quality"
 msgstr "音质"
 
-#: data/gtk/preferences.ui:108
+#: data/gtk/preferences.ui:246
 msgid "Requires desktop-lyrics or osdlyrics"
 msgstr "依赖于 desktop-lyrics 或 osdlyrics"
 
@@ -605,6 +677,30 @@ msgstr "上一首"
 #: src/gui/system_tray.rs
 msgid "Next"
 msgstr "下一首"
+
+#: src/gui/typography.rs:48
+msgid "System default"
+msgstr "系统默认"
+
+#: src/gui/typography.rs:49
+msgid "Sans"
+msgstr "无衬线"
+
+#: src/gui/typography.rs:50
+msgid "Serif"
+msgstr "衬线"
+
+#: src/gui/typography.rs:51
+msgid "Monospace"
+msgstr "等宽"
+
+#: src/gui/typography.rs:52
+msgid "CJK Sans"
+msgstr "中日韩无衬线"
+
+#: src/gui/typography.rs:53
+msgid "Source Han Sans"
+msgstr "思源黑体"
 
 #: data/gtk/songlist-page.ui data/gtk/toplist.ui
 msgid "Play All"

@@ -56,6 +56,11 @@ impl SongListView {
         imp.max_columns.get() >= 2 && imp.wide_layout.get()
     }
 
+    /// 双列时全局下标奇偶分列：偶→左，奇→右。追加必须用全局下标，不能用本批 enumerate。
+    fn dual_column_is_right(dual: bool, global_index: usize) -> bool {
+        dual && global_index % 2 == 1
+    }
+
     pub fn init_new_list(&self, sis: &[SongInfo], likes: &[bool]) {
         let imp = self.imp();
         let sender = imp.sender.get().unwrap().to_owned();
@@ -69,6 +74,10 @@ impl SongListView {
         let no_act_like = self.property::<bool>("no-act-like");
         let no_act_album = self.property::<bool>("no-act-album");
         let no_act_remove = self.property::<bool>("no-act-remove");
+
+        // 相对已有行的全局起点，避免搜索分页追加时用本批下标错列。
+        let base =
+            Self::collect_list_rows(&left).len() + Self::collect_list_rows(&right).len();
 
         for (i, (si, like)) in sis.iter().zip(likes.iter()).enumerate() {
             let sender = sender.clone();
@@ -103,7 +112,7 @@ impl SongListView {
                 .get_only()
                 .build();
 
-            if dual && i % 2 == 1 {
+            if Self::dual_column_is_right(dual, base + i) {
                 right.append(&row);
             } else {
                 left.append(&row);
@@ -177,7 +186,7 @@ impl SongListView {
         right.set_visible(dual);
         for (i, row) in rows.into_iter().enumerate() {
             row.set_dual_column_compact(dual);
-            if dual && i % 2 == 1 {
+            if Self::dual_column_is_right(dual, i) {
                 right.append(&row);
             } else {
                 left.append(&row);
@@ -197,10 +206,6 @@ impl SongListView {
         Self::clear_listbox(&imp.listbox_left.get());
         Self::clear_listbox(&imp.listbox_right.get());
         imp.playing_row.replace(None);
-    }
-
-    pub fn list_box(&self) -> ListBox {
-        self.imp().listbox_left.get()
     }
 
     fn row_at_global_index(&self, index: i32) -> Option<SonglistRow> {
@@ -461,4 +466,26 @@ mod imp {
     }
     impl WidgetImpl for SongListView {}
     impl BoxImpl for SongListView {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SongListView;
+
+    #[test]
+    fn dual_column_uses_global_parity_not_batch_index() {
+        // 单列：一律左列
+        assert!(!SongListView::dual_column_is_right(false, 0));
+        assert!(!SongListView::dual_column_is_right(false, 1));
+
+        // 双列：偶左奇右
+        assert!(!SongListView::dual_column_is_right(true, 0));
+        assert!(SongListView::dual_column_is_right(true, 1));
+        assert!(!SongListView::dual_column_is_right(true, 2));
+
+        // 已有奇数行（base=1）再追加：本批 i=0 的全局下标为 1，应进右列
+        let base = 1usize;
+        assert!(SongListView::dual_column_is_right(true, base));
+        assert!(!SongListView::dual_column_is_right(true, base + 1));
+    }
 }
