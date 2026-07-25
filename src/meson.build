@@ -33,6 +33,7 @@ rust_sources = files(
   'ncmapi.rs',
   'path.rs',
   'platform/mod.rs',
+  'i18n.rs',
   'utils.rs',
   'audio/mod.rs',
   'audio/mpris.rs',

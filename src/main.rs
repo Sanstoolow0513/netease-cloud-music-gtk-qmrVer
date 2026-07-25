@@ -2,6 +2,7 @@ mod application;
 mod audio;
 mod config;
 mod gui;
+mod i18n;
 mod model;
 mod ncmapi;
 mod path;
@@ -40,6 +41,9 @@ fn main() {
 
     // Initialize paths
     path::init().expect("Unable to create paths.");
+    // Apply display language from GSettings before gettext binds the domain.
+    i18n::init(&runtime.locale_dir);
+    i18n::apply_from_settings();
     // Set up gettext translations
     bindtextdomain(GETTEXT_PACKAGE, &runtime.locale_dir).expect("Unable to bind the text domain");
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8")

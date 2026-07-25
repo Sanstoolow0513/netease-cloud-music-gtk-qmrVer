@@ -246,7 +246,10 @@ impl NeteaseCloudMusicGtk4Window {
         self.imp().settings.get().expect("Could not get settings.")
     }
 
-    /// Apply header page visibility and order from GSettings (once at startup).
+    /// Apply header page visibility and order from GSettings.
+    ///
+    /// Safe to re-run while the window is up: the visible page is kept as long
+    /// as it stays visible.
     fn apply_pages_config(&self) {
         let settings = self.settings();
         let order =
@@ -255,6 +258,7 @@ impl NeteaseCloudMusicGtk4Window {
         let show_toplist = settings.boolean("show-toplist");
 
         let stack = self.imp().stack.get();
+        let previous = stack.visible_child_name().map(|name| name.to_string());
         let page_names = ["discover", "toplist", "my", "search"];
 
         struct PageMeta {
@@ -305,13 +309,37 @@ impl NeteaseCloudMusicGtk4Window {
             page.set_visible(false);
         }
 
-        let first = first_visible_header_page(&order, show_discover, show_toplist);
-        stack.set_visible_child_name(&first);
+        let visible = previous
+            .filter(|name| header_page_visible(name, show_discover, show_toplist))
+            .unwrap_or_else(|| first_visible_header_page(&order, show_discover, show_toplist));
+        stack.set_visible_child_name(&visible);
 
         if let Ok(mut stack_child) = self.imp().stack_child.lock() {
             stack_child.clear();
-            stack_child.push_back((first, "".to_owned()));
+            stack_child.push_back((visible, "".to_owned()));
         }
+    }
+
+    /// Rewrite the text that [`crate::i18n::Retranslator`] cannot reach by
+    /// walking the widget tree.
+    pub fn retranslate(&self, retranslator: &crate::i18n::Retranslator) {
+        let imp = self.imp();
+
+        // A menu model keeps the strings it was built with, so the popover has
+        // to be rebuilt from a translated copy.
+        let primary_menu_button = imp.primary_menu_button.get();
+        if let Some(model) = primary_menu_button.menu_model() {
+            let model = retranslator.retranslate_menu_model(&model);
+            primary_menu_button.set_menu_model(Some(&model));
+            self.attach_theme_selector();
+        }
+
+        // Built once at startup, but only parented while it is on the page stack.
+        if let Some(page) = imp.playlist_lyrics_page.get() {
+            retranslator.retranslate_widget(page);
+        }
+
+        imp.tray_handle.borrow().retranslate(retranslator);
     }
 
     fn setup_action(&self) {
@@ -433,16 +461,37 @@ impl NeteaseCloudMusicGtk4Window {
         } else {
             self.set_hide_on_close(false);
         }
+
+        for key in ["pages-order", "show-discover", "show-toplist"] {
+            self.settings().connect_changed(
+                Some(key),
+                clone!(
+                    #[weak(rename_to = window)]
+                    self,
+                    move |_, _| {
+                        window.apply_pages_config();
+                    }
+                ),
+            );
+        }
+    }
+
+    /// The theme selector lives in the primary menu popover as a custom item,
+    /// so it has to be re-attached whenever that popover is rebuilt.
+    fn attach_theme_selector(&self) {
+        let Some(popover) = self.imp().primary_menu_button.popover() else {
+            return;
+        };
+        let Ok(popover) = popover.downcast::<gtk::PopoverMenu>() else {
+            return;
+        };
+        popover.add_child(&crate::gui::ThemeSelector::new(), "theme");
     }
 
     fn setup_widget(&self) {
         let imp = self.imp();
         let sender = imp.sender.get().unwrap();
-        let primary_menu_button = imp.primary_menu_button.get();
-        let popover = primary_menu_button.popover().unwrap();
-        let popover = popover.downcast::<gtk::PopoverMenu>().unwrap();
-        let theme = crate::gui::ThemeSelector::new();
-        popover.add_child(&theme, "theme");
+        self.attach_theme_selector();
 
         let user_menus = UserMenus::new(sender.clone());
 

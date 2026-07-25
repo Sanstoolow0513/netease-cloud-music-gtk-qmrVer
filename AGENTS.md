@@ -77,7 +77,7 @@ make dev
 - 只允许 `x86_64-pc-windows-msvc` 与同一 gvsbuild 前缀，禁止混入 MinGW/MSYS2 DLL。
 - **运行**：`make dev` 会从 `_windows\dist\netease-cloud-music-gtk4-<ver>-windows-x64\` 启动（DLL 与 exe 同目录）。Meson install 树 `_windows\install\bin\` 的裸 exe 缺 DLL/资源，不能直接双击。
 - 便携包运行时从 exe 相对目录加载 gresource、locale、schema、图标和 GStreamer 插件；`src/platform/mod.rs` 在 Windows 上于 `gstreamer::init` 前设置相关环境变量。
-- bootstrap 跳过 `webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路必需 `glib-networking`（TLS）+ `libsoup3`（→ `souphttpsrc` 拉流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码），bootstrap 会强制重编 `gst-plugins-good` 直到 `gstsoup.dll` 产出。
+- bootstrap 跳过 `webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路必需 `glib-networking`（TLS）+ `libsoup3`（→ `souphttpsrc` 拉流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码），bootstrap 会强制重编 `gst-plugins-good` 直到 `gstsoup.dll` 产出；仓库内 `ffmpeg-build.sh` 覆盖 gvsbuild 的 ffmpeg 脚本时须按 `UV_CACHE_DIR`（未设则 `%LOCALAPPDATA%\uv\cache`）定位，勿写死 LOCALAPPDATA（CI 的 setup-uv 会改缓存根）。
 
 查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。
 
@@ -145,8 +145,8 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **单线程 GLib MainContext 架构**：应用不是多线程 tokio 运行时，而是基于 GLib 主循环。全局 `MAINCONTEXT`（`main.rs` 中的 `Lazy<glib::MainContext>`）用于 `spawn_local` 派生异步任务。
 - **Action 消息总线**：UI 与后端通过 `async-channel` 解耦。`application.rs` 定义了庞大的 `Action` 枚举（播放、登录、页面路由、发现页、榜单、歌词等约百种消息）和 `ActionCallback` 回调类型；各 GUI 组件持有 `Sender<Action>` 发送请求，Application 集中处理后再通过 Action 回投结果。新增功能时遵循"GUI 发 Action → Application 处理 → 回发 Action 更新 UI"的模式。
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
-- **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，300→170）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。
-- **歌曲列表 `SongListView`**：共享组件（榜单 / 歌单详情 / 搜索歌曲 / 播放列表+歌词）。宽屏（组件内断点约 `max-width: 900sp`）默认双列交错排布（左偶右奇），窄屏收回单列；`max-columns=1` 可强制单列（播放列表+歌词页已如此）。双列时行进入紧凑模式（隐藏专辑列）。榜单页右侧**不再**套 1280 `AdwClamp` 限宽列表——用双列铺满内容区；发现页 / 我的页页面级 1280 clamp 仍在。勿把 `docs/superpowers/` 里「榜单列表 clamp 1280 / 单列全宽」的旧结论当现役合同。
+- **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，380→220）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。**禁止把 `AdwBreakpointBin` 放进 `GtkScrolledWindow` 内**（高度会被钉在 `height-request` 上，列表无法滚动）；`SongListView` 现役结构是 bin 包在滚动容器外。
+- **歌曲列表 `SongListView`**：共享组件（榜单 / 歌单详情 / 搜索歌曲 / 播放列表+歌词）。宽屏（组件内断点约 `max-width: 900sp`）默认双列交错排布（左偶右奇），窄屏收回单列；`max-columns=1` 可强制单列（播放列表+歌词页已如此）。双列时行进入紧凑模式（隐藏专辑列）。榜单页右侧**不再**套列表外层 `AdwClamp`——用双列铺满内容区；**发现页 / 我的页也无页面级 clamp**，内容随窗口铺满（仅保留 `.page-content` 左右边距）；发现页 Banner 不再套 980 Clamp，随页宽铺满并由断点切换固定高度。勿把 `docs/superpowers/` 里「三主页 1280 居中 / 榜单列表 clamp 1280 / 单列全宽」的旧结论当现役合同。
 - **持久化**：
   - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
   - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`；Windows 上 `glib::user_cache_dir()` 指向 `AppData\Local\Microsoft\Windows\INetCache`，排查图片缓存时注意不是 `AppData\Local`）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
@@ -197,6 +197,8 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
 - Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于可运行应用：日常用 `make dev`（缺包时会 package），正式 zip 用 `build.ps1 -Package`。
 - GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已优先 `C:\msys64\usr\bin` 并传 `--use-env`（详见 `build-aux/windows/README.md`）。
+- Windows CI 的 gvsbuild 缓存 key 含 `hashFiles('build-aux/windows/bootstrap.ps1')`：改该文件会强制冷编依赖前缀（含 ffmpeg，可数十分钟），属预期；细节与对照表见 `build-aux/windows/README.md`。
+- `*.sh` 经 `.gitattributes` 强制 `eol=lf`（msys2 bash 遇 CRLF 会解析失败）；新增 shell 补丁脚本保持 LF。
 - `docs/superpowers/` 下的 dated plans/specs 是历史设计记录，不作为现役构建/平台能力合同。
 
 ## 发布与部署流程

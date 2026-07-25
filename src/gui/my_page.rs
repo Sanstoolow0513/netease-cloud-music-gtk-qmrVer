@@ -122,7 +122,7 @@ impl MyPage {
         }
 
         let sender = imp.sender.get().unwrap();
-        SongListGridItem::box_update_songlist(grid, &items, 140, show_author, sender);
+        SongListGridItem::box_update_songlist(grid, &items, 160, show_author, sender);
         match section {
             MyPageSection::FavoriteAlbums => imp.albums.replace(items),
             MyPageSection::FavoriteSongLists => imp.songlists.replace(items),

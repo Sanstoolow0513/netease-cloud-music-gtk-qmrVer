@@ -161,6 +161,14 @@ impl TrayState {
             .unwrap_or_default()
     }
 
+    pub fn retranslate(&self, retranslator: &crate::i18n::Retranslator) {
+        if let Ok(mut title) = self.song_title.lock() {
+            if let Some(translated) = retranslator.translate(title.as_str()) {
+                *title = translated.to_string();
+            }
+        }
+    }
+
     pub fn get_cover_icon_data(&self) -> Vec<u8> {
         self.cover_icon_data
             .lock()
@@ -335,6 +343,16 @@ impl TrayHandle {
             state.set_song_title(title);
             state.set_song_artist(artist);
             state.set_cover_icon_data(load_cover_icon_data(album_id));
+            self.refresh();
+        }
+    }
+
+    /// `menu()` and `title()` call `gettext` on every refresh, so refreshing is
+    /// enough once the catalog changed; only the stored song title (which
+    /// defaults to the translated app name) needs remapping.
+    pub fn retranslate(&self, retranslator: &crate::i18n::Retranslator) {
+        if let Some(state) = &self.state {
+            state.retranslate(retranslator);
             self.refresh();
         }
     }

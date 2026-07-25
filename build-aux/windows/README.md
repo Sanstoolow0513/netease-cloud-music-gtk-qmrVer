@@ -24,7 +24,7 @@ $prefix = .\build-aux\windows\bootstrap.ps1 | Select-Object -Last 1
 
 `bootstrap.ps1` 默认把依赖建在 `C:\ncm-gtk`。仓库内旧的 `_windows\gvsbuild` 若仍存在，脚本会自动迁过去；并会创建 `_windows\gvsbuild` → `C:\ncm-gtk` 联接以兼容旧绝对路径。源码预取（cairo 与 GStreamer 核心/插件包）放在该目录的 `src` 下。中断后可直接重跑：已成功项目会被 `--fast-build` 跳过。用 `--skip webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路依赖：`glib-networking`（OpenSSL TLS GIO 模块）+ `libsoup3`（使 gst-plugins-good 编出 `souphttpsrc`，拉取 http(s) 流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码）；脚本结尾会校验 `gstsoup.dll`、`gstlibav.dll` 与 `gioopenssl.dll` 是否产出。若报缺少 `gstreamer-play-1.0.pc`，说明 `gst-plugins-bad` 尚未编完，继续重跑 bootstrap 即可。
 
-脚本有两处自愈机制：机器上没有 python.org 的 `py` 启动器时（如仅有 uv 管理的 Python），自动生成 `C:\ncm-gtk\tools\py-shim\py.cmd` 转发（否则 icu 构建必挂）；构建前会用仓库内的 `ffmpeg-build.sh` 覆盖 gvsbuild 缓存与已解压源码树中的 ffmpeg 构建脚本——原版只编视频解码器（缺 mp3/flac/aac），且其 configure 的 `grep ^Microsoft` 探测在未装英文语言包的 VS 上会失败（中文 `cl` 横幅 → "Unknown C compiler" → MSVC 19.44+ 忽略 `-o` → 链接失败）。
+脚本有两处自愈机制：机器上没有 python.org 的 `py` 启动器时（如仅有 uv 管理的 Python），自动生成 `C:\ncm-gtk\tools\py-shim\py.cmd` 转发（否则 icu 构建必挂）；构建前会用仓库内的 `ffmpeg-build.sh` 覆盖 uv 解压出的 gvsbuild 包与已解压源码树中的 ffmpeg 构建脚本——原版只编视频解码器（缺 mp3/flac/aac），且其 configure 的 `grep ^Microsoft` 探测在未装英文语言包的 VS 上会失败（中文 `cl` 横幅 → "Unknown C compiler" → MSVC 19.44+ 忽略 `-o` → 链接失败）。查找路径必须尊重 `UV_CACHE_DIR`（GitHub Actions 的 `astral-sh/setup-uv` 会把它指到 `%TEMP%\setup-uv-cache` 一类目录）；未设置时才回退 `%LOCALAPPDATA%\uv\cache`。硬编码 `LOCALAPPDATA` 会在 CI 上出现 “Unable to locate … ffmpeg build.sh”。
 
 **日常开发（推荐）**：依赖前缀就绪后，在仓库根目录执行：
 
@@ -49,7 +49,9 @@ make dev
 | `webrtc` / abseil `C1083` Invalid argument | 使用默认短路径 `C:\ncm-gtk`，勿把 BuildRoot 放在 Desktop 深目录 |
 | `Get-FileHash` 无法识别（Windows PowerShell 5.1） | 换用 PowerShell 7（`pwsh`）运行脚本 |
 | icu 构建报 `'py' is not recognized` | 缺 python.org 启动器；新版 bootstrap 会自动生成 py shim，重跑即可 |
+| `Unable to locate gvsbuild … ffmpeg build.sh`（常见于 CI） | 补丁查找未走 `UV_CACHE_DIR`；确认 `bootstrap.ps1` 用 `UV_CACHE_DIR`（否则 `%LOCALAPPDATA%\uv\cache`）下的 `archive-v0` |
 | ffmpeg 报 `cl.exe is unable to create an executable file` / `Unknown C compiler` | VS 未装英文语言包导致 configure 探测 MSVC 失败；新版 bootstrap 会用仓库内 `ffmpeg-build.sh`（含探测修正）覆盖后再编，重跑即可 |
+| 改过 `bootstrap.ps1` 后 CI Windows 极慢 / 像卡住 | Actions cache key 含该文件 hash，会 miss 并冷编整棵 `C:\ncm-gtk`（含 ffmpeg）；属预期，非挂死。无头 runner 上 `Fontconfig error: Cannot load default config file` 可忽略 |
 
 生成 release 便携包：
 
