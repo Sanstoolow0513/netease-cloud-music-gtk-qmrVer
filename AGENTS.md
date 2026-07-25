@@ -96,7 +96,7 @@ macOS 构建时根目录 `build.rs`（Cargo 自动识别）会设置 GStreamer f
 
 ```
 src/
-├── main.rs          # 入口：初始化日志/gstreamer/路径/gettext/gresource，启动 Application
+├── main.rs          # 入口：初始化日志/gettext/gstreamer/路径/gresource，启动 Application（顺序敏感，见「已知注意点」）
 ├── application.rs   # NeteaseCloudMusicGtk4Application：全局 Action 事件循环与分发（~1500 行核心）
 ├── window.rs        # 主窗口（CompositeTemplate，绑定 gtk/window.ui），页面栈与全局状态（~1200 行）
 ├── model.rs         # 共享数据结构：UserInfo、PageStack（页面导航栈）、图片加载工具等
@@ -145,6 +145,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **单线程 GLib MainContext 架构**：应用不是多线程 tokio 运行时，而是基于 GLib 主循环。全局 `MAINCONTEXT`（`main.rs` 中的 `Lazy<glib::MainContext>`）用于 `spawn_local` 派生异步任务。
 - **Action 消息总线**：UI 与后端通过 `async-channel` 解耦。`application.rs` 定义了庞大的 `Action` 枚举（播放、登录、页面路由、发现页、榜单、歌词等约百种消息）和 `ActionCallback` 回调类型；各 GUI 组件持有 `Sender<Action>` 发送请求，Application 集中处理后再通过 Action 回投结果。新增功能时遵循"GUI 发 Action → Application 处理 → 回发 Action 更新 UI"的模式。
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
+- **设置即时生效**：显示语言（`ui-language`）与顶栏页面显隐/排序（`pages-order`/`show-discover`/`show-toplist`）均经 GSettings `connect_changed` 热更新，无需重启。页面侧入口是 `window.rs` 的 `apply_pages_config()`（remove 后按序重加 ViewStack 页，保持当前可见页）。语言侧由 `i18n::switch_ui_language` 构建「旧译文 → 新译文」映射（`Retranslator`）并遍历控件树重写字符串属性；`utils::gettext_f` 的 `{name}` 占位符标签（如「100 首歌曲」）永远匹配不上精确映射，由 `Retranslator` 内的正则模式列表做子串替换；主菜单模型、播放列表+歌词页、用户弹窗三个登录子页（任一时刻只有一个挂在弹窗里）、首选项 combo/页面行等走各自显式 retranslate 入口。
 - **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，380→220）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。**禁止把 `AdwBreakpointBin` 放进 `GtkScrolledWindow` 内**（高度会被钉在 `height-request` 上，列表无法滚动）；`SongListView` 现役结构是 bin 包在滚动容器外。
 - **歌曲列表 `SongListView`**：共享组件（榜单 / 歌单详情 / 搜索歌曲 / 播放列表+歌词）。宽屏（组件内断点约 `max-width: 900sp`）默认双列交错排布（左偶右奇），窄屏收回单列；`max-columns=1` 可强制单列（播放列表+歌词页已如此）。双列时行进入紧凑模式（隐藏专辑列）。榜单页右侧**不再**套列表外层 `AdwClamp`——用双列铺满内容区；**发现页 / 我的页也无页面级 clamp**，内容随窗口铺满（仅保留 `.page-content` 左右边距）；发现页 Banner 不再套 980 Clamp，随页宽铺满并由断点切换固定高度。勿把 `docs/superpowers/` 里「三主页 1280 居中 / 榜单列表 clamp 1280 / 单列全宽」的旧结论当现役合同。
 - **持久化**：
@@ -199,6 +200,10 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已优先 `C:\msys64\usr\bin` 并传 `--use-env`（详见 `build-aux/windows/README.md`）。
 - Windows CI 的 gvsbuild 缓存 key 含 `hashFiles('build-aux/windows/bootstrap.ps1')`：改该文件会强制冷编依赖前缀（含 ffmpeg，可数十分钟），属预期；细节与对照表见 `build-aux/windows/README.md`。
 - `*.sh` 经 `.gitattributes` 强制 `eol=lf`（msys2 bash 遇 CRLF 会解析失败）；新增 shell 补丁脚本保持 LF。
+- **Windows gettext 初始化三要素**（缺一则界面永远是英文，实测排障结论）：
+  1. `main.rs` 中 `bindtextdomain`/`textdomain` 必须先于 `gstreamer::init()`——GLib/GStreamer 的 NLS 初始化会快照 libintl 内部 locale 状态，之后绑定的域会停留在错误状态；
+  2. `LANGUAGE` 必须写入 CRT 环境：`std::env::set_var` 只更新 Win32 环境块，libintl 读的是 CRT 私有副本，故 `i18n.rs` 用 `libc::putenv_s` 同步（CRT `_putenv*` 才两边可见）；
+  3. CRT locale 不能是 "C"（GNU 规则："C" locale 下忽略 `LANGUAGE`）：用 `libc::setlocale(LC_ALL, "")` 启用；**不要**用 `gettextrs::setlocale`——其 `LocaleCategory` 常量按 Unix 取值（`LcAll=6`），对 Windows CRT（`LC_ALL=0`）是非法 category，会直接 abort。
 - `docs/superpowers/` 下的 dated plans/specs 是历史设计记录，不作为现役构建/平台能力合同。
 
 ## 发布与部署流程
