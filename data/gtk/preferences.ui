@@ -67,22 +67,13 @@
                         <child>
                             <object class="AdwComboRow" id="ui_language">
                                 <property name="title" translatable="yes">Display language</property>
-                                <property name="subtitle" translatable="yes">Takes effect after restart</property>
+                                <property name="subtitle" translatable="yes">Takes effect immediately</property>
                             </object>
                         </child>
                         <child>
+                            <!-- Items are built in preferences.rs so they can be rebuilt on a language switch. -->
                             <object class="AdwComboRow" id="cache_clear">
                                 <property name="title" translatable="yes">Cache cleaning</property>
-                                <property name="model">
-                                    <object class="GtkStringList">
-                                        <items>
-                                            <item translatable="yes">Never</item>
-                                            <item translatable="yes">Daily</item>
-                                            <item translatable="yes">Weekly</item>
-                                            <item translatable="yes">Monthly</item>
-                                        </items>
-                                    </object>
-                                </property>
                             </object>
                         </child>
                     </object>
@@ -90,7 +81,7 @@
                 <child>
                     <object class="AdwPreferencesGroup" id="pages_group">
                         <property name="title" translatable="yes">Header Pages</property>
-                        <property name="description" translatable="yes">Takes effect after restart</property>
+                        <property name="description" translatable="yes">Takes effect immediately</property>
                     </object>
                 </child>
                 <child>

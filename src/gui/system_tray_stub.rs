@@ -20,6 +20,8 @@ impl TrayHandle {
 
     pub fn update_song_title(&self, _title: String, _artist: String, _album_id: u64) {}
 
+    pub fn retranslate(&self, _retranslator: &crate::i18n::Retranslator) {}
+
     pub fn is_running(&self) -> bool {
         false
     }

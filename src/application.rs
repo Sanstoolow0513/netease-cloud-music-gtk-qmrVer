@@ -207,6 +207,9 @@ mod imp {
         pub unikey: Arc<RwLock<String>>,
         pub ncmapi: RefCell<Option<NcmClient>>,
         pub(super) login_session: LoginSessionGeneration,
+        /// Kept alive so its `changed` signal keeps firing.
+        pub settings: OnceCell<Settings>,
+        pub preferences: RefCell<Option<WeakRef<NeteaseCloudMusicGtk4Preferences>>>,
     }
 
     #[glib::object_subclass]
@@ -229,6 +232,8 @@ mod imp {
                 unikey,
                 ncmapi,
                 login_session,
+                settings: OnceCell::new(),
+                preferences: RefCell::new(None),
             }
         }
     }
@@ -239,6 +244,7 @@ mod imp {
             self.parent_constructed();
 
             obj.setup_gactions();
+            obj.setup_language_watch();
             obj.setup_cache_clear();
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
             obj.set_accels_for_action("win.search-button", &["<primary>f", "slash"]);
@@ -1597,6 +1603,55 @@ impl NeteaseCloudMusicGtk4Application {
         self.add_action(&about_action);
     }
 
+    fn setup_language_watch(&self) {
+        let settings = Settings::new(crate::APP_ID);
+        settings.connect_changed(
+            Some("ui-language"),
+            clone!(
+                #[weak(rename_to = app)]
+                self,
+                move |settings, _| {
+                    app.apply_ui_language(settings.string("ui-language").as_str());
+                }
+            ),
+        );
+        let _ = self.imp().settings.set(settings);
+    }
+
+    /// Switch the display language in place, without restarting.
+    ///
+    /// Strings created from now on come from the new catalog; text already
+    /// rendered is rewritten by walking every live widget.
+    fn apply_ui_language(&self, id: &str) {
+        let retranslator = crate::i18n::switch_ui_language(id);
+        if retranslator.is_empty() {
+            return;
+        }
+        glib::set_application_name(&gettext(crate::APP_NAME));
+
+        // Toplevels cover the main window, the shortcuts overlay and any dialog
+        // that libadwaita floated into its own window.
+        let toplevels = gtk::Window::toplevels();
+        for index in 0..toplevels.n_items() {
+            if let Some(toplevel) = toplevels.item(index).and_downcast::<gtk::Window>() {
+                retranslator.retranslate_widget(&toplevel);
+            }
+        }
+
+        if let Some(window) = self.imp().window.get().and_then(WeakRef::upgrade) {
+            window.retranslate(&retranslator);
+        }
+        if let Some(preferences) = self
+            .imp()
+            .preferences
+            .borrow()
+            .as_ref()
+            .and_then(WeakRef::upgrade)
+        {
+            preferences.retranslate(&retranslator);
+        }
+    }
+
     fn show_prefrerences(&self) {
         let window = self.active_window().unwrap();
         let preferences = NeteaseCloudMusicGtk4Preferences::new();
@@ -1604,6 +1659,9 @@ impl NeteaseCloudMusicGtk4Application {
         let (size, unit) = crate::path::get_cache_size();
         preferences.set_cache_size_label(size, unit);
 
+        self.imp()
+            .preferences
+            .replace(Some(preferences.downgrade()));
         AdwDialogExt::present(&preferences, Some(&window));
     }
 

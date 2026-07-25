@@ -42,6 +42,7 @@ fn main() {
     // Initialize paths
     path::init().expect("Unable to create paths.");
     // Apply display language from GSettings before gettext binds the domain.
+    i18n::init(&runtime.locale_dir);
     i18n::apply_from_settings();
     // Set up gettext translations
     bindtextdomain(GETTEXT_PACKAGE, &runtime.locale_dir).expect("Unable to bind the text domain");

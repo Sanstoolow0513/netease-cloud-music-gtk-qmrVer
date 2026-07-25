@@ -13,7 +13,7 @@ use gio::Settings;
 use gtk::gio::SettingsBindFlags;
 use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use once_cell::sync::OnceCell;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 glib::wrapper! {
     pub struct NeteaseCloudMusicGtk4Preferences(ObjectSubclass<imp::NeteaseCloudMusicGtk4Preferences>)
@@ -88,6 +88,9 @@ impl NeteaseCloudMusicGtk4Preferences {
             .flags(SettingsBindFlags::DEFAULT)
             .build();
 
+        // The model has to exist before `selected` is bound, otherwise the
+        // binding starts out on an empty model.
+        self.refresh_cache_clear_model();
         let cache_clear = self.imp().cache_clear.get();
         self.settings()
             .bind("cache-clear", &cache_clear, "selected")
@@ -124,26 +127,18 @@ impl NeteaseCloudMusicGtk4Preferences {
     }
 
     fn bind_ui_language(&self) {
-        let combo = self.imp().ui_language.get();
-        let labels: Vec<String> = LANGUAGE_IDS
-            .iter()
-            .map(|id| i18n::language_label(id))
-            .collect();
-        let model = StringList::new(&labels.iter().map(|s| s.as_str()).collect::<Vec<_>>());
-        combo.set_model(Some(&model));
+        self.refresh_ui_language_model();
 
         let settings = self.settings();
-        let language = settings.string("ui-language");
-        let idx = LANGUAGE_IDS
-            .iter()
-            .position(|&id| id == language.as_str())
-            .unwrap_or(0);
-        combo.set_selected(idx as u32);
-
-        combo.connect_selected_notify(glib::clone!(
+        self.imp().ui_language.connect_selected_notify(glib::clone!(
             #[strong]
             settings,
+            #[weak(rename_to = dialog)]
+            self,
             move |combo| {
+                if dialog.imp().refreshing_models.get() {
+                    return;
+                }
                 let idx = combo.selected() as usize;
                 if let Some(id) = LANGUAGE_IDS.get(idx) {
                     let _ = settings.set_string("ui-language", id);
@@ -153,32 +148,84 @@ impl NeteaseCloudMusicGtk4Preferences {
     }
 
     fn bind_font_preset(&self) {
-        let combo = self.imp().font_preset.get();
-        let labels: Vec<String> = FONT_PRESET_IDS
-            .iter()
-            .map(|id| typography::preset_label(id))
-            .collect();
-        let model = StringList::new(&labels.iter().map(|s| s.as_str()).collect::<Vec<_>>());
-        combo.set_model(Some(&model));
+        self.refresh_font_preset_model();
 
         let settings = self.settings();
-        let preset = settings.string("ui-font-preset");
-        let idx = FONT_PRESET_IDS
-            .iter()
-            .position(|&id| id == preset.as_str())
-            .unwrap_or(0);
-        combo.set_selected(idx as u32);
-
-        combo.connect_selected_notify(glib::clone!(
+        self.imp().font_preset.connect_selected_notify(glib::clone!(
             #[strong]
             settings,
+            #[weak(rename_to = dialog)]
+            self,
             move |combo| {
+                if dialog.imp().refreshing_models.get() {
+                    return;
+                }
                 let idx = combo.selected() as usize;
                 if let Some(id) = FONT_PRESET_IDS.get(idx) {
                     let _ = settings.set_string("ui-font-preset", id);
                 }
             }
         ));
+    }
+
+    fn set_combo_items(combo: &adw::ComboRow, labels: &[String], selected: u32) {
+        let model = StringList::new(&labels.iter().map(|s| s.as_str()).collect::<Vec<_>>());
+        combo.set_model(Some(&model));
+        combo.set_selected(selected);
+    }
+
+    fn refresh_ui_language_model(&self) {
+        let language = self.settings().string("ui-language");
+        let selected = LANGUAGE_IDS
+            .iter()
+            .position(|&id| id == language.as_str())
+            .unwrap_or(0);
+        let labels: Vec<String> = LANGUAGE_IDS
+            .iter()
+            .map(|id| i18n::language_label(id))
+            .collect();
+        Self::set_combo_items(&self.imp().ui_language.get(), &labels, selected as u32);
+    }
+
+    fn refresh_font_preset_model(&self) {
+        let preset = self.settings().string("ui-font-preset");
+        let selected = FONT_PRESET_IDS
+            .iter()
+            .position(|&id| id == preset.as_str())
+            .unwrap_or(0);
+        let labels: Vec<String> = FONT_PRESET_IDS
+            .iter()
+            .map(|id| typography::preset_label(id))
+            .collect();
+        Self::set_combo_items(&self.imp().font_preset.get(), &labels, selected as u32);
+    }
+
+    fn refresh_cache_clear_model(&self) {
+        // Keep the stored value: swapping the model resets `selected`, which is
+        // bound to GSettings.
+        let selected = self.settings().uint("cache-clear");
+        let labels = vec![
+            gettext("Never"),
+            gettext("Daily"),
+            gettext("Weekly"),
+            gettext("Monthly"),
+        ];
+        Self::set_combo_items(&self.imp().cache_clear.get(), &labels, selected);
+    }
+
+    /// Rebuild everything whose text was baked in when the dialog was built.
+    pub fn retranslate(&self, retranslator: &crate::i18n::Retranslator) {
+        retranslator.retranslate_widget(self);
+
+        // Combo rows render their rows from the model, which keeps the strings
+        // it was created with.
+        self.imp().refreshing_models.set(true);
+        self.refresh_ui_language_model();
+        self.refresh_font_preset_model();
+        self.refresh_cache_clear_model();
+        self.imp().refreshing_models.set(false);
+
+        self.rebuild_page_rows();
     }
 
     pub fn set_cache_size_label(&self, size: f64, unit: String) {
@@ -298,6 +345,9 @@ mod imp {
     pub struct NeteaseCloudMusicGtk4Preferences {
         pub settings: OnceCell<Settings>,
         pub page_rows: RefCell<Vec<adw::ActionRow>>,
+        /// Set while combo models are swapped, so the `selected` handlers do not
+        /// write the transient selection back to GSettings.
+        pub refreshing_models: Cell<bool>,
         #[template_child]
         pub exit_row: TemplateChild<adw::ActionRow>,
         #[template_child]
