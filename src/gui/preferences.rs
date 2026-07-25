@@ -5,6 +5,7 @@
 //
 
 use crate::gui::typography::{self, FONT_PRESET_IDS};
+use crate::i18n::{self, LANGUAGE_IDS};
 use crate::utils::sanitize_pages_order;
 use adw::prelude::{ActionRowExt, ComboRowExt, PreferencesGroupExt};
 use gettextrs::gettext;
@@ -100,6 +101,7 @@ impl NeteaseCloudMusicGtk4Preferences {
             &self.imp().desktop_lyrics_row.get(),
         );
 
+        self.bind_ui_language();
         self.bind_font_preset();
         self.bind_font_scale("ui-font-scale", &self.imp().ui_font_scale.get());
         self.bind_font_scale(
@@ -119,6 +121,35 @@ impl NeteaseCloudMusicGtk4Preferences {
             .bind(key, &scale.adjustment(), "value")
             .flags(SettingsBindFlags::DEFAULT)
             .build();
+    }
+
+    fn bind_ui_language(&self) {
+        let combo = self.imp().ui_language.get();
+        let labels: Vec<String> = LANGUAGE_IDS
+            .iter()
+            .map(|id| i18n::language_label(id))
+            .collect();
+        let model = StringList::new(&labels.iter().map(|s| s.as_str()).collect::<Vec<_>>());
+        combo.set_model(Some(&model));
+
+        let settings = self.settings();
+        let language = settings.string("ui-language");
+        let idx = LANGUAGE_IDS
+            .iter()
+            .position(|&id| id == language.as_str())
+            .unwrap_or(0);
+        combo.set_selected(idx as u32);
+
+        combo.connect_selected_notify(glib::clone!(
+            #[strong]
+            settings,
+            move |combo| {
+                let idx = combo.selected() as usize;
+                if let Some(id) = LANGUAGE_IDS.get(idx) {
+                    let _ = settings.set_string("ui-language", id);
+                }
+            }
+        ));
     }
 
     fn bind_font_preset(&self) {
@@ -281,6 +312,8 @@ mod imp {
         pub switch_rate: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub cache_clear: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub ui_language: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub desktop_lyrics_row: TemplateChild<adw::ActionRow>,
         #[template_child]

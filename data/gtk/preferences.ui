@@ -65,6 +65,12 @@
                             </object>
                         </child>
                         <child>
+                            <object class="AdwComboRow" id="ui_language">
+                                <property name="title" translatable="yes">Display language</property>
+                                <property name="subtitle" translatable="yes">Takes effect after restart</property>
+                            </object>
+                        </child>
+                        <child>
                             <object class="AdwComboRow" id="cache_clear">
                                 <property name="title" translatable="yes">Cache cleaning</property>
                                 <property name="model">

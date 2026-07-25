@@ -80,6 +80,15 @@
             <default>true</default>
             <summary>Show Toplist page in header</summary>
         </key>
+        <key name="ui-language" type="s">
+            <choices>
+                <choice value='system' />
+                <choice value='zh_CN' />
+                <choice value='en' />
+            </choices>
+            <default>'system'</default>
+            <summary>Display language</summary>
+        </key>
         <key name="ui-font-preset" type="s">
             <choices>
                 <choice value='system' />

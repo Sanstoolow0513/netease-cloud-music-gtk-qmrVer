@@ -242,7 +242,12 @@ msgstr "网络代理"
 msgid "http/https/socks4/socks4a/socks5/socks5h"
 msgstr ""
 
-#: data/gtk/preferences.ui:71
+#: data/gtk/preferences.ui:69
+#: data/com.gitee.gmg137.NeteaseCloudMusicGtk4.gschema.xml
+msgid "Display language"
+msgstr "显示语言"
+
+#: data/gtk/preferences.ui:77
 msgid "Cache cleaning"
 msgstr "缓存清理"
 
@@ -679,6 +684,7 @@ msgid "Next"
 msgstr "下一首"
 
 #: src/gui/typography.rs:48
+#: src/i18n.rs
 msgid "System default"
 msgstr "系统默认"
 
