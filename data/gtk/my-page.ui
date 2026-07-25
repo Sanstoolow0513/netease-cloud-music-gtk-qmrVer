@@ -3,21 +3,31 @@
     <requires lib="gtk" version="4.0" />
     <template class="MyPage" parent="GtkBox">
         <property name="orientation">vertical</property>
-        <property name="spacing">32</property>
+        <property name="spacing">40</property>
         <style>
             <class name="page-content" />
+            <class name="my-page" />
         </style>
 
         <child>
             <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
+                <property name="spacing">16</property>
+                <style>
+                    <class name="page-section" />
+                </style>
                 <child>
                     <object class="GtkBox">
                         <property name="spacing">8</property>
+                        <style>
+                            <class name="page-section-header" />
+                        </style>
                         <child>
                             <object class="GtkImage">
                                 <property name="icon-name">x-office-calendar-symbolic</property>
+                                <style>
+                                    <class name="page-section-icon" />
+                                </style>
                             </object>
                         </child>
                         <child>
@@ -39,7 +49,6 @@
                         </child>
                     </object>
                 </child>
-                <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="daily_state">
                         <child>
@@ -64,20 +73,29 @@
                                         <property name="min-children-per-line">1</property>
                                         <property name="max-children-per-line">2</property>
                                         <property name="homogeneous">true</property>
-                                        <property name="column-spacing">16</property>
+                                        <property name="column-spacing">20</property>
                                         <property name="row-spacing">16</property>
+                                        <style>
+                                            <class name="my-page-song-flow" />
+                                        </style>
                                         <child>
                                             <object class="GtkListBox" id="daily_left">
-                                                <property name="width-request">360</property>
+                                                <property name="width-request">320</property>
                                                 <property name="selection-mode">none</property>
-                                                <style><class name="boxed-list" /></style>
+                                                <style>
+                                                    <class name="boxed-list" />
+                                                    <class name="my-page-song-list" />
+                                                </style>
                                             </object>
                                         </child>
                                         <child>
                                             <object class="GtkListBox" id="daily_right">
-                                                <property name="width-request">360</property>
+                                                <property name="width-request">320</property>
                                                 <property name="selection-mode">none</property>
-                                                <style><class name="boxed-list" /></style>
+                                                <style>
+                                                    <class name="boxed-list" />
+                                                    <class name="my-page-song-list" />
+                                                </style>
                                             </object>
                                         </child>
                                     </object>
@@ -129,13 +147,22 @@
         <child>
             <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
+                <property name="spacing">16</property>
+                <style>
+                    <class name="page-section" />
+                </style>
                 <child>
                     <object class="GtkBox">
                         <property name="spacing">8</property>
+                        <style>
+                            <class name="page-section-header" />
+                        </style>
                         <child>
                             <object class="GtkImage">
                                 <property name="icon-name">emote-love-symbolic</property>
+                                <style>
+                                    <class name="page-section-icon" />
+                                </style>
                             </object>
                         </child>
                         <child>
@@ -157,7 +184,6 @@
                         </child>
                     </object>
                 </child>
-                <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="favorite_songs_state">
                         <child>
@@ -182,20 +208,29 @@
                                         <property name="min-children-per-line">1</property>
                                         <property name="max-children-per-line">2</property>
                                         <property name="homogeneous">true</property>
-                                        <property name="column-spacing">16</property>
+                                        <property name="column-spacing">20</property>
                                         <property name="row-spacing">16</property>
+                                        <style>
+                                            <class name="my-page-song-flow" />
+                                        </style>
                                         <child>
                                             <object class="GtkListBox" id="favorite_songs_left">
-                                                <property name="width-request">360</property>
+                                                <property name="width-request">320</property>
                                                 <property name="selection-mode">none</property>
-                                                <style><class name="boxed-list" /></style>
+                                                <style>
+                                                    <class name="boxed-list" />
+                                                    <class name="my-page-song-list" />
+                                                </style>
                                             </object>
                                         </child>
                                         <child>
                                             <object class="GtkListBox" id="favorite_songs_right">
-                                                <property name="width-request">360</property>
+                                                <property name="width-request">320</property>
                                                 <property name="selection-mode">none</property>
-                                                <style><class name="boxed-list" /></style>
+                                                <style>
+                                                    <class name="boxed-list" />
+                                                    <class name="my-page-song-list" />
+                                                </style>
                                             </object>
                                         </child>
                                     </object>
@@ -247,13 +282,22 @@
         <child>
             <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
+                <property name="spacing">16</property>
+                <style>
+                    <class name="page-section" />
+                </style>
                 <child>
                     <object class="GtkBox">
                         <property name="spacing">8</property>
+                        <style>
+                            <class name="page-section-header" />
+                        </style>
                         <child>
                             <object class="GtkImage">
                                 <property name="icon-name">media-optical-bd-symbolic</property>
+                                <style>
+                                    <class name="page-section-icon" />
+                                </style>
                             </object>
                         </child>
                         <child>
@@ -275,7 +319,6 @@
                         </child>
                     </object>
                 </child>
-                <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="albums_state">
                         <child>
@@ -298,10 +341,16 @@
                                     <object class="GtkFlowBox" id="albums_grid">
                                         <property name="hexpand">true</property>
                                         <property name="valign">start</property>
-                                        <property name="max-children-per-line">12</property>
+                                        <property name="max-children-per-line">6</property>
                                         <property name="min-children-per-line">2</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="column-spacing">8</property>
+                                        <property name="row-spacing">8</property>
                                         <property name="selection-mode">none</property>
                                         <property name="activate-on-single-click">true</property>
+                                        <style>
+                                            <class name="my-page-collection-grid" />
+                                        </style>
                                     </object>
                                 </property>
                             </object>
@@ -351,13 +400,22 @@
         <child>
             <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
+                <property name="spacing">16</property>
+                <style>
+                    <class name="page-section" />
+                </style>
                 <child>
                     <object class="GtkBox">
                         <property name="spacing">8</property>
+                        <style>
+                            <class name="page-section-header" />
+                        </style>
                         <child>
                             <object class="GtkImage">
                                 <property name="icon-name">non-starred-symbolic</property>
+                                <style>
+                                    <class name="page-section-icon" />
+                                </style>
                             </object>
                         </child>
                         <child>
@@ -379,7 +437,6 @@
                         </child>
                     </object>
                 </child>
-                <child><object class="GtkSeparator" /></child>
                 <child>
                     <object class="GtkStack" id="songlists_state">
                         <child>
@@ -402,10 +459,16 @@
                                     <object class="GtkFlowBox" id="songlists_grid">
                                         <property name="hexpand">true</property>
                                         <property name="valign">start</property>
-                                        <property name="max-children-per-line">12</property>
+                                        <property name="max-children-per-line">6</property>
                                         <property name="min-children-per-line">2</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="column-spacing">8</property>
+                                        <property name="row-spacing">8</property>
                                         <property name="selection-mode">none</property>
                                         <property name="activate-on-single-click">true</property>
+                                        <style>
+                                            <class name="my-page-collection-grid" />
+                                        </style>
                                     </object>
                                 </property>
                             </object>

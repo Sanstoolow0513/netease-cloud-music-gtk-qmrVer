@@ -131,7 +131,7 @@ gridview > child:hover .card-play-badge {
     border-radius: 16px;
 }
 
-/* Banner 容器：固定高度档（断点切换 300/170），图片加载完成前显示占位底色，
+/* Banner 容器：固定高度档（断点切换 380/220），图片加载完成前显示占位底色，
    替代原 GtkAspectFrame 比例锁（与异步图片尺寸协商坍缩导致 banner 空白） */
 .banner-box {
     background-color: alpha(@theme_fg_color, 0.05);
@@ -187,6 +187,59 @@ flowboxchild:active {
 .quick-entry-cover {
     background-color: alpha(@accent_bg_color, 0.12);
     color: @accent_bg_color;
+}
+
+/* ===== 我的页分区预览 ===== */
+
+/* 分区标题图标略弱，让 title-3 做主层级 */
+.my-page .page-section-icon {
+    opacity: 0.7;
+}
+
+/* 歌曲预览 FlowBox：去掉全局 flowboxchild 边距，避免双列卡片外圈发虚 */
+.my-page-song-flow > flowboxchild {
+    margin: 0;
+    padding: 0;
+    border-radius: 12px;
+}
+
+.my-page-song-flow > flowboxchild:hover,
+.my-page-song-flow > flowboxchild:active {
+    background-color: transparent;
+}
+
+/* 预览列表行：加高触达、拉开行距，改善扫描 */
+.my-page-song-list > row.song_row {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 0;
+}
+
+.my-page-song-list > row.song_row:first-child {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.my-page-song-list > row.song_row:last-child {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* 专辑/歌单网格：更疏的单元格，标题更易读 */
+.my-page-collection-grid > flowboxchild {
+    margin: 10px;
+    padding: 8px;
+}
+
+.my-page-collection-grid .songlist-card-title {
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.my-page-collection-grid .label-album-grid-artist {
+    margin-top: 2px;
 }
 
 /* ===== 从 discover.css 迁入的规则（原文件已删除） ===== */
