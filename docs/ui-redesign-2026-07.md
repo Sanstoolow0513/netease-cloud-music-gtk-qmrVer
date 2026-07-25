@@ -104,7 +104,8 @@
 
 - **`AdwBreakpointBin` 不传播子组件尺寸请求**：必须给 bin 自身设 `width-request`/`height-request`，
   否则在盒式布局里被压到 0（libadwaita 会打 "does not have a minimum size" 警告）。banner 高度档
-  因此设在 bin 上而非内部容器。
+  因此设在 bin 上而非内部容器。**不可把 bin 放进 `GtkScrolledWindow` 内**（高度钉死在
+  `height-request`，列表无法滚动）；`SongListView` 现役是 bin 包在滚动容器外。
 - **多个断点命中时只应用列表中最后一个**（`current-breakpoint` 语义）：重叠档位（如
   player-controls 的 700sp 与 500sp）的窄档 setter 必须自包含，把宽档已隐藏的项再写一遍。
 - **`GtkButton` 没有 `icon-size` 属性**（GTK4），模板里写会直接构建失败。
