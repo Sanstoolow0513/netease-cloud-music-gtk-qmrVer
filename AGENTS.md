@@ -77,7 +77,7 @@ make dev
 - 只允许 `x86_64-pc-windows-msvc` 与同一 gvsbuild 前缀，禁止混入 MinGW/MSYS2 DLL。
 - **运行**：`make dev` 会从 `_windows\dist\netease-cloud-music-gtk4-<ver>-windows-x64\` 启动（DLL 与 exe 同目录）。Meson install 树 `_windows\install\bin\` 的裸 exe 缺 DLL/资源，不能直接双击。
 - 便携包运行时从 exe 相对目录加载 gresource、locale、schema、图标和 GStreamer 插件；`src/platform/mod.rs` 在 Windows 上于 `gstreamer::init` 前设置相关环境变量。
-- bootstrap 跳过 `webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路必需 `glib-networking`（TLS）+ `libsoup3`（→ `souphttpsrc` 拉流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码），bootstrap 会强制重编 `gst-plugins-good` 直到 `gstsoup.dll` 产出。
+- bootstrap 跳过 `webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路必需 `glib-networking`（TLS）+ `libsoup3`（→ `souphttpsrc` 拉流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码），bootstrap 会强制重编 `gst-plugins-good` 直到 `gstsoup.dll` 产出；仓库内 `ffmpeg-build.sh` 覆盖 gvsbuild 的 ffmpeg 脚本时须按 `UV_CACHE_DIR`（未设则 `%LOCALAPPDATA%\uv\cache`）定位，勿写死 LOCALAPPDATA（CI 的 setup-uv 会改缓存根）。
 
 查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。
 
@@ -197,6 +197,8 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
 - Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于可运行应用：日常用 `make dev`（缺包时会 package），正式 zip 用 `build.ps1 -Package`。
 - GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已优先 `C:\msys64\usr\bin` 并传 `--use-env`（详见 `build-aux/windows/README.md`）。
+- Windows CI 的 gvsbuild 缓存 key 含 `hashFiles('build-aux/windows/bootstrap.ps1')`：改该文件会强制冷编依赖前缀（含 ffmpeg，可数十分钟），属预期；细节与对照表见 `build-aux/windows/README.md`。
+- `*.sh` 经 `.gitattributes` 强制 `eol=lf`（msys2 bash 遇 CRLF 会解析失败）；新增 shell 补丁脚本保持 LF。
 - `docs/superpowers/` 下的 dated plans/specs 是历史设计记录，不作为现役构建/平台能力合同。
 
 ## 发布与部署流程
