@@ -94,6 +94,10 @@ impl SonglistPage {
                 self.set_property("like", dy.is_sub);
                 imp.songs_list.set_property("no-act-album", true);
                 imp.songs_list.set_property("no-act-remove", true);
+                // 专辑页：单列，列表限宽与上方 header AdwClamp(1000) 对齐
+                imp.songs_list.set_property("max-columns", 1);
+                imp.songs_list.set_property("clamp-maximum-size", 1000);
+                imp.songs_list.set_property("clamp-tightening-threshold", 730);
                 imp.page_type.replace(Some(DiscoverSubPage::Album));
                 let dt = Utc
                     .timestamp_millis_opt(detail.publish_time as i64)
