@@ -143,6 +143,11 @@ gridview > child:hover .card-play-badge {
     border-radius: 8px;
 }
 
+/* 播放栏进度组：保证滑条在中段占住可用宽度（与 width-request 配合） */
+.player-seek scale {
+    min-width: 200px;
+}
+
 /* 榜单页分栏拖拽分隔线 */
 paned > separator {
     min-width: 1px;

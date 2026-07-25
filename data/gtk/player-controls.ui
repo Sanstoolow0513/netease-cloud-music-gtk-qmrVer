@@ -79,86 +79,106 @@
                                 </child>
                             </object>
                         </child>
-                        <!-- 中段：走带控制 + 进度 -->
+                        <!-- 中段：走带控制 + 进度（进度组独立 hexpand，保证滑条占住可用宽度） -->
                         <child>
                             <object class="GtkBox">
-                                <property name="halign">center</property>
+                                <property name="halign">fill</property>
                                 <property name="valign">center</property>
                                 <property name="hexpand">true</property>
                                 <property name="orientation">horizontal</property>
-                                <property name="spacing">6</property>
+                                <property name="spacing">10</property>
                                 <child>
-                                    <object class="GtkButton" id="prev_button">
-                                        <property name="halign">fill</property>
+                                    <object class="GtkBox">
+                                        <property name="halign">center</property>
                                         <property name="valign">center</property>
-                                        <property name="icon-name">media-skip-backward-symbolic</property>
-                                        <signal name="clicked" handler="prev_button_clicked_cb" swapped="true" />
-                                        <style>
-                                            <class name="circular" />
-                                            <class name="flat" />
-                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <property name="spacing">6</property>
+                                        <child>
+                                            <object class="GtkButton" id="prev_button">
+                                                <property name="halign">fill</property>
+                                                <property name="valign">center</property>
+                                                <property name="icon-name">media-skip-backward-symbolic</property>
+                                                <signal name="clicked" handler="prev_button_clicked_cb" swapped="true" />
+                                                <style>
+                                                    <class name="circular" />
+                                                    <class name="flat" />
+                                                </style>
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkButton" id="play_button">
+                                                <property name="width-request">44</property>
+                                                <property name="height-request">44</property>
+                                                <property name="halign">fill</property>
+                                                <property name="valign">center</property>
+                                                <property name="icon-name">media-playback-start-symbolic</property>
+                                                <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
+                                                <style>
+                                                    <class name="circular" />
+                                                    <class name="flat" />
+                                                </style>
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkButton" id="next_button">
+                                                <property name="halign">fill</property>
+                                                <property name="valign">center</property>
+                                                <property name="icon-name">media-skip-forward-symbolic</property>
+                                                <signal name="clicked" handler="next_button_clicked_cb" swapped="true" />
+                                                <style>
+                                                    <class name="circular" />
+                                                    <class name="flat" />
+                                                </style>
+                                            </object>
+                                        </child>
                                     </object>
                                 </child>
                                 <child>
-                                    <object class="GtkButton" id="play_button">
-                                        <property name="width-request">44</property>
-                                        <property name="height-request">44</property>
+                                    <object class="GtkBox">
                                         <property name="halign">fill</property>
-                                        <property name="valign">center</property>
-                                        <property name="icon-name">media-playback-start-symbolic</property>
-                                        <signal name="clicked" handler="play_button_clicked_cb" swapped="true" />
-                                        <style>
-                                            <class name="circular" />
-                                            <class name="flat" />
-                                        </style>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkButton" id="next_button">
-                                        <property name="halign">fill</property>
-                                        <property name="valign">center</property>
-                                        <property name="icon-name">media-skip-forward-symbolic</property>
-                                        <signal name="clicked" handler="next_button_clicked_cb" swapped="true" />
-                                        <style>
-                                            <class name="circular" />
-                                            <class name="flat" />
-                                        </style>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkLabel" id="progress_time_label">
-                                        <property name="halign">fill</property>
-                                        <property name="valign">center</property>
-                                        <property name="label">0:00</property>
-                                        <property name="width-chars">5</property>
-                                        <style>
-                                            <class name="caption" />
-                                            <class name="dim-label" />
-                                            <class name="numeric" />
-                                        </style>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkScale" id="seek_scale">
-                                        <property name="can_focus">False</property>
                                         <property name="valign">center</property>
                                         <property name="hexpand">true</property>
-                                        <property name="width-request">120</property>
-                                        <property name="adjustment">seek_adjustment</property>
-                                        <signal name="change-value" handler="seek_scale_cb" swapped="true" />
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkLabel" id="duration_label">
-                                        <property name="halign">fill</property>
-                                        <property name="valign">center</property>
-                                        <property name="label">0:00</property>
-                                        <property name="width-chars">5</property>
+                                        <property name="orientation">horizontal</property>
+                                        <property name="spacing">6</property>
                                         <style>
-                                            <class name="caption" />
-                                            <class name="dim-label" />
-                                            <class name="numeric" />
+                                            <class name="player-seek" />
                                         </style>
+                                        <child>
+                                            <object class="GtkLabel" id="progress_time_label">
+                                                <property name="halign">fill</property>
+                                                <property name="valign">center</property>
+                                                <property name="label">0:00</property>
+                                                <property name="width-chars">5</property>
+                                                <style>
+                                                    <class name="caption" />
+                                                    <class name="dim-label" />
+                                                    <class name="numeric" />
+                                                </style>
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkScale" id="seek_scale">
+                                                <property name="can_focus">False</property>
+                                                <property name="valign">center</property>
+                                                <property name="hexpand">true</property>
+                                                <property name="width-request">200</property>
+                                                <property name="adjustment">seek_adjustment</property>
+                                                <signal name="change-value" handler="seek_scale_cb" swapped="true" />
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkLabel" id="duration_label">
+                                                <property name="halign">fill</property>
+                                                <property name="valign">center</property>
+                                                <property name="label">0:00</property>
+                                                <property name="width-chars">5</property>
+                                                <style>
+                                                    <class name="caption" />
+                                                    <class name="dim-label" />
+                                                    <class name="numeric" />
+                                                </style>
+                                            </object>
+                                        </child>
                                     </object>
                                 </child>
                             </object>
