@@ -339,6 +339,15 @@ impl NeteaseCloudMusicGtk4Window {
             retranslator.retranslate_widget(page);
         }
 
+        // Only the active login sub-page stays parented inside the user
+        // popover; walk all three so the inactive ones are not left behind in
+        // the old language.
+        if let Some(user_menus) = imp.user_menus.get() {
+            retranslator.retranslate_widget(&user_menus.qrbox);
+            retranslator.retranslate_widget(&user_menus.phonebox);
+            retranslator.retranslate_widget(&user_menus.userbox);
+        }
+
         imp.tray_handle.borrow().retranslate(retranslator);
     }
 

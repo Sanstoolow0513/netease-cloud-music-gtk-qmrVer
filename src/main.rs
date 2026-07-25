@@ -36,12 +36,11 @@ fn main() {
     // Resolve platform-specific runtime data before native libraries initialize.
     let runtime = platform::initialize_runtime().expect("Unable to initialize runtime paths");
 
-    // Initialize gstreamer
-    gstreamer::init().expect("Error initializing gstreamer");
-
-    // Initialize paths
-    path::init().expect("Unable to create paths.");
     // Apply display language from GSettings before gettext binds the domain.
+    //
+    // This whole block must run before `gstreamer::init`: GLib/GStreamer NLS
+    // setup snapshots libintl's internal locale state, so a domain bound
+    // afterwards can stay stuck on the pre-init locale (on Windows: English).
     i18n::init(&runtime.locale_dir);
     i18n::apply_from_settings();
     // Set up gettext translations
@@ -49,6 +48,12 @@ fn main() {
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8")
         .expect("Unable to set the text domain encoding");
     textdomain(GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
+
+    // Initialize gstreamer
+    gstreamer::init().expect("Error initializing gstreamer");
+
+    // Initialize paths
+    path::init().expect("Unable to create paths.");
 
     // Load resources
     let resources = gio::Resource::load(&runtime.resource_file).expect("Could not load resources");

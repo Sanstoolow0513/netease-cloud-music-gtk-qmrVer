@@ -9,6 +9,7 @@ use gettextrs::{bind_textdomain_codeset, bindtextdomain, gettext, pgettext};
 use gtk::gio::{self, prelude::*};
 use gtk::{glib, prelude::*};
 use once_cell::sync::{Lazy, OnceCell};
+use regex::Regex;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -62,12 +63,25 @@ pub fn init(locale_dir: impl Into<PathBuf>) {
 /// GTK worker threads exist (same env-var safety window as
 /// `platform::initialize_runtime`).
 ///
-/// On Unix we also call `setlocale(LC_ALL, "")` so libc and gettext agree.
-/// On Windows, gettext-rs `setlocale` can abort (MSVC CRT vs libintl); GNU
-/// gettext still honors `LANGUAGE` without it.
+/// GNU gettext only honors `LANGUAGE` once localization is enabled, i.e. the
+/// locale is not "C". On Unix the desktop session enables it; on Windows the
+/// CRT starts in the "C" locale, so without `setlocale(LC_ALL, "")` every
+/// string silently stays English.
 pub fn apply_ui_language(id: &str) {
     set_language_env(id);
+    enable_locale();
+}
 
+/// Enable a non-"C" locale so GNU gettext honors `LANGUAGE`.
+///
+/// On Windows this goes through the C library directly: gettext-rs
+/// `setlocale` resolves to libintl's own override, which aborts the process
+/// (MSVC CRT vs libintl).
+fn enable_locale() {
+    #[cfg(windows)]
+    unsafe {
+        libc::setlocale(libc::LC_ALL, c"".as_ptr());
+    }
     #[cfg(not(windows))]
     {
         use gettextrs::{LocaleCategory, setlocale};
@@ -95,38 +109,61 @@ pub fn switch_ui_language(id: &str) -> Retranslator {
     reload_catalog();
 
     let mut map: HashMap<String, String> = HashMap::with_capacity(entries.len());
+    let mut patterns: Vec<PlaceholderPattern> = Vec::new();
     for (entry, old) in entries.iter().zip(previous) {
         if old.is_empty() {
             continue;
         }
         let new = entry.translate();
-        if new != old {
+        if new == old {
+            continue;
+        }
+        match PlaceholderPattern::new(&old, &new) {
+            // Rendered placeholder text (`12 首歌曲`) never equals the catalog
+            // translation (`{num} 首歌曲`), so it goes to the pattern list.
+            Some(pattern) => patterns.push(pattern),
             // First entry wins so that ambiguous translations stay deterministic.
-            map.entry(old).or_insert(new);
+            None => {
+                map.entry(old).or_insert(new);
+            }
         }
     }
 
-    Retranslator { map }
+    Retranslator { map, patterns }
 }
 
 /// Rewrites already-built widgets from one language to another.
 pub struct Retranslator {
     map: HashMap<String, String>,
+    patterns: Vec<PlaceholderPattern>,
 }
 
 impl Retranslator {
     pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
+        self.map.is_empty() && self.patterns.is_empty()
     }
 
-    pub fn translate(&self, current: &str) -> Option<&str> {
-        self.map.get(current).map(String::as_str)
+    pub fn translate(&self, current: &str) -> Option<String> {
+        if let Some(exact) = self.map.get(current) {
+            return Some(exact.clone());
+        }
+        // A label may combine several rendered placeholders (`12 首歌曲, 34
+        // 收藏`), so every pattern gets a pass over the running text.
+        let mut text = current.to_string();
+        let mut matched = false;
+        for pattern in &self.patterns {
+            if let Some(out) = pattern.translate(&text) {
+                text = out;
+                matched = true;
+            }
+        }
+        matched.then_some(text)
     }
 
     /// Retranslate `widget` and its whole subtree, including stack page titles
     /// and attached popovers.
     pub fn retranslate_widget(&self, widget: &impl IsA<gtk::Widget>) {
-        if self.map.is_empty() {
+        if self.is_empty() {
             return;
         }
         self.walk(widget.as_ref());
@@ -219,6 +256,75 @@ impl Retranslator {
     }
 }
 
+/// A translation carrying `{name}` placeholders (see `utils::gettext_f`).
+///
+/// Widgets show the rendered text (`12 首歌曲`), which never equals the
+/// catalog translation (`{num} 首歌曲`), so the exact map cannot reach them.
+struct PlaceholderPattern {
+    regex: Regex,
+    /// Capture group `v{i}` holds the rendered value of placeholder `vars[i]`.
+    vars: Vec<String>,
+    template: String,
+}
+
+impl PlaceholderPattern {
+    /// Compile `old` into a matcher: `{name}` runs become non-greedy capture
+    /// groups, everything else stays literal. `None` when there is no
+    /// placeholder to capture.
+    fn new(old: &str, new: &str) -> Option<Self> {
+        let mut pattern = String::new();
+        let mut vars = Vec::new();
+        let mut rest = old;
+        while let Some(start) = rest.find('{') {
+            let Some(end) = rest[start..].find('}').map(|offset| start + offset) else {
+                break;
+            };
+            let name = &rest[start + 1..end];
+            let is_placeholder = !name.is_empty()
+                && name
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_');
+            if is_placeholder {
+                pattern.push_str(&regex::escape(&rest[..start]));
+                pattern.push_str(&format!("(?P<v{}>.*?)", vars.len()));
+                vars.push(name.to_string());
+            } else {
+                // Literal braces, kept as plain text.
+                pattern.push_str(&regex::escape(&rest[..end + 1]));
+            }
+            rest = &rest[end + 1..];
+        }
+        if vars.is_empty() {
+            return None;
+        }
+        pattern.push_str(&regex::escape(rest));
+        Some(Self {
+            regex: Regex::new(&pattern).ok()?,
+            vars,
+            template: new.to_string(),
+        })
+    }
+
+    /// Render every match in `text` from `template`, substituting the captured
+    /// placeholder values. `None` when nothing matched.
+    fn translate(&self, text: &str) -> Option<String> {
+        let mut matched = false;
+        let out = self.regex.replace_all(text, |captures: &regex::Captures| {
+            matched = true;
+            let mut rendered = self.template.clone();
+            for (index, name) in self.vars.iter().enumerate() {
+                let value = captures
+                    .name(&format!("v{index}"))
+                    .map(|capture| capture.as_str())
+                    .unwrap_or_default();
+                rendered = rendered.replace(&format!("{{{name}}}"), value);
+            }
+            rendered
+        });
+        matched.then(|| out.into_owned())
+    }
+}
+
 fn set_language_env(id: &str) {
     // SAFETY: called from the main thread. At startup no worker thread exists
     // yet; when switching at runtime other threads may read the environment
@@ -233,7 +339,29 @@ fn set_language_env(id: &str) {
             None => unsafe { std::env::remove_var("LANGUAGE") },
         },
     }
+    sync_crt_language_env();
 }
+
+/// Mirror the Win32 `LANGUAGE` value into the CRT environment.
+///
+/// Rust's `std::env::set_var` only updates the Win32 environment block, but
+/// libintl resolves `LANGUAGE` through the CRT's own copy, so without this
+/// the override is invisible to gettext on Windows.
+#[cfg(windows)]
+fn sync_crt_language_env() {
+    match std::env::var("LANGUAGE") {
+        Ok(value) => unsafe {
+            let value = std::ffi::CString::new(value).unwrap_or_default();
+            libc::putenv_s(c"LANGUAGE".as_ptr(), value.as_ptr());
+        },
+        Err(_) => unsafe {
+            libc::putenv_s(c"LANGUAGE".as_ptr(), c"".as_ptr());
+        },
+    }
+}
+
+#[cfg(not(windows))]
+fn sync_crt_language_env() {}
 
 /// Force gettext to re-resolve the catalog for the current `LANGUAGE`.
 ///
@@ -447,6 +575,69 @@ msgstr "重试"
             entries
                 .iter()
                 .any(|entry| entry.context.as_deref() == Some("shortcut window"))
+        );
+    }
+
+    fn retranslator_for(old: &str, new: &str) -> Retranslator {
+        Retranslator {
+            map: HashMap::new(),
+            patterns: vec![PlaceholderPattern::new(old, new).unwrap()],
+        }
+    }
+
+    #[test]
+    fn placeholder_pattern_renders_zh_to_en() {
+        let retranslator = retranslator_for("{num} 首歌曲", "{num} songs");
+        assert_eq!(
+            retranslator.translate("12 首歌曲").as_deref(),
+            Some("12 songs")
+        );
+    }
+
+    #[test]
+    fn placeholder_pattern_renders_en_to_zh() {
+        let retranslator = retranslator_for("{num} songs", "{num} 首歌曲");
+        assert_eq!(
+            retranslator.translate("12 songs").as_deref(),
+            Some("12 首歌曲")
+        );
+    }
+
+    #[test]
+    fn placeholder_patterns_cover_combined_labels() {
+        let retranslator = Retranslator {
+            map: HashMap::new(),
+            patterns: vec![
+                PlaceholderPattern::new("{num} 首歌曲", "{num} songs").unwrap(),
+                PlaceholderPattern::new("{num} 收藏", "{num} favs").unwrap(),
+            ],
+        };
+        assert_eq!(
+            retranslator.translate("12 首歌曲, 34 收藏").as_deref(),
+            Some("12 songs, 34 favs")
+        );
+    }
+
+    #[test]
+    fn literal_braces_are_not_placeholders() {
+        assert!(PlaceholderPattern::new("use {} here", "benutze {} hier").is_none());
+    }
+
+    #[test]
+    fn non_matching_text_is_untouched() {
+        let retranslator = retranslator_for("{num} 首歌曲", "{num} songs");
+        assert_eq!(retranslator.translate("随机播放"), None);
+    }
+
+    #[test]
+    fn exact_match_wins_over_patterns() {
+        let mut retranslator = retranslator_for("{num} 首歌曲", "{num} songs");
+        retranslator
+            .map
+            .insert("12 首歌曲".to_string(), "twelve songs".to_string());
+        assert_eq!(
+            retranslator.translate("12 首歌曲").as_deref(),
+            Some("twelve songs")
         );
     }
 }
