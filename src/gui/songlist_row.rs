@@ -76,7 +76,9 @@ impl SonglistRow {
 
     pub fn set_album_button_visible(&self, visible: bool) {
         let imp = self.imp();
-        imp.album_button.set_visible(visible);
+        imp.album_button_allowed.set(visible);
+        imp.album_button
+            .set_visible(visible && !imp.dual_compact.get());
     }
 
     pub fn set_remove_button_visible(&self, visible: bool) {
@@ -86,8 +88,27 @@ impl SonglistRow {
 
     pub fn set_my_page_preview_mode(&self) {
         self.imp().album_label.set_visible(false);
+        if let Some(parent) = self.imp().album_label.parent() {
+            parent.set_visible(false);
+        }
         self.set_album_button_visible(false);
         self.set_remove_button_visible(false);
+    }
+
+    /// 双列布局下隐藏专辑列，收紧歌手列宽度，保留喜欢按钮。
+    pub fn set_dual_column_compact(&self, compact: bool) {
+        let imp = self.imp();
+        imp.dual_compact.set(compact);
+        if let Some(parent) = imp.album_label.parent() {
+            parent.set_visible(!compact);
+        } else {
+            imp.album_label.set_visible(!compact);
+        }
+        imp.album_button
+            .set_visible(!compact && imp.album_button_allowed.get());
+        if let Some(parent) = imp.artist_label.parent() {
+            parent.set_width_request(if compact { 100 } else { 132 });
+        }
     }
 
     fn set_name(&self, label: &str) {
@@ -199,6 +220,8 @@ mod imp {
 
         pub like: Cell<bool>,
         pub not_ignore_grey: Cell<bool>,
+        pub album_button_allowed: Cell<bool>,
+        pub dual_compact: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -221,6 +244,8 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             let obj = self.obj();
+
+            self.album_button_allowed.set(true);
 
             obj.bind_property("like", &self.like_button.get(), "icon_name")
                 .transform_to(|_, v: bool| {

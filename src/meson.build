@@ -55,6 +55,7 @@ rust_sources = files(
   'gui/system_tray_stub.rs',
   'gui/theme_selector.rs',
   'gui/toplist.rs',
+  'gui/typography.rs',
   'gui/user_menus.rs',
 )
 

@@ -6,7 +6,7 @@
 use adw::subclass::prelude::BinImpl;
 use async_channel::Sender;
 use glib::{ParamSpec, Value, closure_local};
-use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
+use gtk::{CompositeTemplate, gio, glib, prelude::*, subclass::prelude::*, *};
 use log::warn;
 use ncm_api::SongInfo;
 use once_cell::sync::Lazy;
@@ -16,7 +16,9 @@ use std::rc::Rc;
 
 use crate::{
     application::Action,
-    gui::{songlist_row::SonglistRow, songlist_view::SongListView},
+    gui::{
+        songlist_row::SonglistRow, songlist_view::SongListView, typography,
+    },
 };
 
 glib::wrapper! {
@@ -179,6 +181,45 @@ impl PlayListLyricsPage {
     pub fn switch_row(&self, index: i32) {
         self.imp().songs_list.mark_new_row_playing(index, false);
     }
+
+    pub fn apply_lyrics_font_from_settings(&self) {
+        let settings = gio::Settings::new(crate::APP_ID);
+        let highlight = self.imp().highlight_text_tag.get();
+        highlight.set_size(typography::lyrics_highlight_pango_size(&settings));
+        match typography::lyrics_font_family_for_tag(&settings) {
+            Some(family) => highlight.set_family(Some(family)),
+            None => highlight.set_family(None::<&str>),
+        }
+    }
+
+    fn setup_typography(&self) {
+        self.apply_lyrics_font_from_settings();
+        let settings = gio::Settings::new(crate::APP_ID);
+        let this = self.clone();
+        settings.connect_changed(
+            Some("lyrics-font-scale"),
+            glib::clone!(
+                #[weak]
+                this,
+                move |_, _| {
+                    this.apply_lyrics_font_from_settings();
+                }
+            ),
+        );
+        let this = self.clone();
+        settings.connect_changed(
+            Some("ui-font-preset"),
+            glib::clone!(
+                #[weak]
+                this,
+                move |_, _| {
+                    this.apply_lyrics_font_from_settings();
+                }
+            ),
+        );
+        // Keep Settings alive for the lifetime of the page.
+        self.imp().typography_settings.set(settings).ok();
+    }
 }
 
 impl Default for PlayListLyricsPage {
@@ -212,6 +253,7 @@ mod imp {
         pub playlist: Rc<RefCell<Vec<SongInfo>>>,
         pub sender: OnceCell<Sender<Action>>,
         pub current_lyrics: Arc<RwLock<Vec<(u64, String)>>>,
+        pub typography_settings: OnceCell<gio::Settings>,
     }
 
     #[glib::object_subclass]
@@ -231,8 +273,9 @@ mod imp {
 
     impl ObjectImpl for PlayListLyricsPage {
         fn constructed(&self) {
-            let _obj = self.obj();
+            let obj = self.obj();
             self.parent_constructed();
+            obj.setup_typography();
         }
 
         fn properties() -> &'static [ParamSpec] {

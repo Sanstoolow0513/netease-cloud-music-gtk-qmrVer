@@ -22,6 +22,7 @@ mod system_tray;
 mod system_tray_stub;
 mod theme_selector;
 mod toplist;
+pub mod typography;
 mod user_menus;
 
 pub use discover::*;

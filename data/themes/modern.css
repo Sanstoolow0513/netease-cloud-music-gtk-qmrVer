@@ -11,11 +11,27 @@
 
 /* ===== 歌曲列表行 ===== */
 
-/* 行高由原模板写死 59px 改为 padding 控制，提高列表密度 */
+/* 无界列表容器：去掉 Adwaita boxed-list 整表卡片底与行间分隔线 */
+.song-list {
+    background-color: transparent;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.song-list > row {
+    border: none;
+    box-shadow: none;
+    outline: none;
+}
+
+/* 紧凑单行表：歌名弹性占位，歌手/专辑固定窄列贴右，避免等分拉伸造成割裂 */
 .song_row {
-    padding-top: 6px;
-    padding-bottom: 6px;
-    border-radius: 8px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border-radius: 6px;
+    border: none;
+    box-shadow: none;
 }
 
 .song_row:hover {
@@ -31,13 +47,36 @@
     color: @accent_bg_color;
 }
 
-/* 无版权置灰（从 discover.css 迁入，行为不变） */
-.song_row label {
-    opacity: 0.5;
+/* 覆盖 Adwaita/GTK：禁止用 opacity 压暗文字（Windows 半透明合成易发糊） */
+.dim-label,
+label.dim-label,
+.navigation-sidebar row .subtitle {
+    opacity: 1;
+    color: alpha(@theme_fg_color, 0.55);
 }
 
-.song_row.activatable label {
-    opacity: 1;
+/* 无版权置灰：颜色变淡，不用 opacity */
+.song_row label {
+    color: alpha(@theme_fg_color, 0.5);
+}
+
+/* 有版权：歌名主信息；歌手/专辑次级；时长更弱 */
+.song_row.activatable .song-title {
+    color: @theme_fg_color;
+    font-weight: 600;
+    /* font-size: typography CssProvider (list-title-font-scale) */
+}
+
+.song_row.activatable .song-meta {
+    color: alpha(@theme_fg_color, 0.7);
+    font-weight: 400;
+    /* font-size: typography CssProvider (list-meta-font-scale) */
+}
+
+.song_row.activatable .song-duration {
+    color: alpha(@theme_fg_color, 0.55);
+    font-weight: 400;
+    /* font-size: typography CssProvider (list-meta-font-scale) */
 }
 
 /* 行尾操作按钮：默认隐藏，悬停淡入 */
@@ -157,9 +196,11 @@ button.hover-button:hover {
     background-color: alpha(white, 0.5);
 }
 
+/* 歌单卡片标题字号/行高：typography CssProvider（.songlist-card-title，整数 px） */
+
 .label-album-grid-artist {
-    font-size: smaller;
-    color: @theme_fg_color;
+    /* font-size: typography CssProvider (list-meta-font-scale) */
+    color: alpha(@theme_fg_color, 0.7);
 }
 
 /* 歌单网格页（搜索歌单页）间距，值已归一到间距刻度 */
