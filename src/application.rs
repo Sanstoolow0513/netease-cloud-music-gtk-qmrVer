@@ -1625,6 +1625,7 @@ impl NeteaseCloudMusicGtk4Application {
     fn apply_ui_language(&self, id: &str) {
         let retranslator = crate::i18n::switch_ui_language(id);
         if retranslator.is_empty() {
+            debug!("language switch to '{id}' produced no differences; already-built text left unchanged");
             return;
         }
         glib::set_application_name(&gettext(crate::APP_NAME));

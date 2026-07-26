@@ -166,10 +166,6 @@ msgstr "通用"
 msgid "Header Pages"
 msgstr "顶栏页面"
 
-#: data/gtk/preferences.ui:87
-msgid "Takes effect after restart"
-msgstr "重启后生效"
-
 #: data/gtk/preferences.ui:92
 msgid "Font and Size"
 msgstr "字体与字号"
