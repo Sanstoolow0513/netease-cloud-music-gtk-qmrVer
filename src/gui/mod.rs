@@ -20,6 +20,7 @@ mod songlist_view;
 mod system_tray;
 #[cfg(not(target_os = "linux"))]
 mod system_tray_stub;
+pub mod theme;
 mod theme_selector;
 mod toplist;
 pub mod typography;

@@ -151,6 +151,7 @@ mod imp {
                 }
             }
             crate::gui::typography::init_and_apply(obj.settings());
+            crate::gui::theme::init_and_apply(obj.settings());
             obj.bind_settings();
 
             // 窗口关闭时保存播放列表并清理系统托盘

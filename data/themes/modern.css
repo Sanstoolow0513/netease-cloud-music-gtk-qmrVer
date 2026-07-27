@@ -8,14 +8,24 @@
  *
  * 配色约定（Libadwaita 语义色，禁止 @theme_* 兼容别名与硬编码色值）：
  *   主文   — @window_fg_color
- *   次文   — color-mix(@window_fg_color, @window_bg_color) 实色，避免 alpha 叠乘发灰
- *   弱文   — 同上，更低混合比例（dim-label / 时长）
+ *   次文   — @text_secondary token（实色混合，避免 alpha 叠乘发灰）
+ *   弱文   — @text_dim token（dim-label / 时长）
+ *   置灰   — @text_disabled token（无版权）
  *   强调文 — @accent_color（适合前景；勿用 @accent_bg_color 作文字色）
  *   强调面 — @accent_bg_color + @accent_fg_color（按钮/徽标底）
  *   遮罩   — @shade_color / @borders；主题无关场景可用 white/black
  *
  * 次文不用 opacity 压暗（Windows 半透明合成易发糊）。
+ *
+ * 主题机制：theme-*.css 以更高优先级 provider 覆盖 @define-color
+ * （accent 三件套）；下列层级 token 同样可被主题按需覆盖。
  */
+
+/* 文本/填充层级 token（color-mix 实色，主题无关） */
+@define-color text_secondary color-mix(in srgb, @window_fg_color 72%, @window_bg_color);
+@define-color text_dim color-mix(in srgb, @window_fg_color 58%, @window_bg_color);
+@define-color text_disabled color-mix(in srgb, @window_fg_color 42%, @window_bg_color);
+@define-color fill_active color-mix(in srgb, @window_fg_color 16%, transparent);
 
 /* ===== 歌曲列表行 ===== */
 
@@ -60,12 +70,12 @@
 label.dim-label,
 .navigation-sidebar row .subtitle {
     opacity: 1;
-    color: color-mix(in srgb, @window_fg_color 58%, @window_bg_color);
+    color: @text_dim;
 }
 
 /* 无版权置灰：颜色变淡，不用 opacity */
 .song_row label {
-    color: color-mix(in srgb, @window_fg_color 42%, @window_bg_color);
+    color: @text_disabled;
 }
 
 /* 有版权：歌名主信息；歌手/专辑次级；时长更弱 */
@@ -76,13 +86,13 @@ label.dim-label,
 }
 
 .song_row.activatable .song-meta {
-    color: color-mix(in srgb, @window_fg_color 72%, @window_bg_color);
+    color: @text_secondary;
     font-weight: 400;
     /* font-size: typography CssProvider (list-meta-font-scale) */
 }
 
 .song_row.activatable .song-duration {
-    color: color-mix(in srgb, @window_fg_color 58%, @window_bg_color);
+    color: @text_dim;
     font-weight: 400;
     /* font-size: typography CssProvider (list-meta-font-scale) */
 }
@@ -174,7 +184,7 @@ flowboxchild:hover {
 }
 
 flowboxchild:active {
-    background-color: color-mix(in srgb, @window_fg_color 16%, transparent);
+    background-color: @fill_active;
 }
 
 /* ===== 页面骨架（三主页面统一规范） ===== */
@@ -266,7 +276,7 @@ button.hover-button:hover {
 
 .label-album-grid-artist {
     /* font-size: typography CssProvider (list-meta-font-scale) */
-    color: color-mix(in srgb, @window_fg_color 72%, @window_bg_color);
+    color: @text_secondary;
 }
 
 /* 歌单网格页（搜索歌单页）间距，值已归一到间距刻度 */
