@@ -108,6 +108,7 @@ src/
 ├── audio/
 │   ├── mod.rs       # 按 target 选用 mpris 或 mpris_stub
 │   ├── playlist.rs  # 播放列表与 LoopsState（不依赖 mpris_server 类型）
+│   ├── output_device.rs # 音频输出设备枚举与 sink 查找（gst DeviceMonitor，全平台）
 │   ├── mpris.rs     # Linux：MprisController（MPRIS2）
 │   └── mpris_stub.rs # 非 Linux：no-op
 └── gui/             # 各页面/控件，均为 CompositeTemplate 子类 + data/gtk/*.ui
@@ -150,7 +151,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，380→220）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。**禁止把 `AdwBreakpointBin` 放进 `GtkScrolledWindow` 内**（高度会被钉在 `height-request` 上，列表无法滚动）；`SongListView` 现役结构是 bin 包在滚动容器外。
 - **歌曲列表 `SongListView`**：共享组件（榜单 / 歌单详情 / 搜索歌曲 / 播放列表+歌词）。宽屏（组件内断点约 `max-width: 900sp`）默认双列交错排布（左偶右奇），窄屏收回单列；`max-columns=1` 可强制单列（播放列表+歌词页已如此）。双列时行进入紧凑模式（隐藏专辑列）。榜单页右侧**不再**套列表外层 `AdwClamp`——用双列铺满内容区；**发现页 / 我的页也无页面级 clamp**，内容随窗口铺满（仅保留 `.page-content` 左右边距）；发现页 Banner 不再套 980 Clamp，随页宽铺满并由断点切换固定高度。勿把 `docs/superpowers/` 里「三主页 1280 居中 / 榜单列表 clamp 1280 / 单列全宽」的旧结论当现役合同。
 - **持久化**：
-  - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
+  - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、音频输出设备（`audio-device`，空串=系统默认）、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
   - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`；Windows 上 `glib::user_cache_dir()` 指向 `AppData\Local\Microsoft\Windows\INetCache`，排查图片缓存时注意不是 `AppData\Local`）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 - **快捷键**：`<primary>f`/`/` 搜索、`<primary>BackSpace`/`Escape` 返回、`F11` 全屏切换（win.fullscreen，注册于 window.rs）、`<primary>q` 退出。
 - **UI 可视化开发回路**：日常用入库的 `make dev` / `build-aux/windows/dev.ps1`（构建并启动带 DLL 的便携包）。额外截图/注入脚本可放在不入库的 `_windows/dev/`（`Start-App.ps1`、`Capture-AppWindow.ps1`、`Send-Input.ps1`、`Sync-BuildToDist.ps1`）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。

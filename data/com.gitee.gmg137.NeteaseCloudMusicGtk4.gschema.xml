@@ -58,6 +58,10 @@
             <default>1.0</default>
             <summary>Volume</summary>
         </key>
+        <key name="audio-device" type="s">
+            <default>''</default>
+            <summary>Audio output device id, empty = system default</summary>
+        </key>
         <key name="not-ignore-grey" type="b">
             <default>false</default>
             <summary>Always try to play grey song</summary>

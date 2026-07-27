@@ -271,6 +271,18 @@ msgstr "音乐"
 msgid "Sound quality"
 msgstr "音质"
 
+#: data/gtk/preferences.ui:243
+msgid "Audio output device"
+msgstr "音频输出设备"
+
+#: data/gtk/preferences.ui:244
+msgid "System default or a specific output device"
+msgstr "跟随系统默认或指定输出设备"
+
+#: src/gui/preferences.rs
+msgid "Follow system default"
+msgstr "跟随系统默认"
+
 #: data/gtk/preferences.ui:246
 msgid "Requires desktop-lyrics or osdlyrics"
 msgstr "依赖于 desktop-lyrics 或 osdlyrics"

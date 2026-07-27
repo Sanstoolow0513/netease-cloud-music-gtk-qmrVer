@@ -250,6 +250,12 @@
                             </object>
                         </child>
                         <child>
+                            <object class="AdwComboRow" id="audio_device">
+                                <property name="title" translatable="yes">Audio output device</property>
+                                <property name="subtitle" translatable="yes">System default or a specific output device</property>
+                            </object>
+                        </child>
+                        <child>
                             <object class="AdwActionRow" id="desktop_lyrics_row">
                                 <property name="title" translatable="yes">Desktop Lyrics</property>
                                 <property name="subtitle" translatable="yes">Requires desktop-lyrics or osdlyrics</property>

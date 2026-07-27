@@ -8,6 +8,7 @@
 mod mpris;
 #[cfg(not(target_os = "linux"))]
 mod mpris_stub;
+pub mod output_device;
 mod playlist;
 
 #[cfg(target_os = "linux")]
