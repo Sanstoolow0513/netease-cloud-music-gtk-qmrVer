@@ -224,6 +224,11 @@ impl PlayListLyricsPage {
     /// 歌词标签颜色跟随主题：高亮行取 @accent_color，已唱行取
     /// @text_dim（modern.css 的层级 token，随皮肤/明暗自动适配）。
     /// lookup 失败时保留 .ui 中的回退色值。
+    // GTK 4.10 弃用了 style_context()/lookup_color() 且无替代 API
+    // （gtk_widget_get_color() 只能取控件自身前景色，取不到命名色）。
+    // 两个颜色名来源有保证：@accent_color 由 libadwaita 内置样式提供，
+    // @text_dim 由 modern.css 定义且启动时无条件加载。
+    #[allow(deprecated)]
     pub fn sync_lyrics_tag_colors(&self) {
         let imp = self.imp();
         let context = imp.lyrics_text_view.style_context();

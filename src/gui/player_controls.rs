@@ -1036,7 +1036,7 @@ mod imp {
         #[template_child]
         pub duration_label: TemplateChild<Label>,
         #[template_child]
-        pub volume_button: TemplateChild<VolumeButton>,
+        pub volume_button: TemplateChild<ScaleButton>,
 
         #[template_child]
         pub repeat_menu_button: TemplateChild<MenuButton>,
