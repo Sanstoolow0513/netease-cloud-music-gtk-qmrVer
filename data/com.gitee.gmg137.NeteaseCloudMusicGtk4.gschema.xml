@@ -10,6 +10,16 @@
             <default>'system'</default>
             <summary>Settings theme</summary>
         </key>
+        <key name="ui-theme" type="s">
+            <choices>
+                <choice value='default' />
+                <choice value='netease-red' />
+                <choice value='ocean' />
+                <choice value='forest' />
+            </choices>
+            <default>'default'</default>
+            <summary>UI color theme</summary>
+        </key>
         <key name="repeat-variant" type="s">
             <choices>
                 <choice value='none' />

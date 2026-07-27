@@ -19,6 +19,9 @@
         <file compressed="true">gtk/playlist-lyrics-page.ui</file>
         <file compressed="true">themes/themesselector.css</file>
         <file compressed="true">themes/modern.css</file>
+        <file compressed="true">themes/theme-netease-red.css</file>
+        <file compressed="true">themes/theme-ocean.css</file>
+        <file compressed="true">themes/theme-forest.css</file>
     </gresource>
     <gresource prefix="/com/gitee/gmg137/NeteaseCloudMusicGtk4/icons/scalable/apps/">
         <file preprocess="xml-stripblanks" alias="logo.svg">icons/hicolor/scalable/apps/com.gitee.gmg137.NeteaseCloudMusicGtk4.svg</file>
