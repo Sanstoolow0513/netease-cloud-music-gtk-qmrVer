@@ -17,6 +17,18 @@ use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*, *};
 use once_cell::sync::OnceCell;
 use std::cell::{Cell, RefCell};
 
+/// Ordered style-variant ids; index matches the Style ComboRow.
+const STYLE_VARIANT_IDS: &[&str] = &["system", "light", "dark"];
+
+fn style_variant_label(id: &str) -> String {
+    match id {
+        "system" => gettext("Follow System"),
+        "light" => gettext("Light"),
+        "dark" => gettext("Dark"),
+        _ => id.to_string(),
+    }
+}
+
 glib::wrapper! {
     pub struct NeteaseCloudMusicGtk4Preferences(ObjectSubclass<imp::NeteaseCloudMusicGtk4Preferences>)
         @extends adw::PreferencesDialog, adw::Dialog, Widget,
@@ -110,6 +122,7 @@ impl NeteaseCloudMusicGtk4Preferences {
 
         self.bind_ui_language();
         self.bind_font_preset();
+        self.bind_ui_style();
         self.bind_theme();
         self.bind_font_scale("ui-font-scale", &self.imp().ui_font_scale.get());
         self.bind_font_scale(
@@ -189,6 +202,27 @@ impl NeteaseCloudMusicGtk4Preferences {
                 let idx = combo.selected() as usize;
                 if let Some(id) = THEME_IDS.get(idx) {
                     let _ = settings.set_string("ui-theme", id);
+                }
+            }
+        ));
+    }
+
+    fn bind_ui_style(&self) {
+        self.refresh_ui_style_model();
+
+        let settings = self.settings();
+        self.imp().ui_style.connect_selected_notify(glib::clone!(
+            #[strong]
+            settings,
+            #[weak(rename_to = dialog)]
+            self,
+            move |combo| {
+                if dialog.imp().refreshing_models.get() {
+                    return;
+                }
+                let idx = combo.selected() as usize;
+                if let Some(id) = STYLE_VARIANT_IDS.get(idx) {
+                    let _ = settings.set_string("style-variant", id);
                 }
             }
         ));
@@ -285,6 +319,19 @@ impl NeteaseCloudMusicGtk4Preferences {
         Self::set_combo_items(&self.imp().ui_theme.get(), &labels, selected as u32);
     }
 
+    fn refresh_ui_style_model(&self) {
+        let variant = self.settings().string("style-variant");
+        let selected = STYLE_VARIANT_IDS
+            .iter()
+            .position(|&id| id == variant.as_str())
+            .unwrap_or(0);
+        let labels: Vec<String> = STYLE_VARIANT_IDS
+            .iter()
+            .map(|id| style_variant_label(id))
+            .collect();
+        Self::set_combo_items(&self.imp().ui_style.get(), &labels, selected as u32);
+    }
+
     fn refresh_cache_clear_model(&self) {
         // Keep the stored value: swapping the model resets `selected`, which is
         // bound to GSettings.
@@ -307,6 +354,7 @@ impl NeteaseCloudMusicGtk4Preferences {
         self.imp().refreshing_models.set(true);
         self.refresh_ui_language_model();
         self.refresh_font_preset_model();
+        self.refresh_ui_style_model();
         self.refresh_theme_model();
         self.refresh_cache_clear_model();
         self.refresh_audio_device_model();
@@ -463,6 +511,8 @@ mod imp {
         pub pages_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
         pub font_preset: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub ui_style: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub ui_theme: TemplateChild<adw::ComboRow>,
         #[template_child]

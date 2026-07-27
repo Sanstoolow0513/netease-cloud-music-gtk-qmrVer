@@ -90,6 +90,12 @@
                         <property name="description" translatable="yes">Takes effect immediately</property>
                         <child>
                             <!-- Items are built in preferences.rs so they can be rebuilt on a language switch. -->
+                            <object class="AdwComboRow" id="ui_style">
+                                <property name="title" translatable="yes">Style</property>
+                            </object>
+                        </child>
+                        <child>
+                            <!-- Items are built in preferences.rs so they can be rebuilt on a language switch. -->
                             <object class="AdwComboRow" id="ui_theme">
                                 <property name="title" translatable="yes">Color theme</property>
                             </object>

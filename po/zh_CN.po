@@ -728,6 +728,22 @@ msgstr "主题"
 msgid "Color theme"
 msgstr "配色主题"
 
+#: data/gtk/preferences.ui
+msgid "Style"
+msgstr "样式"
+
+#: src/gui/preferences.rs
+msgid "Follow System"
+msgstr "跟随系统"
+
+#: src/gui/preferences.rs
+msgid "Light"
+msgstr "明亮"
+
+#: src/gui/preferences.rs
+msgid "Dark"
+msgstr "暗黑"
+
 #: src/gui/theme.rs
 msgid "Default"
 msgstr "默认"

@@ -21,7 +21,6 @@ mod system_tray;
 #[cfg(not(target_os = "linux"))]
 mod system_tray_stub;
 pub mod theme;
-mod theme_selector;
 mod toplist;
 pub mod typography;
 mod user_menus;
@@ -40,6 +39,5 @@ pub use songlist_page::*;
 pub use system_tray::*;
 #[cfg(not(target_os = "linux"))]
 pub use system_tray_stub::*;
-pub use theme_selector::*;
 pub use toplist::*;
 pub use user_menus::*;

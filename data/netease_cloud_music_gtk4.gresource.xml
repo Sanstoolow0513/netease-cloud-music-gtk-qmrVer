@@ -3,10 +3,8 @@
     <gresource prefix="/com/gitee/gmg137/NeteaseCloudMusicGtk4">
         <file compressed="true">gtk/window.ui</file>
         <file compressed="true">gtk/preferences.ui</file>
-        <file compressed="true">gtk/theme-selector.ui</file>
         <file compressed="true">gtk/discover.ui</file>
         <file compressed="true">gtk/my-page.ui</file>
-        <file compressed="true">gtk/help-overlay.ui</file>
         <file compressed="true">gtk/user-menus.ui</file>
         <file compressed="true">gtk/player-controls.ui</file>
         <file compressed="true">gtk/songlist-page.ui</file>
@@ -17,7 +15,6 @@
         <file compressed="true">gtk/search-songlist-page.ui</file>
         <file compressed="true">gtk/search-singer-page.ui</file>
         <file compressed="true">gtk/playlist-lyrics-page.ui</file>
-        <file compressed="true">themes/themesselector.css</file>
         <file compressed="true">themes/modern.css</file>
         <file compressed="true">themes/theme-netease-red.css</file>
         <file compressed="true">themes/theme-ocean.css</file>

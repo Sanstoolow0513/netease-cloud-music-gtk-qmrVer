@@ -56,8 +56,6 @@ mod imp {
         #[template_child]
         pub search_menu: TemplateChild<MenuButton>,
         #[template_child]
-        pub primary_menu_button: TemplateChild<MenuButton>,
-        #[template_child]
         pub switcher_title: TemplateChild<adw::ViewSwitcher>,
         #[template_child]
         pub label_title: TemplateChild<Label>,
@@ -326,15 +324,6 @@ impl NeteaseCloudMusicGtk4Window {
     pub fn retranslate(&self, retranslator: &crate::i18n::Retranslator) {
         let imp = self.imp();
 
-        // A menu model keeps the strings it was built with, so the popover has
-        // to be rebuilt from a translated copy.
-        let primary_menu_button = imp.primary_menu_button.get();
-        if let Some(model) = primary_menu_button.menu_model() {
-            let model = retranslator.retranslate_menu_model(&model);
-            primary_menu_button.set_menu_model(Some(&model));
-            self.attach_theme_selector();
-        }
-
         // Built once at startup, but only parented while it is on the page stack.
         if let Some(page) = imp.playlist_lyrics_page.get() {
             retranslator.retranslate_widget(page);
@@ -365,10 +354,6 @@ impl NeteaseCloudMusicGtk4Window {
         popover.connect_show(move |_| {
             sender.send_blocking(Action::TryUpdateQrCode).unwrap();
         });
-
-        // 绑定设置与主题
-        let action_style = self.settings().create_action("style-variant");
-        self.add_action(&action_style);
 
         // 绑定搜索按钮和搜索栏
         let search_button = imp.search_button.get();
@@ -486,22 +471,9 @@ impl NeteaseCloudMusicGtk4Window {
         }
     }
 
-    /// The theme selector lives in the primary menu popover as a custom item,
-    /// so it has to be re-attached whenever that popover is rebuilt.
-    fn attach_theme_selector(&self) {
-        let Some(popover) = self.imp().primary_menu_button.popover() else {
-            return;
-        };
-        let Ok(popover) = popover.downcast::<gtk::PopoverMenu>() else {
-            return;
-        };
-        popover.add_child(&crate::gui::ThemeSelector::new(), "theme");
-    }
-
     fn setup_widget(&self) {
         let imp = self.imp();
         let sender = imp.sender.get().unwrap();
-        self.attach_theme_selector();
 
         let user_menus = UserMenus::new(sender.clone());
 
