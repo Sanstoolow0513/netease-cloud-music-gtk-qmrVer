@@ -4,6 +4,7 @@
 // Distributed under terms of the GPL-3.0-or-later license.
 //
 
+use crate::gui::theme::{self, THEME_IDS};
 use crate::gui::typography::{self, FONT_PRESET_IDS};
 use crate::i18n::{self, LANGUAGE_IDS};
 use crate::utils::sanitize_pages_order;
@@ -106,6 +107,7 @@ impl NeteaseCloudMusicGtk4Preferences {
 
         self.bind_ui_language();
         self.bind_font_preset();
+        self.bind_theme();
         self.bind_font_scale("ui-font-scale", &self.imp().ui_font_scale.get());
         self.bind_font_scale(
             "list-title-font-scale",
@@ -168,6 +170,27 @@ impl NeteaseCloudMusicGtk4Preferences {
         ));
     }
 
+    fn bind_theme(&self) {
+        self.refresh_theme_model();
+
+        let settings = self.settings();
+        self.imp().ui_theme.connect_selected_notify(glib::clone!(
+            #[strong]
+            settings,
+            #[weak(rename_to = dialog)]
+            self,
+            move |combo| {
+                if dialog.imp().refreshing_models.get() {
+                    return;
+                }
+                let idx = combo.selected() as usize;
+                if let Some(id) = THEME_IDS.get(idx) {
+                    let _ = settings.set_string("ui-theme", id);
+                }
+            }
+        ));
+    }
+
     fn set_combo_items(combo: &adw::ComboRow, labels: &[String], selected: u32) {
         let model = StringList::new(&labels.iter().map(|s| s.as_str()).collect::<Vec<_>>());
         combo.set_model(Some(&model));
@@ -200,6 +223,16 @@ impl NeteaseCloudMusicGtk4Preferences {
         Self::set_combo_items(&self.imp().font_preset.get(), &labels, selected as u32);
     }
 
+    fn refresh_theme_model(&self) {
+        let theme_id = self.settings().string("ui-theme");
+        let selected = THEME_IDS
+            .iter()
+            .position(|&id| id == theme_id.as_str())
+            .unwrap_or(0);
+        let labels: Vec<String> = THEME_IDS.iter().map(|id| theme::theme_label(id)).collect();
+        Self::set_combo_items(&self.imp().ui_theme.get(), &labels, selected as u32);
+    }
+
     fn refresh_cache_clear_model(&self) {
         // Keep the stored value: swapping the model resets `selected`, which is
         // bound to GSettings.
@@ -222,6 +255,7 @@ impl NeteaseCloudMusicGtk4Preferences {
         self.imp().refreshing_models.set(true);
         self.refresh_ui_language_model();
         self.refresh_font_preset_model();
+        self.refresh_theme_model();
         self.refresh_cache_clear_model();
         self.imp().refreshing_models.set(false);
 
@@ -372,6 +406,8 @@ mod imp {
         pub pages_group: TemplateChild<adw::PreferencesGroup>,
         #[template_child]
         pub font_preset: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub ui_theme: TemplateChild<adw::ComboRow>,
         #[template_child]
         pub ui_font_scale: TemplateChild<Scale>,
         #[template_child]
