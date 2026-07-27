@@ -728,53 +728,45 @@ msgstr "主题"
 msgid "Color theme"
 msgstr "配色主题"
 
-#: data/gtk/preferences.ui
-msgid "Style"
-msgstr "样式"
-
-#: src/gui/preferences.rs
-msgid "Follow System"
-msgstr "跟随系统"
-
-#: src/gui/preferences.rs
-msgid "Light"
-msgstr "明亮"
-
-#: src/gui/preferences.rs
-msgid "Dark"
-msgstr "暗黑"
-
 #: src/gui/theme.rs
 msgid "Default"
 msgstr "默认"
-
-#: src/gui/theme.rs
-msgid "NetEase Red"
-msgstr "网易红"
-
-#: src/gui/theme.rs
-msgid "Ocean"
-msgstr "海洋"
-
-#: src/gui/theme.rs
-msgid "Forest"
-msgstr "森林"
 
 #: src/gui/theme.rs
 msgid "Midnight"
 msgstr "墨黑"
 
 #: src/gui/theme.rs
-msgid "Paper"
-msgstr "素白"
-
-#: src/gui/theme.rs
 msgid "Abyss"
 msgstr "深海"
 
 #: src/gui/theme.rs
+msgid "One Dark"
+msgstr "One Dark"
+
+#: src/gui/theme.rs
+msgid "Nord"
+msgstr "Nord"
+
+#: src/gui/theme.rs
+msgid "Solarized Dark"
+msgstr "Solarized Dark"
+
+#: src/gui/theme.rs
+msgid "Paper"
+msgstr "素白"
+
+#: src/gui/theme.rs
 msgid "Matcha"
 msgstr "抹茶"
+
+#: src/gui/theme.rs
+msgid "GitHub Light"
+msgstr "GitHub Light"
+
+#: src/gui/theme.rs
+msgid "Solarized Light"
+msgstr "Solarized Light"
 
 #~ msgid "{} songs, {} favs"
 #~ msgstr "{} 首歌曲，{} 收藏"

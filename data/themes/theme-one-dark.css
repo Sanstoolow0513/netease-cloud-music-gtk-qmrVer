@@ -1,0 +1,50 @@
+/*
+ * theme-one-dark.css
+ * Copyright (C) 2026 gmg137 <gmg137 AT live.com>
+ *
+ * Distributed under terms of the GPL-3.0-or-later license.
+ *
+ * 完整皮肤「One Dark」：Atom/VSCode 经典深蓝灰底 + 天青 accent。
+ * 约定：完整皮肤覆盖整套语义色板（前景/背景全部显式指定），
+ * 效果自我包含、不随明/暗变体变化；结构样式归 modern.css，
+ * 文本层级 token（@text_secondary 等）由 window 前/背景色自动派生。
+ * 配对规则：accent bg 鲜亮、color 提亮（暗底前景对比）、fg 白；
+ * hover/占位 shade 用白罩（暗肤），borders 用白色低透明。
+ */
+
+/* 窗口与视图 */
+@define-color window_bg_color #282c34;
+@define-color window_fg_color #abb2bf;
+@define-color view_bg_color #21252b;
+@define-color view_fg_color #abb2bf;
+
+/* 顶栏 */
+@define-color headerbar_bg_color #2c313a;
+@define-color headerbar_fg_color #abb2bf;
+@define-color headerbar_border_color alpha(white, 0.08);
+@define-color headerbar_backdrop_color #282c34;
+@define-color headerbar_shade_color alpha(black, 0.36);
+
+/* 卡片 / 弹窗 / 对话框 */
+@define-color card_bg_color alpha(white, 0.06);
+@define-color card_fg_color #abb2bf;
+@define-color popover_bg_color #2c313c;
+@define-color popover_fg_color #abb2bf;
+@define-color dialog_bg_color #282c34;
+@define-color dialog_fg_color #abb2bf;
+
+/* 侧栏（首选项/导航容器） */
+@define-color sidebar_bg_color #282c34;
+@define-color sidebar_fg_color #abb2bf;
+@define-color sidebar_backdrop_color #282c34;
+@define-color sidebar_border_color alpha(white, 0.08);
+@define-color sidebar_shade_color alpha(black, 0.36);
+
+/* 强调色：暗底上 accent_color 提亮保证文字对比 */
+@define-color accent_bg_color #61afef;
+@define-color accent_color #82c3f5;
+@define-color accent_fg_color #ffffff;
+
+/* 遮罩与边框 */
+@define-color shade_color alpha(white, 0.06);
+@define-color borders alpha(white, 0.12);

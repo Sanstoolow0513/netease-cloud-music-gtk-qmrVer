@@ -1,25 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="netease-cloud-music-gtk4">
     <schema id="com.gitee.gmg137.NeteaseCloudMusicGtk4" path="/com/gitee/gmg137/NeteaseCloudMusicGtk4/">
-        <key name="style-variant" type="s">
-            <choices>
-                <choice value='system' />
-                <choice value='light' />
-                <choice value='dark' />
-            </choices>
-            <default>'system'</default>
-            <summary>Settings theme</summary>
-        </key>
         <key name="ui-theme" type="s">
             <choices>
                 <choice value='default' />
-                <choice value='netease-red' />
-                <choice value='ocean' />
-                <choice value='forest' />
                 <choice value='midnight' />
-                <choice value='paper' />
                 <choice value='abyss' />
+                <choice value='one-dark' />
+                <choice value='nord' />
+                <choice value='solarized-dark' />
+                <choice value='paper' />
                 <choice value='matcha' />
+                <choice value='github-light' />
+                <choice value='solarized-light' />
             </choices>
             <default>'default'</default>
             <summary>UI color theme</summary>

@@ -6,7 +6,7 @@ use crate::{
     ncmapi::NcmClient,
     utils::{first_visible_header_page, header_page_visible, sanitize_pages_order},
 };
-use adw::{ColorScheme, StyleManager, Toast};
+use adw::Toast;
 use async_channel::Sender;
 use gettextrs::gettext;
 use gio::{Settings, SimpleAction};
@@ -430,23 +430,6 @@ impl NeteaseCloudMusicGtk4Window {
             let _ = settings.set_boolean("window-maximized", win.is_maximized());
             glib::Propagation::Proceed
         });
-
-        let style = StyleManager::default();
-        self.settings()
-            .bind("style-variant", &style, "color-scheme")
-            .mapping(|themes, _| {
-                let themes = themes
-                    .get::<String>()
-                    .expect("The variant needs to be of type `String`.");
-                let scheme = match themes.as_str() {
-                    "system" => ColorScheme::Default,
-                    "light" => ColorScheme::ForceLight,
-                    "dark" => ColorScheme::ForceDark,
-                    _ => ColorScheme::Default,
-                };
-                Some(scheme.to_value())
-            })
-            .build();
 
         if crate::platform::HAS_SYSTEM_TRAY {
             self.settings()
