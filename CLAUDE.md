@@ -38,7 +38,7 @@ ninja -C _build test
 - **Action 消息总线**：UI 与后端经 `async-channel` 解耦。`src/application.rs` 定义全局 `Action` 枚举（约百种消息）集中分发。新增功能遵循 **GUI 发 Action → Application 处理 → 回发 Action 更新 UI** 的模式。
 - **页面导航**：`src/model.rs` 的 `PageStack` 包装 `gtk::Stack` 管理页面栈。
 - **UI 构建方式**：所有页面/控件是 `CompositeTemplate` 子类（`src/gui/*.rs`）+ `data/gtk/*.ui` 模板一一对应；资源路径前缀 `/com/gitee/gmg137/NeteaseCloudMusicGtk4/`。
-- **集中式样式**：`data/themes/modern.css` 是现代化样式集中地（页面骨架/歌曲行/卡片等），由 `window.rs` 启动时加载。其头注约定：**只允许 Libadwaita 命名色，禁止硬编码颜色值**（图片遮罩/阴影等主题无关场景除外，可用 white/black 关键字）。**可切换配色主题**：`data/themes/theme-*.css`（只含 `@define-color` 覆盖，允许 hex），由 `src/gui/theme.rs` 按 GSettings `ui-theme` 键热切换，首选项「主题」分组选择。
+- **集中式样式**：`data/themes/modern.css` 是现代化样式集中地（页面骨架/歌曲行/卡片等），由 `window.rs` 启动时加载。其头注约定：**只允许 Libadwaita 命名色，禁止硬编码颜色值**（图片遮罩/阴影等主题无关场景除外，可用 white/black 关键字）。**可切换配色主题**：`data/themes/theme-*.css`（只含 `@define-color` 覆盖，允许 hex），由 `src/gui/theme.rs` 按 GSettings `ui-theme` 键热切换，首选项「主题」分组选择；分两层——自适应主题（netease-red/ocean/forest，仅 accent，跟随明/暗）与完整皮肤（midnight/paper/abyss/matcha，整套色板、自带明暗）。
 - **歌曲列表**：`SongListView` 宽屏双列 / 窄屏单列（细节与禁区见 AGENTS.md）。
 - **持久化**：GSettings（主题/代理/音质/歌词等）；用户数据目录下的 `cookies.json`（登录 cookie，敏感，勿入日志/提交）；平台缓存目录；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 

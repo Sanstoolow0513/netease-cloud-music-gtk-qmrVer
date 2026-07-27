@@ -154,7 +154,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
   - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、音频输出设备（`audio-device`，空串=系统默认）、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
   - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`；Windows 上 `glib::user_cache_dir()` 指向 `AppData\Local\Microsoft\Windows\INetCache`，排查图片缓存时注意不是 `AppData\Local`）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
 - **快捷键**：`<primary>f`/`/` 搜索、`<primary>BackSpace`/`Escape` 返回、`F11` 全屏切换（win.fullscreen，注册于 window.rs）、`<primary>q` 退出。
-- **UI 可视化开发回路**：日常用入库的 `make dev` / `build-aux/windows/dev.ps1`（构建并启动带 DLL 的便携包）。额外截图/注入脚本可放在不入库的 `_windows/dev/`（`Start-App.ps1`、`Capture-AppWindow.ps1`、`Send-Input.ps1`、`Sync-BuildToDist.ps1`）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。
+- **UI 可视化开发回路**：日常用入库的 `make dev` / `build-aux/windows/dev.ps1`（构建并启动带 DLL 的便携包；**应用启动后进程常驻，shell 任务不会自行退出**——以后台任务运行 `make dev` 时，确认构建与同步完成后用 TaskStop 收掉即可，注意这会连带结束由它拉起的应用）。额外截图/注入脚本可放在不入库的 `_windows/dev/`（`Start-App.ps1`、`Capture-AppWindow.ps1`、`Send-Input.ps1`、`Sync-BuildToDist.ps1`）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。注意 `Capture-AppWindow.ps1` 的 PrintWindow 截图底部有 ~20px 垂直偏移，按图点击播放栏等底部控件前先以 `Capture-ScreenRegion.ps1`（CopyFromScreen）校准坐标。
 - **MPRIS 名称**（仅 Linux）：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
 - **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux stub 负责保持相同 API 形状，Action 消息不按平台拆分。`platform::HAS_*` 只用于设置显隐、关窗行为和外部桌面歌词等确实不同的用户行为；可由 stub 吸收的 MPRIS/托盘调用保持统一路径。
 
@@ -173,7 +173,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - 单线程约束：GUI 对象不可跨线程，跨上下文传递用 `glib::SendWeakRef`；`MprisController` 上有显式的 `unsafe impl Send/Sync` 注释。
 - 用户可见字符串使用 `gettextrs::gettext(...)` 包裹，并把源文件加入 `po/POTFILES`。
 - 新增 `.ui` / `.css` 文件时：放入 `data/gtk/` 或 `data/themes/`，登记到 `data/netease_cloud_music_gtk4.gresource.xml`；新增 `.rs` 文件需登记到 `src/meson.build` 的 `rust_sources`。
-- 配色主题 CSS（`data/themes/theme-*.css`）只含 `@define-color` 覆盖（accent 三件套为主），不写选择器，且单套色板需兼顾明/暗两态（GTK CSS 无明暗条件语法）；结构样式归 `modern.css`，其文本/填充层级走 `@text_secondary` / `@text_dim` / `@text_disabled` / `@fill_active` token，主题可按需覆盖。新增主题需同步三处：gschema `ui-theme` choices、`gui/theme.rs` 的 `THEME_IDS` 与 `theme_label`、po 词条。
+- 配色主题 CSS（`data/themes/theme-*.css`）只含 `@define-color` 覆盖，不写选择器；分两层：**自适应主题**（`netease-red`/`ocean`/`forest`）只覆盖 accent 三件套，单套色板兼顾明/暗两态（GTK CSS 无明暗条件语法）；**完整皮肤**（`midnight`/`paper`/`abyss`/`matcha`）覆盖整套语义色板（window/view/headerbar/card/popover/dialog/sidebar 的 bg+fg、accent 三件套、`shade_color`、`borders`），前景背景全部显式指定故效果自我包含、盖过 `style-variant` 明/暗设置，暗肤 accent_color 提亮、亮肤压深保证前景对比。结构样式归 `modern.css`，其文本/填充层级走 `@text_secondary` / `@text_dim` / `@text_disabled` / `@fill_active` token（由 window 前/背景色 color-mix 派生，随皮肤自动适配）。新增主题需同步三处：gschema `ui-theme` choices、`gui/theme.rs` 的 `THEME_IDS` 与 `theme_label`、po 词条。
 - 依赖版本统一用 `~x.y` 形式写在 `Cargo.toml`；系统库版本约束在根 `meson.build` 中声明，两者需保持同步。
 - `Cargo.lock` 与 `src/config.rs` 均被 gitignore（另有 `/target`、`/build`、`/_local`、`/_windows`、`/worktrees`），不要提交。
 - Windows 构建细节以 [`build-aux/windows/README.md`](build-aux/windows/README.md) 为准；`CLAUDE.md` 仅作快速索引，冲突时以本文件为准。

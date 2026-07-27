@@ -22,6 +22,10 @@
         <file compressed="true">themes/theme-netease-red.css</file>
         <file compressed="true">themes/theme-ocean.css</file>
         <file compressed="true">themes/theme-forest.css</file>
+        <file compressed="true">themes/theme-midnight.css</file>
+        <file compressed="true">themes/theme-paper.css</file>
+        <file compressed="true">themes/theme-abyss.css</file>
+        <file compressed="true">themes/theme-matcha.css</file>
     </gresource>
     <gresource prefix="/com/gitee/gmg137/NeteaseCloudMusicGtk4/icons/scalable/apps/">
         <file preprocess="xml-stripblanks" alias="logo.svg">icons/hicolor/scalable/apps/com.gitee.gmg137.NeteaseCloudMusicGtk4.svg</file>

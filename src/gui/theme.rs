@@ -8,6 +8,10 @@
 //! `STYLE_PROVIDER_PRIORITY_APPLICATION + 1` 叠加对应 CSS
 //! （仅含 `@define-color` 覆盖），高于 modern.css 的 APPLICATION
 //! 优先级使其生效；切回 `default` 时移除 provider 完全还原。
+//!
+//! 两层主题：自适应主题（netease-red/ocean/forest）只覆盖 accent
+//! 三件套、跟随明/暗变体；完整皮肤（midnight/paper/abyss/matcha）
+//! 覆盖整套语义色板、效果自我包含，盖过 style-variant 明/暗设置。
 
 use gettextrs::gettext;
 use gtk::{
@@ -19,7 +23,19 @@ use once_cell::sync::OnceCell;
 use std::cell::RefCell;
 
 /// Ordered theme ids; index matches Preferences ComboRow.
-pub const THEME_IDS: &[&str] = &["default", "netease-red", "ocean", "forest"];
+/// 两层机制：default/netease-red/ocean/forest 为自适应主题（仅覆盖
+/// accent，跟随明/暗变体）；midnight/paper/abyss/matcha 为完整皮肤
+/// （整套色板，自带明暗，盖过 style-variant 的视觉效果）。
+pub const THEME_IDS: &[&str] = &[
+    "default",
+    "netease-red",
+    "ocean",
+    "forest",
+    "midnight",
+    "paper",
+    "abyss",
+    "matcha",
+];
 
 thread_local! {
     static PROVIDER: RefCell<Option<CssProvider>> = const { RefCell::new(None) };
@@ -33,6 +49,10 @@ pub fn theme_label(id: &str) -> String {
         "netease-red" => gettext("NetEase Red"),
         "ocean" => gettext("Ocean"),
         "forest" => gettext("Forest"),
+        "midnight" => gettext("Midnight"),
+        "paper" => gettext("Paper"),
+        "abyss" => gettext("Abyss"),
+        "matcha" => gettext("Matcha"),
         _ => id.to_string(),
     }
 }

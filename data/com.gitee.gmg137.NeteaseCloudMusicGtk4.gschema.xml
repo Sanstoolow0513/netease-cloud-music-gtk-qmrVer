@@ -16,6 +16,10 @@
                 <choice value='netease-red' />
                 <choice value='ocean' />
                 <choice value='forest' />
+                <choice value='midnight' />
+                <choice value='paper' />
+                <choice value='abyss' />
+                <choice value='matcha' />
             </choices>
             <default>'default'</default>
             <summary>UI color theme</summary>
