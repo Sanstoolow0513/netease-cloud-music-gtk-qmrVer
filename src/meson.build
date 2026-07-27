@@ -38,6 +38,7 @@ rust_sources = files(
   'audio/mod.rs',
   'audio/mpris.rs',
   'audio/mpris_stub.rs',
+  'audio/output_device.rs',
   'audio/playlist.rs',
   'gui/mod.rs',
   'gui/discover.rs',

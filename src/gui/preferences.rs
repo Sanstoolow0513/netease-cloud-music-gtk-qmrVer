@@ -4,6 +4,7 @@
 // Distributed under terms of the GPL-3.0-or-later license.
 //
 
+use crate::audio::output_device::{self, AudioOutputDevice};
 use crate::gui::typography::{self, FONT_PRESET_IDS};
 use crate::i18n::{self, LANGUAGE_IDS};
 use crate::utils::sanitize_pages_order;
@@ -104,6 +105,8 @@ impl NeteaseCloudMusicGtk4Preferences {
             &self.imp().desktop_lyrics_row.get(),
         );
 
+        self.bind_audio_device();
+
         self.bind_ui_language();
         self.bind_font_preset();
         self.bind_font_scale("ui-font-scale", &self.imp().ui_font_scale.get());
@@ -174,6 +177,55 @@ impl NeteaseCloudMusicGtk4Preferences {
         combo.set_selected(selected);
     }
 
+    fn bind_audio_device(&self) {
+        // 先刷新模型再连接信号：模型初始填充不应回写 GSettings
+        self.refresh_audio_device_model();
+
+        let settings = self.settings();
+        self.imp()
+            .audio_device
+            .connect_selected_notify(glib::clone!(
+                #[strong]
+                settings,
+                #[weak(rename_to = dialog)]
+                self,
+                move |combo| {
+                    if dialog.imp().refreshing_models.get() {
+                        return;
+                    }
+                    let idx = combo.selected() as usize;
+                    let id = if idx == 0 {
+                        String::new()
+                    } else {
+                        dialog
+                            .imp()
+                            .audio_devices
+                            .borrow()
+                            .get(idx - 1)
+                            .map(|d| d.id.clone())
+                            .unwrap_or_default()
+                    };
+                    let _ = settings.set_string("audio-device", &id);
+                }
+            ));
+    }
+
+    fn refresh_audio_device_model(&self) {
+        let imp = self.imp();
+        let stored = self.settings().string("audio-device");
+        // 对话框每次打开都会重建（application.rs），此处枚举到的总是最新设备
+        let devices = output_device::enumerate();
+        let selected = devices
+            .iter()
+            .position(|d| d.id == stored.as_str())
+            .map(|i| i + 1)
+            .unwrap_or(0);
+        let mut labels = vec![gettext("Follow system default")];
+        labels.extend(devices.iter().map(|d| d.name.clone()));
+        *imp.audio_devices.borrow_mut() = devices;
+        Self::set_combo_items(&imp.audio_device.get(), &labels, selected as u32);
+    }
+
     fn refresh_ui_language_model(&self) {
         let language = self.settings().string("ui-language");
         let selected = LANGUAGE_IDS
@@ -223,6 +275,7 @@ impl NeteaseCloudMusicGtk4Preferences {
         self.refresh_ui_language_model();
         self.refresh_font_preset_model();
         self.refresh_cache_clear_model();
+        self.refresh_audio_device_model();
         self.imp().refreshing_models.set(false);
 
         self.rebuild_page_rows();
@@ -360,6 +413,10 @@ mod imp {
         pub proxy_entry: TemplateChild<Entry>,
         #[template_child]
         pub switch_rate: TemplateChild<adw::ComboRow>,
+        #[template_child]
+        pub audio_device: TemplateChild<adw::ComboRow>,
+        /// 与 audio_device 下拉项一一对应（第 0 项为「跟随系统默认」，不占此表）
+        pub audio_devices: RefCell<Vec<AudioOutputDevice>>,
         #[template_child]
         pub cache_clear: TemplateChild<adw::ComboRow>,
         #[template_child]

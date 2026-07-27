@@ -10,7 +10,10 @@ use glib::{
     ParamSpec, ParamSpecBoolean, ParamSpecDouble, ParamSpecEnum, ParamSpecUInt, ParamSpecUInt64,
     Value, clone, source::Priority,
 };
-use gst::{ClockTime, prelude::ObjectExt};
+use gst::{
+    ClockTime,
+    prelude::{ElementExtManual, ObjectExt},
+};
 use gstreamer_play::{prelude::ElementExt, *};
 use gtk::{CompositeTemplate, GestureClick, glib, prelude::*, subclass::prelude::*, *};
 use log::*;
@@ -71,6 +74,62 @@ impl PlayerControls {
         });
 
         settings.bind("music-rate", self, "music-rate").build();
+
+        // 音频输出设备：启动时应用一次，运行时修改即时热切换
+        self.apply_audio_device();
+        settings.connect_changed(
+            Some("audio-device"),
+            clone!(
+                #[weak(rename_to = this)]
+                self,
+                move |_, _| this.apply_audio_device()
+            ),
+        );
+    }
+
+    /// 应用 GSettings 中保存的音频输出设备（空串 = 系统默认）。
+    /// playbin 不支持流式更换 sink，播放/暂停中切换时需
+    /// stop → 换 sink → play → seek 回原位置，再视情况恢复暂停。
+    pub fn apply_audio_device(&self) {
+        let imp = self.imp();
+        let Some(player) = imp.player.get() else {
+            return;
+        };
+        let device_id = self.settings().string("audio-device");
+        let sink: Option<gst::Element> = if device_id.is_empty() {
+            None
+        } else {
+            match output_device::find_sink(&device_id) {
+                Some(sink) => Some(sink),
+                None => {
+                    warn!("音频输出设备不存在（可能已拔出），回落到系统默认: {device_id}");
+                    None
+                }
+            }
+        };
+
+        let pipeline = player.pipeline();
+        let state = pipeline.current_state();
+        let was_playing = state == gst::State::Playing;
+        // 仅在已加载媒体且处于播放/暂停时才需要重启管线
+        let needs_restart =
+            player.uri().is_some() && matches!(state, gst::State::Playing | gst::State::Paused);
+        let position = player.position();
+
+        if needs_restart {
+            player.stop();
+        }
+        pipeline.set_property("audio-sink", &sink);
+        if needs_restart {
+            player.play();
+            if let Some(position) = position {
+                player.seek(position);
+            }
+            if !was_playing {
+                player.pause();
+            }
+        }
+        debug!("音频输出设备已应用: {device_id}");
     }
 
     pub fn setup_mpris(&self) {
