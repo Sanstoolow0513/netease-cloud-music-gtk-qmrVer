@@ -123,8 +123,7 @@ src/
     ├── user_menus.rs        # 用户菜单/登录（二维码、验证码）
     ├── system_tray.rs       # Linux：ksni 托盘
     ├── system_tray_stub.rs  # 非 Linux：no-op
-    ├── theme.rs             # 配色主题框架：ui-theme 键 → 运行时切换 theme-*.css provider（APPLICATION+1 优先级）
-    └── theme_selector.rs    # 明暗/跟随系统选择组件（主菜单弹窗）
+    └── theme.rs             # 配色主题框架：ui-theme 键 → 运行时切换 theme-*.css provider（APPLICATION+1 优先级）并同步 color-scheme；THEMES 元数据表含明暗与预览色
 
 data/
 ├── gtk/*.ui                 # GTK Builder 模板（与 gui 模块一一对应）
@@ -147,14 +146,14 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - **单线程 GLib MainContext 架构**：应用不是多线程 tokio 运行时，而是基于 GLib 主循环。全局 `MAINCONTEXT`（`main.rs` 中的 `Lazy<glib::MainContext>`）用于 `spawn_local` 派生异步任务。
 - **Action 消息总线**：UI 与后端通过 `async-channel` 解耦。`application.rs` 定义了庞大的 `Action` 枚举（播放、登录、页面路由、发现页、榜单、歌词等约百种消息）和 `ActionCallback` 回调类型；各 GUI 组件持有 `Sender<Action>` 发送请求，Application 集中处理后再通过 Action 回投结果。新增功能时遵循"GUI 发 Action → Application 处理 → 回发 Action 更新 UI"的模式。
 - **页面导航**：`model.rs` 的 `PageStack` 包装 `gtk::Stack`，管理页面 push/pop/切换与延迟移除。
-- **设置即时生效**：显示语言（`ui-language`）、配色主题（`ui-theme`）与顶栏页面显隐/排序（`pages-order`/`show-discover`/`show-toplist`）均经 GSettings `connect_changed` 热更新，无需重启。主题侧入口是 `gui/theme.rs` 的 `init_and_apply()`（切换 = 移除旧 provider + 以 APPLICATION+1 优先级加载新 theme-*.css；`default` 不加载）。页面侧入口是 `window.rs` 的 `apply_pages_config()`（remove 后按序重加 ViewStack 页，保持当前可见页）。语言侧由 `i18n::switch_ui_language` 构建「旧译文 → 新译文」映射（`Retranslator`）并遍历控件树重写字符串属性；`utils::gettext_f` 的 `{name}` 占位符标签（如「100 首歌曲」）永远匹配不上精确映射，由 `Retranslator` 内的正则模式列表做子串替换；主菜单模型、播放列表+歌词页、用户弹窗三个登录子页（任一时刻只有一个挂在弹窗里）、首选项 combo/页面行等走各自显式 retranslate 入口。
+- **设置即时生效**：显示语言（`ui-language`）、配色主题（`ui-theme`）与顶栏页面显隐/排序（`pages-order`/`show-discover`/`show-toplist`）均经 GSettings `connect_changed` 热更新，无需重启。主题侧入口是 `gui/theme.rs` 的 `init_and_apply()`（切换 = 移除旧 provider + 以 APPLICATION+1 优先级加载新 theme-*.css；`default` 不加载；同时按主题自带明暗同步 `AdwStyleManager` color-scheme——深肤 ForceDark、亮肤 ForceLight、default 跟随系统，原独立 `style-variant` 明暗设置已并入主题）。页面侧入口是 `window.rs` 的 `apply_pages_config()`（remove 后按序重加 ViewStack 页，保持当前可见页）。语言侧由 `i18n::switch_ui_language` 构建「旧译文 → 新译文」映射（`Retranslator`）并遍历控件树重写字符串属性；`utils::gettext_f` 的 `{name}` 占位符标签（如「100 首歌曲」）永远匹配不上精确映射，由 `Retranslator` 内的正则模式列表做子串替换；播放列表+歌词页、用户弹窗三个登录子页（任一时刻只有一个挂在弹窗里）、首选项 combo/页面行等走各自显式 retranslate 入口。
 - **自适应断点**：布局按宽度分档（设计方案见 `docs/ui-redesign-2026-07.md`）。窗口级 `AdwBreakpointBin`（window.ui，760sp）切换 header `AdwViewSwitcher` ↔ 底部 `AdwViewSwitcherBar`；`player-controls.ui`（700/500sp）与 `discover.ui` banner 高度（760sp，380→220）用模板内断点。注意：`AdwBreakpointBin` 自身不传播子组件尺寸请求（须设 width/height-request），且多个断点命中时**只应用列表中最后一个**（窄档 setter 需自包含，重复宽档的隐藏项）。**禁止把 `AdwBreakpointBin` 放进 `GtkScrolledWindow` 内**（高度会被钉在 `height-request` 上，列表无法滚动）；`SongListView` 现役结构是 bin 包在滚动容器外。
 - **歌曲列表 `SongListView`**：共享组件（榜单 / 歌单详情 / 搜索歌曲 / 播放列表+歌词）。宽屏（组件内断点约 `max-width: 900sp`）默认双列交错排布（左偶右奇），窄屏收回单列；`max-columns=1` 可强制单列（播放列表+歌词页已如此）。双列时行进入紧凑模式（隐藏专辑列）。榜单页右侧**不再**套列表外层 `AdwClamp`——用双列铺满内容区；**发现页 / 我的页也无页面级 clamp**，内容随窗口铺满（仅保留 `.page-content` 左右边距）；发现页 Banner 不再套 980 Clamp，随页宽铺满并由断点切换固定高度。勿把 `docs/superpowers/` 里「三主页 1280 居中 / 榜单列表 clamp 1280 / 单列全宽」的旧结论当现役合同。
 - **持久化**：
   - GSettings（schema `com.gitee.gmg137.NeteaseCloudMusicGtk4`）：主题、循环模式、代理、音质、缓存清理、音量、音频输出设备（`audio-device`，空串=系统默认）、桌面歌词、窗口几何（`window-width`/`window-height`/`window-maximized`，关闭时保存、启动恢复）等。
   - 文件系统：GLib 用户缓存/数据目录下的 `netease-cloud-music-gtk4`（Linux 常见为 `~/.cache` / `~/.local/share`；Windows 上 `glib::user_cache_dir()` 指向 `AppData\Local\Microsoft\Windows\INetCache`，排查图片缓存时注意不是 `AppData\Local`）；登录 cookie `cookies.json`（见 `ncmapi.rs`）；全平台应用内歌词缓存使用 `~/.lyrics`，Linux 外部桌面歌词也复用该目录。
-- **快捷键**：`<primary>f`/`/` 搜索、`<primary>BackSpace`/`Escape` 返回、`F11` 全屏切换（win.fullscreen，注册于 window.rs）、`<primary>q` 退出。
-- **UI 可视化开发回路**：日常用入库的 `make dev` / `build-aux/windows/dev.ps1`（构建并启动带 DLL 的便携包）。额外截图/注入脚本可放在不入库的 `_windows/dev/`（`Start-App.ps1`、`Capture-AppWindow.ps1`、`Send-Input.ps1`、`Sync-BuildToDist.ps1`）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。
+- **快捷键**：`<primary>f`/`/` 搜索、`<primary>BackSpace`/`Escape` 返回、`F11` 全屏切换（win.fullscreen，注册于 window.rs）。
+- **UI 可视化开发回路**：日常用入库的 `make dev` / `build-aux/windows/dev.ps1`（构建并启动带 DLL 的便携包；**应用启动后进程常驻，shell 任务不会自行退出**——以后台任务运行 `make dev` 时，确认构建与同步完成后用 TaskStop 收掉即可，注意这会连带结束由它拉起的应用）。额外截图/注入脚本可放在不入库的 `_windows/dev/`（`Start-App.ps1`、`Capture-AppWindow.ps1`、`Send-Input.ps1`、`Sync-BuildToDist.ps1`）。UI 改动后用截图矩阵（500/800/1160/最大化/全屏 × 明暗）验证。注意 `Capture-AppWindow.ps1` 的 PrintWindow 截图底部有 ~20px 垂直偏移，按图点击播放栏等底部控件前先以 `Capture-ScreenRegion.ps1`（CopyFromScreen）校准坐标。
 - **MPRIS 名称**（仅 Linux）：`org.mpris.MediaPlayer2.NeteaseCloudMusicGtk4`。
 - **平台隔离**：`mpris-server`/`ksni` 仅 `cfg(target_os = "linux")`；非 Linux stub 负责保持相同 API 形状，Action 消息不按平台拆分。`platform::HAS_*` 只用于设置显隐、关窗行为和外部桌面歌词等确实不同的用户行为；可由 stub 吸收的 MPRIS/托盘调用保持统一路径。
 
@@ -173,7 +172,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 - 单线程约束：GUI 对象不可跨线程，跨上下文传递用 `glib::SendWeakRef`；`MprisController` 上有显式的 `unsafe impl Send/Sync` 注释。
 - 用户可见字符串使用 `gettextrs::gettext(...)` 包裹，并把源文件加入 `po/POTFILES`。
 - 新增 `.ui` / `.css` 文件时：放入 `data/gtk/` 或 `data/themes/`，登记到 `data/netease_cloud_music_gtk4.gresource.xml`；新增 `.rs` 文件需登记到 `src/meson.build` 的 `rust_sources`。
-- 配色主题 CSS（`data/themes/theme-*.css`）只含 `@define-color` 覆盖（accent 三件套为主），不写选择器，且单套色板需兼顾明/暗两态（GTK CSS 无明暗条件语法）；结构样式归 `modern.css`，其文本/填充层级走 `@text_secondary` / `@text_dim` / `@text_disabled` / `@fill_active` token，主题可按需覆盖。新增主题需同步三处：gschema `ui-theme` choices、`gui/theme.rs` 的 `THEME_IDS` 与 `theme_label`、po 词条。
+- 配色主题 CSS（`data/themes/theme-*.css`）只含 `@define-color` 覆盖，不写选择器；除 `default`（不加载 CSS、跟随系统明暗）外均为**完整皮肤**：覆盖整套语义色板（window/view/headerbar/card/popover/dialog/sidebar 的 bg+fg、accent 三件套、`shade_color`、`borders`），前景背景全部显式指定故效果自我包含，暗肤 accent_color 提亮、亮肤压深保证前景对比。主题自带明暗属性记录在 `gui/theme.rs` 的 `THEMES` 元数据表（`scheme` + 预览色 `preview`），切换时 theme.rs 同步 color-scheme；首选项「配色」下拉由 `preferences.rs` 的自定义 factory 绘制主题色块预览（model 存 theme id，label 于 bind 时经 `theme_label` 现取以支持语言热切换）。结构样式归 `modern.css`，其文本/填充层级走 `@text_secondary` / `@text_dim` / `@text_disabled` / `@fill_active` token（由 window 前/背景色 color-mix 派生，随皮肤自动适配）。新增主题需同步四处：gschema `ui-theme` choices、`gui/theme.rs` 的 `THEMES` 与 `theme_label`、gresource 清单、po 词条。
 - 依赖版本统一用 `~x.y` 形式写在 `Cargo.toml`；系统库版本约束在根 `meson.build` 中声明，两者需保持同步。
 - `Cargo.lock` 与 `src/config.rs` 均被 gitignore（另有 `/target`、`/build`、`/_local`、`/_windows`、`/worktrees`），不要提交。
 - Windows 构建细节以 [`build-aux/windows/README.md`](build-aux/windows/README.md) 为准；`CLAUDE.md` 仅作快速索引，冲突时以本文件为准。

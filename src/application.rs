@@ -19,7 +19,7 @@ use std::{
 };
 
 use crate::{
-    MAINCONTEXT, NeteaseCloudMusicGtk4Window, audio::MprisController, config::VERSION,
+    MAINCONTEXT, NeteaseCloudMusicGtk4Window, audio::MprisController,
     gui::NeteaseCloudMusicGtk4Preferences, model::*, ncmapi::*, path::CACHE, utils::*,
 };
 
@@ -246,7 +246,6 @@ mod imp {
             obj.setup_gactions();
             obj.setup_language_watch();
             obj.setup_cache_clear();
-            obj.set_accels_for_action("app.quit", &["<primary>q"]);
             obj.set_accels_for_action("win.search-button", &["<primary>f", "slash"]);
             obj.set_accels_for_action("win.back-button", &["<primary>BackSpace", "Escape"]);
             obj.set_accels_for_action("win.fullscreen", &["F11"]);
@@ -1581,26 +1580,6 @@ impl NeteaseCloudMusicGtk4Application {
             }
         ));
         self.add_action(&preferences_action);
-
-        let quit_action = gio::SimpleAction::new("quit", None);
-        quit_action.connect_activate(clone!(
-            #[weak(rename_to = app)]
-            self,
-            move |_, _| {
-                app.graceful_quit();
-            }
-        ));
-        self.add_action(&quit_action);
-
-        let about_action = gio::SimpleAction::new("about", None);
-        about_action.connect_activate(clone!(
-            #[weak(rename_to = app)]
-            self,
-            move |_, _| {
-                app.show_about();
-            }
-        ));
-        self.add_action(&about_action);
     }
 
     fn setup_language_watch(&self) {
@@ -1630,8 +1609,8 @@ impl NeteaseCloudMusicGtk4Application {
         }
         glib::set_application_name(&gettext(crate::APP_NAME));
 
-        // Toplevels cover the main window, the shortcuts overlay and any dialog
-        // that libadwaita floated into its own window.
+        // Toplevels cover the main window and any dialog that libadwaita
+        // floated into its own window.
         let toplevels = gtk::Window::toplevels();
         for index in 0..toplevels.n_items() {
             if let Some(toplevel) = toplevels.item(index).and_downcast::<gtk::Window>() {
@@ -1664,47 +1643,6 @@ impl NeteaseCloudMusicGtk4Application {
             .preferences
             .replace(Some(preferences.downgrade()));
         AdwDialogExt::present(&preferences, Some(&window));
-    }
-
-    fn show_about(&self) {
-        let window = self.active_window().unwrap();
-        let dialog = adw::AboutDialog::builder()
-            .application_name(gettext(crate::APP_NAME))
-            .application_icon(crate::APP_ID)
-            .version(VERSION)
-            .developer_name("gmg137")
-            .developers(vec![
-                "gmg137",
-                "catsout",
-                "fplust",
-                "outloudvi",
-                "CyrusYip",
-                "Integral-Tech",
-                "NOBLES5E",
-                "atzlinux",
-                "mokurin000",
-                "onlymash",
-                "An-n-ya",
-                "MarvelousBlack",
-                "langzime",
-                "h0cheung",
-                "weilinfox",
-                "xyzhou-1",
-                "liuyujielol",
-                "heddxh",
-                "fungaren",
-                "xen0n",
-                "arkuna23",
-                "wngtk",
-                "zyw271828",
-            ])
-            .website("https://github.com/gmg137/netease-cloud-music-gtk")
-            .issue_url("https://github.com/gmg137/netease-cloud-music-gtk/issues")
-            .license_type(gtk::License::Gpl30)
-            .copyright("© 2025 gmg137")
-            .build();
-
-        dialog.present(Some(&window));
     }
 
     fn setup_cache_clear(&self) {

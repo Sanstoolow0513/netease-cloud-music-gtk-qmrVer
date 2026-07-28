@@ -1,3 +1,6 @@
+// Currently unused (the About dialog was removed); allow dead_code to keep
+// the build warning-free.
+#[allow(dead_code)]
 pub static VERSION: &str = @VERSION@;
 pub static GETTEXT_PACKAGE: &str = @GETTEXT_PACKAGE@;
 // Only used on non-Windows platforms (see platform/mod.rs); allow dead_code

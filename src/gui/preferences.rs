@@ -5,7 +5,7 @@
 //
 
 use crate::audio::output_device::{self, AudioOutputDevice};
-use crate::gui::theme::{self, THEME_IDS};
+use crate::gui::theme;
 use crate::gui::typography::{self, FONT_PRESET_IDS};
 use crate::i18n::{self, LANGUAGE_IDS};
 use crate::utils::sanitize_pages_order;
@@ -174,10 +174,16 @@ impl NeteaseCloudMusicGtk4Preferences {
     }
 
     fn bind_theme(&self) {
+        // 下拉行带主题色块预览：model 存 theme id，label 在 factory bind
+        // 时经 theme_label 现取，语言切换重建 model 即可热更新译文。
+        let combo = self.imp().ui_theme.get();
+        combo.set_factory(Some(&Self::theme_row_factory()));
+        combo.set_list_factory(Some(&Self::theme_row_factory()));
+
         self.refresh_theme_model();
 
         let settings = self.settings();
-        self.imp().ui_theme.connect_selected_notify(glib::clone!(
+        combo.connect_selected_notify(glib::clone!(
             #[strong]
             settings,
             #[weak(rename_to = dialog)]
@@ -187,11 +193,116 @@ impl NeteaseCloudMusicGtk4Preferences {
                     return;
                 }
                 let idx = combo.selected() as usize;
-                if let Some(id) = THEME_IDS.get(idx) {
-                    let _ = settings.set_string("ui-theme", id);
+                if let Some(meta) = theme::THEMES.get(idx) {
+                    let _ = settings.set_string("ui-theme", meta.id);
                 }
             }
         ));
+    }
+
+    /// 主题下拉的行 factory：左侧主题色块 + 右侧主题名。
+    fn theme_row_factory() -> SignalListItemFactory {
+        let factory = SignalListItemFactory::new();
+        factory.connect_setup(|_, item| {
+            let Some(item) = item.downcast_ref::<ListItem>() else {
+                return;
+            };
+            let swatch = DrawingArea::builder()
+                .width_request(36)
+                .height_request(18)
+                .valign(Align::Center)
+                .build();
+            let label = Label::builder().xalign(0.0).build();
+            let row = Box::builder()
+                .orientation(Orientation::Horizontal)
+                .spacing(8)
+                .build();
+            row.append(&swatch);
+            row.append(&label);
+            item.set_child(Some(&row));
+        });
+        factory.connect_bind(|_, item| {
+            let Some(item) = item.downcast_ref::<ListItem>() else {
+                return;
+            };
+            let id = item
+                .item()
+                .and_downcast::<StringObject>()
+                .map(|o| o.string().to_string())
+                .unwrap_or_default();
+            let Some(row) = item.child().and_downcast::<Box>() else {
+                return;
+            };
+            let Some(swatch) = row.first_child().and_downcast::<DrawingArea>() else {
+                return;
+            };
+            if let Some(label) = swatch.next_sibling().and_downcast::<Label>() {
+                label.set_text(&theme::theme_label(&id));
+            }
+            // 列表项会回收复用，每次 bind 重设 draw_func 绑定当前 id
+            swatch.set_draw_func(move |_, cr, width, height| {
+                Self::draw_theme_swatch(cr, width, height, &id);
+            });
+        });
+        factory
+    }
+
+    fn draw_theme_swatch(cr: &cairo::Context, width: i32, height: i32, id: &str) {
+        let (w, h) = (f64::from(width), f64::from(height));
+        let r = 4.0_f64.min(h / 2.0);
+
+        Self::rounded_rect(cr, 0.5, 0.5, w - 1.0, h - 1.0, r);
+        match theme::theme_preview(id) {
+            Some((bg, accent)) => {
+                let (red, green, blue) = Self::hex_rgb(bg);
+                cr.set_source_rgb(red, green, blue);
+                cr.fill_preserve().expect("theme swatch fill");
+                // 底部 accent 条，裁剪进圆角矩形
+                cr.save().expect("theme swatch save");
+                cr.clip();
+                cr.rectangle(0.0, h - 5.0, w, 5.0);
+                let (red, green, blue) = Self::hex_rgb(accent);
+                cr.set_source_rgb(red, green, blue);
+                cr.fill().expect("theme swatch accent");
+                cr.restore().expect("theme swatch restore");
+            }
+            None => {
+                // default：左浅右深两半，表示跟随系统
+                cr.save().expect("theme swatch save");
+                cr.clip();
+                cr.rectangle(0.0, 0.0, w / 2.0, h);
+                cr.set_source_rgb(0.965, 0.961, 0.957);
+                cr.fill().expect("theme swatch light half");
+                cr.rectangle(w / 2.0, 0.0, w / 2.0, h);
+                cr.set_source_rgb(0.118, 0.118, 0.118);
+                cr.fill().expect("theme swatch dark half");
+                cr.restore().expect("theme swatch restore");
+            }
+        }
+
+        Self::rounded_rect(cr, 0.5, 0.5, w - 1.0, h - 1.0, r);
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.3);
+        cr.set_line_width(1.0);
+        cr.stroke().expect("theme swatch border");
+    }
+
+    fn rounded_rect(cr: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64) {
+        use std::f64::consts::PI;
+        cr.new_sub_path();
+        cr.arc(x + w - r, y + r, r, -0.5 * PI, 0.0);
+        cr.arc(x + w - r, y + h - r, r, 0.0, 0.5 * PI);
+        cr.arc(x + r, y + h - r, r, 0.5 * PI, PI);
+        cr.arc(x + r, y + r, r, PI, 1.5 * PI);
+        cr.close_path();
+    }
+
+    fn hex_rgb(hex: &str) -> (f64, f64, f64) {
+        let value = u32::from_str_radix(hex.trim_start_matches('#'), 16).unwrap_or(0);
+        (
+            ((value >> 16) & 0xff) as f64 / 255.0,
+            ((value >> 8) & 0xff) as f64 / 255.0,
+            (value & 0xff) as f64 / 255.0,
+        )
     }
 
     fn set_combo_items(combo: &adw::ComboRow, labels: &[String], selected: u32) {
@@ -277,12 +388,16 @@ impl NeteaseCloudMusicGtk4Preferences {
 
     fn refresh_theme_model(&self) {
         let theme_id = self.settings().string("ui-theme");
-        let selected = THEME_IDS
+        let selected = theme::THEMES
             .iter()
-            .position(|&id| id == theme_id.as_str())
+            .position(|meta| meta.id == theme_id.as_str())
             .unwrap_or(0);
-        let labels: Vec<String> = THEME_IDS.iter().map(|id| theme::theme_label(id)).collect();
-        Self::set_combo_items(&self.imp().ui_theme.get(), &labels, selected as u32);
+        // model 存 theme id，行内容（色块 + 译文名）由 factory bind 时生成
+        let ids: Vec<&str> = theme::THEMES.iter().map(|meta| meta.id).collect();
+        let model = StringList::new(&ids);
+        let combo = self.imp().ui_theme.get();
+        combo.set_model(Some(&model));
+        combo.set_selected(selected as u32);
     }
 
     fn refresh_cache_clear_model(&self) {

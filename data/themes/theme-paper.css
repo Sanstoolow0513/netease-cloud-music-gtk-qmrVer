@@ -1,0 +1,50 @@
+/*
+ * theme-paper.css
+ * Copyright (C) 2026 gmg137 <gmg137 AT live.com>
+ *
+ * Distributed under terms of the GPL-3.0-or-later license.
+ *
+ * 完整皮肤「素白」：暖纸白底 + 品牌红 accent，清爽阅读感。
+ * 约定：完整皮肤覆盖整套语义色板（前景/背景全部显式指定），
+ * 效果自我包含、不随明/暗变体变化；结构样式归 modern.css，
+ * 文本层级 token（@text_secondary 等）由 window 前/背景色自动派生。
+ * 配对规则：accent bg 鲜亮、color 压深（亮底前景对比）、fg 白；
+ * hover/占位 shade 用黑罩（亮肤），borders 用黑色低透明。
+ */
+
+/* 窗口与视图 */
+@define-color window_bg_color #f7f5f2;
+@define-color window_fg_color #26231f;
+@define-color view_bg_color #ffffff;
+@define-color view_fg_color #26231f;
+
+/* 顶栏 */
+@define-color headerbar_bg_color #efede9;
+@define-color headerbar_fg_color #26231f;
+@define-color headerbar_border_color alpha(black, 0.08);
+@define-color headerbar_backdrop_color #f7f5f2;
+@define-color headerbar_shade_color alpha(black, 0.07);
+
+/* 卡片 / 弹窗 / 对话框 */
+@define-color card_bg_color #ffffff;
+@define-color card_fg_color #26231f;
+@define-color popover_bg_color #ffffff;
+@define-color popover_fg_color #26231f;
+@define-color dialog_bg_color #ffffff;
+@define-color dialog_fg_color #26231f;
+
+/* 侧栏（首选项/导航容器） */
+@define-color sidebar_bg_color #f7f5f2;
+@define-color sidebar_fg_color #26231f;
+@define-color sidebar_backdrop_color #f7f5f2;
+@define-color sidebar_border_color alpha(black, 0.08);
+@define-color sidebar_shade_color alpha(black, 0.07);
+
+/* 强调色：亮底上 accent_color 压深保证文字对比 */
+@define-color accent_bg_color #ec4141;
+@define-color accent_color #d62e2e;
+@define-color accent_fg_color #ffffff;
+
+/* 遮罩与边框 */
+@define-color shade_color alpha(black, 0.06);
+@define-color borders alpha(black, 0.12);

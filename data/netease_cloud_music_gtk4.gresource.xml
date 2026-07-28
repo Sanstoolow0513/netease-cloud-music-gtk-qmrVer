@@ -3,10 +3,8 @@
     <gresource prefix="/com/gitee/gmg137/NeteaseCloudMusicGtk4">
         <file compressed="true">gtk/window.ui</file>
         <file compressed="true">gtk/preferences.ui</file>
-        <file compressed="true">gtk/theme-selector.ui</file>
         <file compressed="true">gtk/discover.ui</file>
         <file compressed="true">gtk/my-page.ui</file>
-        <file compressed="true">gtk/help-overlay.ui</file>
         <file compressed="true">gtk/user-menus.ui</file>
         <file compressed="true">gtk/player-controls.ui</file>
         <file compressed="true">gtk/songlist-page.ui</file>
@@ -17,11 +15,16 @@
         <file compressed="true">gtk/search-songlist-page.ui</file>
         <file compressed="true">gtk/search-singer-page.ui</file>
         <file compressed="true">gtk/playlist-lyrics-page.ui</file>
-        <file compressed="true">themes/themesselector.css</file>
         <file compressed="true">themes/modern.css</file>
-        <file compressed="true">themes/theme-netease-red.css</file>
-        <file compressed="true">themes/theme-ocean.css</file>
-        <file compressed="true">themes/theme-forest.css</file>
+        <file compressed="true">themes/theme-midnight.css</file>
+        <file compressed="true">themes/theme-abyss.css</file>
+        <file compressed="true">themes/theme-one-dark.css</file>
+        <file compressed="true">themes/theme-nord.css</file>
+        <file compressed="true">themes/theme-solarized-dark.css</file>
+        <file compressed="true">themes/theme-paper.css</file>
+        <file compressed="true">themes/theme-matcha.css</file>
+        <file compressed="true">themes/theme-github-light.css</file>
+        <file compressed="true">themes/theme-solarized-light.css</file>
     </gresource>
     <gresource prefix="/com/gitee/gmg137/NeteaseCloudMusicGtk4/icons/scalable/apps/">
         <file preprocess="xml-stripblanks" alias="logo.svg">icons/hicolor/scalable/apps/com.gitee.gmg137.NeteaseCloudMusicGtk4.svg</file>

@@ -18,7 +18,8 @@
  * 次文不用 opacity 压暗（Windows 半透明合成易发糊）。
  *
  * 主题机制：theme-*.css 以更高优先级 provider 覆盖 @define-color
- * （accent 三件套）；下列层级 token 同样可被主题按需覆盖。
+ * （自适应主题仅 accent 三件套；完整皮肤为整套语义色板，见 theme.rs
+ * 与 AGENTS.md）；下列层级 token 由 window 前/背景色派生，随皮肤自动适配。
  */
 
 /* 文本/填充层级 token（color-mix 实色，主题无关） */

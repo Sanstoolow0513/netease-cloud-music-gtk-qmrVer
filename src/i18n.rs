@@ -169,39 +169,6 @@ impl Retranslator {
         self.walk(widget.as_ref());
     }
 
-    /// Build a copy of `model` with translated item labels.
-    ///
-    /// Menu models cache the strings they were built with, so the owning
-    /// popover has to be rebuilt from the returned copy.
-    pub fn retranslate_menu_model(&self, model: &gio::MenuModel) -> gio::Menu {
-        let menu = gio::Menu::new();
-        for index in 0..model.n_items() {
-            let item = gio::MenuItem::new(None, None);
-
-            let attributes = model.iterate_item_attributes(index);
-            while let Some((name, value)) = attributes.next() {
-                let translated = if name == "label" {
-                    value.str().and_then(|label| self.translate(label))
-                } else {
-                    None
-                };
-                let value = match translated {
-                    Some(label) => label.to_variant(),
-                    None => value,
-                };
-                item.set_attribute_value(&name, Some(&value));
-            }
-
-            let links = model.iterate_item_links(index);
-            while let Some((name, link)) = links.next() {
-                item.set_link(&name, Some(&self.retranslate_menu_model(&link)));
-            }
-
-            menu.append_item(&item);
-        }
-        menu
-    }
-
     fn walk(&self, widget: &gtk::Widget) {
         self.retranslate_object(widget.upcast_ref());
 

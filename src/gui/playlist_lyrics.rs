@@ -220,6 +220,62 @@ impl PlayListLyricsPage {
         // Keep Settings alive for the lifetime of the page.
         self.imp().typography_settings.set(settings).ok();
     }
+
+    /// 歌词标签颜色跟随主题：高亮行取 @accent_color，已唱行取
+    /// @text_dim（modern.css 的层级 token，随皮肤/明暗自动适配）。
+    /// lookup 失败时保留 .ui 中的回退色值。
+    // GTK 4.10 弃用了 style_context()/lookup_color() 且无替代 API
+    // （gtk_widget_get_color() 只能取控件自身前景色，取不到命名色）。
+    // 两个颜色名来源有保证：@accent_color 由 libadwaita 内置样式提供，
+    // @text_dim 由 modern.css 定义且启动时无条件加载。
+    #[allow(deprecated)]
+    pub fn sync_lyrics_tag_colors(&self) {
+        let imp = self.imp();
+        let context = imp.lyrics_text_view.style_context();
+        if let Some(rgba) = context.lookup_color("accent_color") {
+            imp.highlight_text_tag.set_foreground_rgba(Some(&rgba));
+        }
+        if let Some(rgba) = context.lookup_color("text_dim") {
+            imp.uttered_text_tag.set_foreground_rgba(Some(&rgba));
+        }
+    }
+
+    fn setup_tag_color_sync(&self) {
+        // 主题 provider 在 window constructed 中应用、晚于本页构造，
+        // 每次映射时同步一次保证首帧颜色正确。
+        self.connect_map(|page| page.sync_lyrics_tag_colors());
+
+        let settings = gio::Settings::new(crate::APP_ID);
+        settings.connect_changed(
+            Some("ui-theme"),
+            glib::clone!(
+                #[weak(rename_to = page)]
+                self,
+                move |_, _| {
+                    // 本页的监听注册早于 theme.rs，直接取色会读到旧主题；
+                    // 推迟到空闲时（provider 切换完成后）再同步。
+                    glib::idle_add_local_once(glib::clone!(
+                        #[weak]
+                        page,
+                        move || page.sync_lyrics_tag_colors()
+                    ));
+                }
+            ),
+        );
+        // 自适应主题的 accent/text_dim 随明/暗变体变化
+        adw::StyleManager::default().connect_dark_notify(glib::clone!(
+            #[weak(rename_to = page)]
+            self,
+            move |_| {
+                glib::idle_add_local_once(glib::clone!(
+                    #[weak]
+                    page,
+                    move || page.sync_lyrics_tag_colors()
+                ));
+            }
+        ));
+        self.imp().tag_color_settings.set(settings).ok();
+    }
 }
 
 impl Default for PlayListLyricsPage {
@@ -254,6 +310,7 @@ mod imp {
         pub sender: OnceCell<Sender<Action>>,
         pub current_lyrics: Arc<RwLock<Vec<(u64, String)>>>,
         pub typography_settings: OnceCell<gio::Settings>,
+        pub tag_color_settings: OnceCell<gio::Settings>,
     }
 
     #[glib::object_subclass]
@@ -276,6 +333,7 @@ mod imp {
             let obj = self.obj();
             self.parent_constructed();
             obj.setup_typography();
+            obj.setup_tag_color_sync();
         }
 
         fn properties() -> &'static [ParamSpec] {
