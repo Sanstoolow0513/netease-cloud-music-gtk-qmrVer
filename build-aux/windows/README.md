@@ -45,7 +45,7 @@ make dev
 | `MSVCR120.dll` / Perl Configure 闪退 | 安装 VC++ 2013 x64 运行库 |
 | `cargo-c` 要求更新的 rustc | 脚本会重置 gvsbuild 私有 rustup 到 stable-msvc |
 | `libvpx` tlog 被占用 | 结束残留 `MSBuild`/`cl`/`gvsbuild` 后重跑 |
-| `libvpx`：`/tmp/vpx-conf-*.c` 找不到 / `vpxmd.lib` 缺失 | Git Bash 与 MSYS2 抢 PATH（常见于 GitHub `windows-*` runner）。`bootstrap.ps1` 会优先 `C:\msys64\usr\bin` 并传 `--use-env`；本地请确保已装 MSYS2 |
+| `libvpx`：`/tmp/vpx-conf-*.c` 找不到 / `vpxmd.lib` 缺失 | Git Bash 与 MSYS2 抢 PATH（常见于 GitHub `windows-*` runner）。`bootstrap.ps1` 会按 `$env:MSYS2_ROOT` → `C:\msys64`（官网安装默认）→ `C:\tools\msys64`（chocolatey 默认）探测 MSYS2 的 `usr\bin` 并置于 PATH 首位，同时传 `--use-env`；本地请确保已装 MSYS2，装在其它位置时设置 `MSYS2_ROOT` 环境变量即可 |
 | `webrtc` / abseil `C1083` Invalid argument | 使用默认短路径 `C:\ncm-gtk`，勿把 BuildRoot 放在 Desktop 深目录 |
 | `Get-FileHash` 无法识别（Windows PowerShell 5.1） | 换用 PowerShell 7（`pwsh`）运行脚本 |
 | icu 构建报 `'py' is not recognized` | 缺 python.org 启动器；新版 bootstrap 会自动生成 py shim，重跑即可 |

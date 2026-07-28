@@ -199,7 +199,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 
 - Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
 - Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于可运行应用：日常用 `make dev`（缺包时会 package），正式 zip 用 `build.ps1 -Package`。
-- GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已优先 `C:\msys64\usr\bin` 并传 `--use-env`（详见 `build-aux/windows/README.md`）。
+- GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已按 `MSYS2_ROOT` → `C:\msys64` → `C:\tools\msys64`（choco 默认）探测 MSYS2 并优先其 `usr\bin`，同时传 `--use-env`（详见 `build-aux/windows/README.md`）。
 - Windows CI 的 gvsbuild 缓存 key 含 `hashFiles('build-aux/windows/bootstrap.ps1')`：改该文件会强制冷编依赖前缀（含 ffmpeg，可数十分钟），属预期；细节与对照表见 `build-aux/windows/README.md`。
 - `*.sh` 经 `.gitattributes` 强制 `eol=lf`（msys2 bash 遇 CRLF 会解析失败）；新增 shell 补丁脚本保持 LF。
 - **Windows gettext 初始化三要素**（缺一则界面永远是英文，实测排障结论）：
