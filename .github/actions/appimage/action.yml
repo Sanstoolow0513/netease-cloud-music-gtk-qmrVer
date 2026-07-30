@@ -19,13 +19,9 @@ runs:
     - shell: bash
       run: |
         set -euo pipefail
-        eval "$(${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}/bin/brew shellenv)"
-        brew install shared-mime-info file
 
         APPDIR="${{ inputs.appdir }}"
         BUILDDIR="${{ inputs.build-dir }}"
-
-        export LD_LIBRARY_PATH="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
         # Download linuxdeploy (continuous is the recommended distribution)
         curl -fL --retry 3 --retry-delay 2 -O "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
@@ -58,10 +54,9 @@ runs:
           --desktop-file "$APPDIR/usr/share/applications/com.gitee.gmg137.NeteaseCloudMusicGtk4.desktop" \
           --icon-file "$APPDIR/usr/share/icons/hicolor/scalable/apps/com.gitee.gmg137.NeteaseCloudMusicGtk4.svg"
 
-        # Run GTK plugin steps manually (plugin script fails with Homebrew Cellar paths)
+        # Run GTK plugin steps manually (plugin discovery is unreliable in extracted mode)
         export LINUXDEPLOY="$(pwd)/linuxdeploy/AppRun"
         export DEPLOY_GTK_VERSION=4
-        export PKG_CONFIG_PATH="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 
         # Install AppRun hooks
         HOOKSDIR="$APPDIR/apprun-hooks"
@@ -90,7 +85,7 @@ runs:
             cp -r "$GI_TYPELIB_DIR"/* "$APPDIR/usr/lib/girepository-1.0/" 2>/dev/null || true
         fi
 
-        # Copy GTK 4.0 modules (if available from Homebrew)
+        # Copy GTK 4.0 modules (if available)
         GTK4_PREFIX=$(pkg-config --variable=prefix gtk4 2>/dev/null)
         GTK4_LIBDIR=$(pkg-config --variable=libdir gtk4 2>/dev/null)
         if [ -n "$GTK4_LIBDIR" ] && [ -d "$GTK4_LIBDIR/gtk-4.0" ]; then
