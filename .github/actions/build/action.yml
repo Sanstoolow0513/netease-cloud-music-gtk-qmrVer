@@ -53,6 +53,9 @@ runs:
           pkg-config
 
         eval "$(${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}/bin/brew shellenv)"
+        # Homebrew on GitHub runners can refuse installs when formulae expect a
+        # newer installer (e.g. fontconfig post_install: "unknown install step: run").
+        brew update
         brew install gtk4 gstreamer libadwaita openssl@3
 
     - name: Install macOS dependencies
@@ -60,6 +63,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        brew update
         brew install cargo-bundle dbus gettext gstreamer libadwaita meson openssl@3
 
     - name: Build on Linux
