@@ -5,6 +5,17 @@
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>GPL-3.0-or-later</project_license>
     <releases>
+        <release version="1.0.0" date="2026-07-30" type="stable">
+            <description>
+                <ul>
+                    <li>qmrVer 首个正式发行版（基于上游 2.5.3）</li>
+                    <li>Windows MSVC 便携包与跨平台构建隔离</li>
+                    <li>桌面优先自适应 UI、双列歌曲列表与可切换配色皮肤</li>
+                    <li>首选项：显示语言热切换、音频输出设备、页面显隐排序</li>
+                    <li>修复 Windows 播放链路、gettext 与 Bootstrap/CI 稳定性问题</li>
+                </ul>
+            </description>
+        </release>
         <release version="2.5.3" date="2026-04-27" type="stable">
             <description>
                 <ul>

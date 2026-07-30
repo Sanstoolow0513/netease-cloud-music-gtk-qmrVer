@@ -8,7 +8,7 @@
 | Windows 10/11 x64 | MSVC 便携包；关闭窗口即退出，无托盘 / MPRIS / 外部桌面歌词 |
 | macOS | 可构建；能力与 Linux 桌面集成项按平台门控裁剪 |
 
-当前版本：**2.5.3** · 许可证：[GPL-3.0-or-later](COPYING)
+当前版本：**1.0.0**（`qmr/release` 发行分支） · 许可证：[GPL-3.0-or-later](COPYING)
 
 ## 特点
 

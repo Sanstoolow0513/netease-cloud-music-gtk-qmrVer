@@ -4,7 +4,7 @@
 
 ## 项目概览
 
-**netease-cloud-music-gtk4** 是基于 **GTK4 + Libadwaita** 的网易云音乐第三方桌面播放器，使用 **Rust**（edition 2024）编写，支持 Linux、Windows x64 与 macOS。Linux 在 openSUSE Tumbleweed + GNOME 下测试；Windows 使用 MSVC 便携包。当前版本 **2.5.3**，许可证 GPL-3.0-or-later。
+**netease-cloud-music-gtk4** 是基于 **GTK4 + Libadwaita** 的网易云音乐第三方桌面播放器，使用 **Rust**（edition 2024）编写，支持 Linux、Windows x64 与 macOS。Linux 在 openSUSE Tumbleweed + GNOME 下测试；Windows 使用 MSVC 便携包。当前版本 **1.0.0**（`qmr/release` 发行分支；`master` 仍跟踪开发），许可证 GPL-3.0-or-later。
 
 - 应用 ID：`com.gitee.gmg137.NeteaseCloudMusicGtk4`
 - 风格仿 GNOME Music，支持发现页、榜单、歌单、搜索、"我的"页、播放栏、应用内歌词、扫码/验证码登录等。
@@ -215,7 +215,7 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
   - `meson.yml`：push/PR 到 master 时分别执行 Linux 与 Windows MSVC 构建；Linux 打包 AppImage，Windows 打包便携 zip。
   - `nightly.yml`：每日定时检查变更后触发 nightly 构建。
   - `release.yml`：推送 `x.y.z` 格式 tag 触发。Linux 构建 .deb / .rpm / AppImage，macOS（Intel + ARM）构建 dmg，Windows 构建 x64 便携 zip，最后汇总创建 GitHub Release。
-- **分发渠道**：openSUSE (zypper)、Arch AUR/archlinuxcn、Ubuntu PPA (`ppa:gmg137/ncm`)、Debian 中文社区源、Flathub Flatpak、Nix、Gentoo gentoo-zh 源——这些包由各渠道维护；仓库直接产出 AppImage/deb/rpm/dmg，以及（本分支合入并走 release/nightly 后）Windows zip。现役 GitHub Release `2.5.3` 目前仅有 AppImage。
+- **分发渠道**：openSUSE (zypper)、Arch AUR/archlinuxcn、Ubuntu PPA (`ppa:gmg137/ncm`)、Debian 中文社区源、Flathub Flatpak、Nix、Gentoo gentoo-zh 源——这些包由各渠道维护；仓库直接产出 AppImage/deb/rpm/dmg，以及（本分支合入并走 release/nightly 后）Windows zip。现役 GitHub Release 以 `qmr/release` 上的 `x.y.z` tag 为准（含 Linux/macOS/Windows 产物）。
 
 ## 安全注意事项
 

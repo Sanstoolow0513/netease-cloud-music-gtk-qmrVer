@@ -46,8 +46,8 @@
             "sources" : [
                 {
                     "type" : "git",
-                    "url" : "https://github.com/gmg137/netease-cloud-music-gtk.git",
-                    "tag" : "2.5.3"
+                    "url" : "https://github.com/Sanstoolow0513/netease-cloud-music-gtk-qmrVer.git",
+                    "tag" : "1.0.0"
                 }
             ],
             "config-opts" : []
