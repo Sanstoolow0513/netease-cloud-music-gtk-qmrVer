@@ -78,7 +78,7 @@ pub enum Action {
     PlayNextSong,
     PlayPreviousSong,
     Play(SongInfo),
-    PlayStart(SongInfo),
+    PlayStart(SongInfo, Option<u32>),
     TogglePlayPause,
     // (歌单, 是否立即播放)
     AddPlayList(Vec<SongInfo>, bool),
@@ -148,7 +148,6 @@ pub enum Action {
     // gst
     GstDurationChanged(u64),
     GstStateChanged(gstreamer_play::PlayState),
-    GstVolumeChanged(f64),
     GstCacheDownloadComplete(String),
     ScaleSeekUpdate(u64),
     ScaleValueUpdate,
@@ -801,7 +800,10 @@ impl NeteaseCloudMusicGtk4Application {
                                     if song_info.quality.selected.is_none() {
                                         song_info.quality.selected = Some(song_url.quality);
                                     }
-                                    sender.send(Action::PlayStart(song_info)).await.unwrap();
+                                    sender
+                                        .send(Action::PlayStart(song_info, Some(song_url.rate)))
+                                        .await
+                                        .unwrap();
                                 } else {
                                     error!("获取歌曲播放链接失败: {:?}", &[song_info.id]);
                                     sender
@@ -827,7 +829,14 @@ impl NeteaseCloudMusicGtk4Application {
                                 sender.send(Action::PlayNextSong).await.unwrap();
                             }
                         } else {
-                            sender.send(Action::PlayStart(song_info)).await.unwrap();
+                            let bitrate = song_info
+                                .quality
+                                .selected
+                                .map(|q| NcmClient::get_api_rate(NcmClient::get_quality_index(q)));
+                            sender
+                                .send(Action::PlayStart(song_info, bitrate))
+                                .await
+                                .unwrap();
                         }
                     });
                 } else {
@@ -835,10 +844,15 @@ impl NeteaseCloudMusicGtk4Application {
                         song_url: local_file_uri(&path),
                         ..song_info
                     };
-                    sender.send_blocking(Action::PlayStart(song_info)).unwrap();
+                    sender
+                        .send_blocking(Action::PlayStart(
+                            song_info,
+                            Some(NcmClient::get_api_rate(music_rate)),
+                        ))
+                        .unwrap();
                 }
             }
-            Action::PlayStart(song_info) => {
+            Action::PlayStart(song_info, bitrate) => {
                 // 启用桌面歌词
                 if crate::platform::HAS_DESKTOP_LYRICS
                     && window.settings().boolean("desktop-lyrics")
@@ -862,7 +876,7 @@ impl NeteaseCloudMusicGtk4Application {
                     .send_blocking(Action::UpdateTrayPlaying(true))
                     .unwrap();
 
-                window.play(song_info);
+                window.play(song_info, bitrate);
             }
             Action::ToSongListPage(songlist) => {
                 let page = window.init_songlist_page(&songlist, false);
@@ -1533,9 +1547,6 @@ impl NeteaseCloudMusicGtk4Application {
             }
             Action::GstStateChanged(state) => {
                 window.gst_state_changed(state);
-            }
-            Action::GstVolumeChanged(volume) => {
-                window.gst_volume_changed(volume);
             }
             Action::GstCacheDownloadComplete(loc) => {
                 window.gst_cache_download_complete(loc);

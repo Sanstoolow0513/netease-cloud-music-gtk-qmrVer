@@ -198,6 +198,8 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 
 ### 已知注意点（改动时注意）
 
+- **音量单一事实源**：`PlayerControls` 的 `volume` 属性是唯一事实源，所有入口（音量滑条、MPRIS `connect_set_volume`、启动恢复）统一经 `set_volume()` 直设 gstplay 并防抖持久化；**禁止重建 gstplay `volume-changed` → 属性的回环**——该回环曾因 playbin 切歌重建音频链发出默认音量 notify，异步冲掉属性值导致音量跨曲丢失（2026-07 修复，回环与 `Action::GstVolumeChanged` 已删）。`play()`、`PlayState::Playing` 与 `GstDurationChanged` 三处会重申属性音量，防管线重建重置。调节无级化：UI 步进 0.01/翻页 0.1，`set_volume()` 与 MPRIS 侧均不再做百分比取整门，勿恢复。
+- **码率显示**：播放栏时长旁的 `bitrate_label`（0=未知则隐藏）由 `Action::PlayStart(SongInfo, Option<u32>)` 携带 bps——网络路径取 API `SongUrl.rate` 精确值，本地缓存路径取 `NcmClient::get_api_rate(music_rate)` 名义值（与缓存文件名内嵌码率同源），恢复/直连路径按已选音质推导。
 - Flatpak manifest、AppStream、桌面文件仍以 Linux 分发为主；Windows 不安装 `.desktop`/AppStream。
 - Windows 便携包与 GitHub Release 附件：需本分支合入并走 `release.yml`/`nightly.yml` 后才会出现在正式 Release；本地产物在 `_windows/dist/`。依赖前缀就绪不等于可运行应用：日常用 `make dev`（缺包时会 package），正式 zip 用 `build.ps1 -Package`。
 - GitHub `windows-*` runner 上 gvsbuild 编 `libvpx` 时，Git Bash 可能抢 PATH 导致 `/tmp/vpx-conf-*.c` 找不到；`bootstrap.ps1` 已按 `MSYS2_ROOT` → `C:\msys64` → `C:\tools\msys64`（choco 默认）探测 MSYS2 并优先其 `usr\bin`，同时传 `--use-env`（详见 `build-aux/windows/README.md`）。
