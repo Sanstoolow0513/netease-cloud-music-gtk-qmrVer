@@ -17,7 +17,7 @@
 
 - **UI**：gtk4 (gtk-rs 0.11，`v4_10` feature)、libadwaita 0.9（`v1_6` feature）。UI 用 `.ui` 模板（`data/gtk/*.ui`）+ `CompositeTemplate` 子类化方式构建。
 - **音频播放**：GStreamer（`gstreamer` / `gstreamer-play` 0.25）。
-- **网络 API**：`ncm-api` crate（`netease-cloud-music-api`，锁定 gitee 仓库 tag 2.0.0；GitHub dev 分支以注释形式保留在 `Cargo.toml` 中）。
+- **网络 API**：`ncm-api` crate（`netease-cloud-music-api`，锁定 GitHub 仓库 tag 2.0.0；gitee 源以注释形式保留在 `Cargo.toml` 中）。
 - **桌面集成**：`mpris-server`（MPRIS2 D-Bus 接口）、`ksni`（系统托盘）、`qrcode-generator`（扫码登录）。
 - **其他**：`async-channel`（内部消息分发）、`once_cell`、`gettext-rs`（i18n）、`cookie_store`（登录 cookie 持久化）、`serde/serde_json`、`anyhow`、`regex`、`chrono`、`fastrand`、`log` + `env_logger`。
 - 系统依赖（见根 `meson.build`）：openssl、glib-2.0/gio-2.0 (≥2.66)、gdk-pixbuf、gtk4 (≥4.10)、libadwaita-1 (≥1.5)、gstreamer 1.0 系列 (≥1.16，含 base/bad/plugins)；dbus-1、MPRIS 与 ksni 仅用于 Linux。Windows 原生依赖由单一 gvsbuild MSVC 前缀提供。
