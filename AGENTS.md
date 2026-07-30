@@ -20,7 +20,7 @@
 - **网络 API**：`ncm-api` crate（`netease-cloud-music-api`，锁定 GitHub 仓库 tag 2.0.0；gitee 源以注释形式保留在 `Cargo.toml` 中）。
 - **桌面集成**：`mpris-server`（MPRIS2 D-Bus 接口）、`ksni`（系统托盘）、`qrcode-generator`（扫码登录）。
 - **其他**：`async-channel`（内部消息分发）、`once_cell`、`gettext-rs`（i18n）、`cookie_store`（登录 cookie 持久化）、`serde/serde_json`、`anyhow`、`regex`、`chrono`、`fastrand`、`log` + `env_logger`。
-- 系统依赖（见根 `meson.build`）：openssl、glib-2.0/gio-2.0 (≥2.66)、gdk-pixbuf、gtk4 (≥4.10)、libadwaita-1 (≥1.5)、gstreamer 1.0 系列 (≥1.16，含 base/bad/plugins)；dbus-1、MPRIS 与 ksni 仅用于 Linux。Windows 原生依赖由单一 gvsbuild MSVC 前缀提供。
+- 系统依赖（见根 `meson.build`）：openssl、glib-2.0/gio-2.0 (≥2.66)、gdk-pixbuf、gtk4 (≥4.10)、libadwaita-1 (≥1.6，代码使用 `AdwBreakpointBin`)、gstreamer 1.0 系列 (≥1.16，含 base/bad/plugins)；dbus-1、MPRIS 与 ksni 仅用于 Linux。Windows 原生依赖由单一 gvsbuild MSVC 前缀提供。
 
 ## 构建与运行
 
@@ -212,7 +212,8 @@ com.gitee.gmg137.NeteaseCloudMusicGtk4.json  # Flatpak manifest（GNOME Platform
 
 - **版本号三处同步**：`Cargo.toml` 的 `version`、根 `meson.build` 的 `project(version)`、Flatpak manifest 中的 git `tag`。
 - **CI**（`.github/workflows/` + 本地 composite actions）：
-  - `meson.yml`：push/PR 到 master 时分别执行 Linux 与 Windows MSVC 构建；Linux 打包 AppImage，Windows 打包便携 zip。
+  - `meson.yml`：push/PR 到 master 时分别执行 Linux 与 Windows MSVC 构建；Windows 打包便携 zip；Linux 仅在 push 时打包 AppImage（PR 只做编译验证）。
+  - Linux 构建跑在 `ubuntu-26.04`：GTK4/libadwaita 等全部来自 apt（24.04 的 libadwaita 1.5 不满足 ≥1.6，曾因此用 linuxbrew 装 GTK 栈，慢且不稳定，已移除）；macOS 依赖仍用 brew。
   - `nightly.yml`：每日定时检查变更后触发 nightly 构建。
   - `release.yml`：推送 `x.y.z` 格式 tag 触发。Linux 构建 .deb / .rpm / AppImage，macOS（Intel + ARM）构建 dmg，Windows 构建 x64 便携 zip，最后汇总创建 GitHub Release。
 - **分发渠道**：openSUSE (zypper)、Arch AUR/archlinuxcn、Ubuntu PPA (`ppa:gmg137/ncm`)、Debian 中文社区源、Flathub Flatpak、Nix、Gentoo gentoo-zh 源——这些包由各渠道维护；仓库直接产出 AppImage/deb/rpm/dmg，以及（本分支合入并走 release/nightly 后）Windows zip。现役 GitHub Release `2.5.3` 目前仅有 AppImage。

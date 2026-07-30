@@ -46,7 +46,7 @@ jobs:
   linux-build:
     needs: check-changes
     if: needs.check-changes.outputs.has-changes == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
 
     steps:
