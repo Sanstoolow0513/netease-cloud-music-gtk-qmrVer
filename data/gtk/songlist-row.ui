@@ -27,6 +27,18 @@
                     </object>
                 </child>
                 <child>
+                    <object class="GtkImage" id="cover_image">
+                        <property name="focusable">False</property>
+                        <property name="pixel-size">48</property>
+                        <property name="valign">center</property>
+                        <property name="icon-name">audio-x-generic-symbolic</property>
+                        <property name="margin-end">8</property>
+                        <style>
+                            <class name="song-row-cover" />
+                        </style>
+                    </object>
+                </child>
+                <child>
                     <object class="GtkBox" id="_title_box">
                         <property name="focusable">False</property>
                         <property name="hexpand">True</property>

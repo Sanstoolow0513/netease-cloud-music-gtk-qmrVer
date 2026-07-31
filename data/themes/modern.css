@@ -46,11 +46,17 @@
 
 /* 紧凑单行表：歌名弹性占位，歌手/专辑固定窄列贴右，避免等分拉伸造成割裂 */
 .song_row {
-    padding-top: 3px;
-    padding-bottom: 3px;
+    padding-top: 6px;
+    padding-bottom: 6px;
     border-radius: 6px;
     border: none;
     box-shadow: none;
+}
+
+/* 行内歌曲封面 */
+.song-row-cover {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px alpha(black, 0.12);
 }
 
 .song_row:hover {
