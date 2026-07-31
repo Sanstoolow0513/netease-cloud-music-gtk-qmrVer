@@ -8,6 +8,7 @@ use gtk::subclass::prelude::*;
 use gtk::{CompositeTemplate, glib, *};
 
 use crate::application::Action;
+use crate::model::ImageDownloadImpl;
 use async_channel::Sender;
 use gettextrs::gettext;
 use glib::{ParamSpec, ParamSpecBoolean, SendWeakRef, Value};
@@ -43,6 +44,7 @@ impl SonglistRow {
         self.set_singer(&si.singer);
         self.set_album(&si.album);
         self.set_duration(si.duration);
+        self.set_cover(si);
 
         gtk::prelude::ListBoxRowExt::set_activatable(self, si.copyright.playable());
     }
@@ -86,34 +88,6 @@ impl SonglistRow {
         imp.remove_button.set_visible(visible);
     }
 
-    pub fn set_my_page_preview_mode(&self) {
-        let imp = self.imp();
-        imp.album_label.set_visible(false);
-        if let Some(parent) = imp.album_label.parent() {
-            parent.set_visible(false);
-        }
-        self.set_album_button_visible(false);
-        self.set_remove_button_visible(false);
-
-        // Pack title + artist together on the left; duration absorbs leftover
-        // width so wide preview cards don't open a dead zone between the
-        // song name and the artist.
-        if let Some(title_box) = imp.title_label.parent() {
-            title_box.set_hexpand(false);
-        }
-        imp.title_label.set_max_width_chars(32);
-        if let Some(artist_box) = imp.artist_label.parent() {
-            artist_box.set_width_request(120);
-        }
-        imp.artist_label.set_width_chars(8);
-        imp.artist_label.set_max_width_chars(12);
-        if let Some(tail_box) = imp.duration_label.parent() {
-            tail_box.set_hexpand(true);
-        }
-        imp.duration_label.set_hexpand(true);
-        imp.duration_label.set_halign(gtk::Align::End);
-    }
-
     /// 双列布局下隐藏专辑列，收紧歌手列宽度，保留喜欢按钮。
     pub fn set_dual_column_compact(&self, compact: bool) {
         let imp = self.imp();
@@ -149,6 +123,22 @@ impl SonglistRow {
         let imp = self.imp();
         let label = format!("{:0>2}:{:0>2}", duration / 1000 / 60, duration / 1000 % 60);
         imp.duration_label.set_label(&label);
+    }
+
+    /// 加载歌曲封面（48px），有缓存直接用缓存，否则走 DownloadImage 下载。
+    fn set_cover(&self, si: &SongInfo) {
+        let imp = self.imp();
+        if si.pic_url.is_empty() {
+            return;
+        }
+        let mut path = crate::path::CACHE.clone();
+        path.push(format!("{}-song-48.jpg", si.id));
+        if path.exists() {
+            imp.cover_image.set_from_file(Some(&path));
+        } else if let Some(sender) = imp.sender.get() {
+            imp.cover_image
+                .set_from_net(si.pic_url.to_owned(), path, (48, 48), sender);
+        }
     }
 }
 
@@ -219,6 +209,8 @@ mod imp {
     pub struct SonglistRow {
         #[template_child]
         pub play_icon: TemplateChild<Image>,
+        #[template_child]
+        pub cover_image: TemplateChild<Image>,
         #[template_child]
         pub title_label: TemplateChild<Label>,
         #[template_child]

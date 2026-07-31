@@ -23,7 +23,7 @@ use crate::{
 
 glib::wrapper! {
     pub struct PlayListLyricsPage(ObjectSubclass<imp::PlayListLyricsPage>)
-        @extends adw::Bin, Widget, Paned,
+        @extends adw::Bin, Widget,
         @implements Accessible, Orientable, ConstraintTarget,Buildable;
 }
 

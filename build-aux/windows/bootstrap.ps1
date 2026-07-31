@@ -223,12 +223,23 @@ if ((Test-Path -LiteralPath $goodBuildDir) -and -not (Test-Path -LiteralPath $so
 # on PATH. libvpx's configure then probes /tmp with Git's cat/mv against a
 # different tmp root and fails before producing vpxmd.lib (wingtk/gvsbuild#1723).
 # Prefer system MSYS2 and pass --use-env so gvsbuild keeps that PATH.
-$msysUsrBin = "C:\msys64\usr\bin"
-if (Test-Path -LiteralPath $msysUsrBin) {
+$msysUsrBin = $null
+$msysCandidates = @(
+    if ($env:MSYS2_ROOT) { Join-Path $env:MSYS2_ROOT "usr\bin" }
+    "C:\msys64\usr\bin"        # msys2.org installer default
+    "C:\tools\msys64\usr\bin"  # chocolatey default
+)
+foreach ($candidate in $msysCandidates) {
+    if ($candidate -and (Test-Path -LiteralPath $candidate)) {
+        $msysUsrBin = $candidate
+        break
+    }
+}
+if ($msysUsrBin) {
     $env:Path = "$msysUsrBin;$env:Path"
     Write-Host "Preferring MSYS2 tools at $msysUsrBin for gvsbuild"
 } else {
-    Write-Warning "C:\msys64\usr\bin not found; libvpx may fail if Git Bash tools shadow MSYS2."
+    Write-Warning "MSYS2 usr\bin not found (checked C:\msys64, C:\tools\msys64, MSYS2_ROOT); libvpx may fail if Git Bash tools shadow MSYS2."
 }
 
 # gvsbuild's stock ffmpeg build.sh cannot produce the decoders we need and its

@@ -32,7 +32,7 @@ runs:
         Version: ${VERSION}
         Architecture: amd64
         Maintainer: gmg137
-        Depends: libgtk-4-1 (>= 4.0.0), libadwaita-1-0 (>= 1.5.0), libgstreamer1.0-0 (>= 1.16), libssl3, libdbus-1-3
+        Depends: libgtk-4-1 (>= 4.10), libadwaita-1-0 (>= 1.6.0), libgstreamer1.0-0 (>= 1.16), libssl3, libdbus-1-3
         Description: Netease Cloud Music GTK4 Client
         DEBCTRL
 

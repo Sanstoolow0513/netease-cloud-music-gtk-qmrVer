@@ -209,8 +209,9 @@ impl PlayerControls {
         imp.player_signal.set(player_signal).unwrap();
     }
 
-    pub fn play(&self, song_info: SongInfo) {
+    pub fn play(&self, song_info: SongInfo, bitrate: Option<u32>) {
         let imp = self.imp();
+        self.set_property("song-bitrate", bitrate.unwrap_or(0));
 
         let sender = imp.sender.get().unwrap();
         sender
@@ -275,6 +276,16 @@ impl PlayerControls {
 
         let artist_label = imp.artist_label.get();
         artist_label.set_label(&song_info.singer);
+
+        // 码率标签（bps → kbps，0 表示未知则隐藏）
+        let bitrate: u32 = self.property("song-bitrate");
+        let bitrate_label = imp.bitrate_label.get();
+        if bitrate > 0 {
+            bitrate_label.set_label(&format!("{} kbps", (bitrate + 500) / 1000));
+            bitrate_label.set_visible(true);
+        } else {
+            bitrate_label.set_visible(false);
+        }
 
         let volume = self.property("volume");
         if let Some(mpris) = imp.mpris.get() {
@@ -370,13 +381,6 @@ impl PlayerControls {
         player_sig.connect_state_changed(move |_, state| {
             sender
                 .send_blocking(Action::GstStateChanged(state))
-                .unwrap();
-        });
-
-        let sender = sender_.clone();
-        player_sig.connect_volume_changed(move |_, volume| {
-            sender
-                .send_blocking(Action::GstVolumeChanged(volume))
                 .unwrap();
         });
 
@@ -485,6 +489,11 @@ impl PlayerControls {
                 );
             }
         }
+
+        // 媒体解析完成后重申音量（音频链重建可能重置音量）
+        if let Some(player) = imp.player.get() {
+            player.set_volume(self.property("volume"));
+        }
     }
 
     pub fn gst_state_changed(&self, state: PlayState) {
@@ -509,13 +518,13 @@ impl PlayerControls {
                 if let Ok(mut playlist) = imp.playlist.lock() {
                     playlist.set_play_state(true);
                 }
+                // 管线起播后重申音量（音频链重建可能重置音量）
+                if let Some(player) = imp.player.get() {
+                    player.set_volume(self.property("volume"));
+                }
             }
             _ => (),
         }
-    }
-
-    pub fn gst_volume_changed(&self, volume: f64) {
-        self.set_property("volume", volume);
     }
 
     pub fn gst_cache_download_complete(&self, loc: String) {
@@ -861,11 +870,13 @@ impl PlayerControls {
     }
 
     pub fn set_volume(&self, value: f64) {
+        let value = value.clamp(0.0, 1.0);
         let old: f64 = self.property("volume");
-        if (old * 100.0).round() as i64 != (value * 100.0).round() as i64 {
+        if old != value {
             self.set_property("volume", value);
-            let player = self.imp().player.get().unwrap();
-            player.set_volume(value);
+            if let Some(player) = self.imp().player.get() {
+                player.set_volume(value);
+            }
             if self.imp().sender.get().is_none() {
                 // if sender is not ready, just return
                 return;
@@ -1036,6 +1047,8 @@ mod imp {
         #[template_child]
         pub duration_label: TemplateChild<Label>,
         #[template_child]
+        pub bitrate_label: TemplateChild<Label>,
+        #[template_child]
         pub volume_button: TemplateChild<ScaleButton>,
 
         #[template_child]
@@ -1067,6 +1080,8 @@ mod imp {
         loops: Cell<LoopsState>,
         music_rate: Cell<u32>,
         duration: Cell<u64>,
+        // 当前歌曲码率（bps，0 表示未知）
+        song_bitrate: Cell<u32>,
 
         like: Cell<bool>,
 
@@ -1322,6 +1337,7 @@ mod imp {
                     ParamSpecEnum::builder::<LoopsState>("loops").build(),
                     ParamSpecUInt::builder("music-rate").build(),
                     ParamSpecUInt64::builder("duration").build(),
+                    ParamSpecUInt::builder("song-bitrate").build(),
                     ParamSpecBoolean::builder("like").readwrite().build(),
                     ParamSpecDouble::builder("scale-value").readwrite().build(),
                 ]
@@ -1347,6 +1363,10 @@ mod imp {
                     let val = value.get().unwrap();
                     self.duration.replace(val);
                 }
+                "song-bitrate" => {
+                    let val = value.get().unwrap();
+                    self.song_bitrate.replace(val);
+                }
                 "like" => {
                     let like = value.get().expect("The value needs to be of type `bool`.");
                     self.like.replace(like);
@@ -1365,6 +1385,7 @@ mod imp {
                 "loops" => self.loops.get().to_value(),
                 "music-rate" => self.music_rate.get().to_value(),
                 "duration" => self.duration.get().to_value(),
+                "song-bitrate" => self.song_bitrate.get().to_value(),
                 "like" => self.like.get().to_value(),
                 "scale-value" => self.scale_value.get().to_value(),
                 n => unimplemented!("{}", n),

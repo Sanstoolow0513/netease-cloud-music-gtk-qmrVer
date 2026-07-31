@@ -94,10 +94,8 @@ impl SonglistPage {
                 self.set_property("like", dy.is_sub);
                 imp.songs_list.set_property("no-act-album", true);
                 imp.songs_list.set_property("no-act-remove", true);
-                // 专辑页：单列，列表限宽与上方 header AdwClamp(1000) 对齐
+                // 专辑页：单列（列表限宽已在 .ui 中与 header AdwClamp(1000) 统一对齐）
                 imp.songs_list.set_property("max-columns", 1);
-                imp.songs_list.set_property("clamp-maximum-size", 1000);
-                imp.songs_list.set_property("clamp-tightening-threshold", 730);
                 imp.page_type.replace(Some(DiscoverSubPage::Album));
                 let dt = Utc
                     .timestamp_millis_opt(detail.publish_time as i64)
@@ -106,8 +104,11 @@ impl SonglistPage {
                 imp.time_label.set_label(&format!("{}", dt,));
 
                 let desc = detail.description.trim();
+                // 简介常含大量换行，多行 ellipsize 对硬换行不可靠，折叠成单行空白后交给 label 软换行
+                let desc_flat = desc.split_whitespace().collect::<Vec<_>>().join(" ");
                 imp.description_label.set_visible(!desc.is_empty());
-                imp.description_label.set_label(desc);
+                imp.description_label.set_label(&desc_flat);
+                imp.description_label.set_tooltip_text(Some(desc));
 
                 imp.num_label.set_label(&format!(
                     "{}, {}",
@@ -127,8 +128,11 @@ impl SonglistPage {
                 ));
 
                 let desc = detail.description.trim();
+                // 同专辑分支：折叠硬换行，tooltip 展示完整简介
+                let desc_flat = desc.split_whitespace().collect::<Vec<_>>().join(" ");
                 imp.description_label.set_visible(!desc.is_empty());
-                imp.description_label.set_label(desc);
+                imp.description_label.set_label(&desc_flat);
+                imp.description_label.set_tooltip_text(Some(desc));
             }
             SongListDetail::Radio(detail) => {
                 imp.description_label.set_visible(false);

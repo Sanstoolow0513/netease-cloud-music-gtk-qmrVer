@@ -644,10 +644,10 @@ impl NeteaseCloudMusicGtk4Window {
         player_controls.next_song();
     }
 
-    pub fn play(&self, song_info: SongInfo) {
+    pub fn play(&self, song_info: SongInfo, bitrate: Option<u32>) {
         let player_controls = self.imp().player_controls.get();
         player_controls.set_property("like", self.imp().user_like_song_contains(&song_info.id));
-        player_controls.play(song_info);
+        player_controls.play(song_info, bitrate);
         self.show_player_bar();
     }
 
@@ -889,11 +889,6 @@ impl NeteaseCloudMusicGtk4Window {
         self.imp().my_page.is_current_request(section, request_id)
     }
 
-    pub fn update_my_page_songs(&self, section: MyPageSection, songs: Vec<SongInfo>) {
-        let likes = self.get_song_likes(&songs);
-        self.imp().my_page.update_songs(section, &songs, &likes);
-    }
-
     pub fn update_my_page_collections(&self, section: MyPageSection, items: Vec<SongList>) {
         self.imp().my_page.update_collections(section, items);
     }
@@ -952,9 +947,6 @@ impl NeteaseCloudMusicGtk4Window {
         use gstreamer_play::PlayState;
         let is_playing = matches!(state, PlayState::Playing);
         self.update_tray_playing(is_playing);
-    }
-    pub fn gst_volume_changed(&self, volume: f64) {
-        self.imp().player_controls.get().gst_volume_changed(volume);
     }
     pub fn gst_cache_download_complete(&self, loc: String) {
         self.imp()
