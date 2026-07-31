@@ -64,6 +64,23 @@ make dev
 
 产物位于 `_windows\dist\netease-cloud-music-gtk4-<版本>-windows-x64.zip`。
 
+生成 Inno Setup 安装器（前置：本机装有 Inno Setup 6，可用 `winget install JRSoftware.InnoSetup`；CI 的 windows-2022 镜像已预装）：
+
+```powershell
+# staging 已存在（跑过 -Package / make dev 完整打包）时直接：
+.\build-aux\windows\installer.ps1
+
+# 或一条龙：构建 + staging + 安装器（再加 -Package 可同时出 zip）
+.\build-aux\windows\build.ps1 `
+  -DependencyPrefix $prefix `
+  -BuildType release `
+  -Installer
+```
+
+产物位于 `_windows\dist\netease-cloud-music-gtk4-<版本>-windows-x64-setup.exe`。安装器为每用户安装（免 UAC），默认装到 `%LocalAppData%\Programs\NetEase Cloud Music Gtk4`，自带开始菜单快捷方式与卸载程序。`installer.ps1` 会从 `data/icons/hicolor/512x512@2x.png` 生成 `app.ico`（输出到 `_windows\build\installer-assets\`，不入库）用于安装器与快捷方式图标；`package.ps1 -SkipZip` 可只产出 staging 而不压 zip。release/nightly CI 会把 setup.exe 与 zip 一起挂到 GitHub Release。
+
+安装向导提供中英双语：英文用 Inno 自带 `Default.isl`，简体中文用入库的 `build-aux/windows/lang/ChineseSimplified.isl`（源自 [jrsoftware/issrc](https://github.com/jrsoftware/issrc) `Files/Languages/`，官方发行版 6.7.3 及之前未随附中文，故随仓库携带；`installer.iss` 以相对路径引用，本地与 CI 行为一致）。
+
 ## 目录与平台隔离
 
 - `C:\ncm-gtk`：默认 gvsbuild MSVC 依赖前缀（GTK4、Libadwaita、GStreamer、gettext、OpenSSL）。

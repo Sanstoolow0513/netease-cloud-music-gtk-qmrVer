@@ -3,7 +3,8 @@ param(
     [string]$BuildDir,
     [string]$InstallRoot,
     [ValidateSet("debug", "release")][string]$BuildType = "release",
-    [switch]$Package
+    [switch]$Package,
+    [switch]$Installer
 )
 
 $ErrorActionPreference = "Stop"
@@ -71,4 +72,20 @@ if ($Package) {
     & (Join-Path $PSScriptRoot "package.ps1") `
         -InstallRoot $InstallRoot `
         -DependencyPrefix $DependencyPrefix
+}
+
+if ($Installer) {
+    if (-not $Package) {
+        & (Join-Path $PSScriptRoot "package.ps1") `
+            -InstallRoot $InstallRoot `
+            -DependencyPrefix $DependencyPrefix `
+            -SkipZip
+        if ($LASTEXITCODE -ne 0) {
+            throw "package.ps1 failed with exit code $LASTEXITCODE"
+        }
+    }
+    & (Join-Path $PSScriptRoot "installer.ps1")
+    if ($LASTEXITCODE -ne 0) {
+        throw "installer.ps1 failed with exit code $LASTEXITCODE"
+    }
 }

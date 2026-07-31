@@ -107,7 +107,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-windows-x64
-          path: ${{ steps.windows.outputs.package }}
+          path: |
+            ${{ steps.windows.outputs.package }}
+            ${{ steps.windows.outputs.installer }}
 
   release:
     needs: [linux-build, macos-build, windows-build]
@@ -150,3 +152,4 @@ jobs:
             release-macos-15-intel/*.dmg
             release-macos-latest/*.dmg
             release-windows-x64/*.zip
+            release-windows-x64/*.exe

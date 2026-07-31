@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory = $true)][string]$InstallRoot,
     [Parameter(Mandatory = $true)][string]$DependencyPrefix,
     [string]$OutputDir,
-    [string]$Version
+    [string]$Version,
+    [switch]$SkipZip
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,7 +49,7 @@ New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 if (Test-Path -LiteralPath $staging) {
     Remove-Item -LiteralPath $staging -Recurse -Force
 }
-if (Test-Path -LiteralPath $zipPath) {
+if ((-not $SkipZip) -and (Test-Path -LiteralPath $zipPath)) {
     Remove-Item -LiteralPath $zipPath -Force
 }
 New-Item -ItemType Directory -Path $staging | Out-Null
@@ -141,6 +142,11 @@ Get-ChildItem -LiteralPath $staging -Recurse -Include "*.exe", "*.dll" | ForEach
     if ($imports -match "libgcc|libwinpthread|libstdc\+\+|msys-2\.0") {
         throw "MinGW/MSYS runtime import detected in $($_.FullName)"
     }
+}
+
+if ($SkipZip) {
+    Write-Output $staging
+    exit 0
 }
 
 Compress-Archive -Path (Join-Path $staging "*") -DestinationPath $zipPath -CompressionLevel Optimal

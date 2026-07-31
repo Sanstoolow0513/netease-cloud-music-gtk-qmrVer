@@ -148,7 +148,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: nightly-windows-x64
-          path: ${{ steps.windows.outputs.package }}
+          path: |
+            ${{ steps.windows.outputs.package }}
+            ${{ steps.windows.outputs.installer }}
 
   release:
     needs: [check-changes, linux-build, macos-build, windows-build]
@@ -191,3 +193,4 @@ jobs:
             nightly-macos-15-intel/*.dmg
             nightly-macos-latest/*.dmg
             nightly-windows-x64/*.zip
+            nightly-windows-x64/*.exe

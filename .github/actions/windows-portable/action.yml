@@ -5,6 +5,9 @@ outputs:
   package:
     description: Path to the Windows portable zip
     value: ${{ steps.package.outputs.package }}
+  installer:
+    description: Path to the Windows Inno Setup installer exe
+    value: ${{ steps.installer.outputs.installer }}
 
 runs:
   using: composite
@@ -63,3 +66,16 @@ runs:
           Sort-Object LastWriteTime -Descending |
           Select-Object -First 1
         "package=$($package.FullName)" >> $env:GITHUB_OUTPUT
+
+    - name: Build Inno Setup installer
+      id: installer
+      shell: pwsh
+      run: |
+        & "${{ github.workspace }}\build-aux\windows\installer.ps1"
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+        $installer = Get-ChildItem "${{ github.workspace }}\_windows\dist\*-setup.exe" |
+          Sort-Object LastWriteTime -Descending |
+          Select-Object -First 1
+        "installer=$($installer.FullName)" >> $env:GITHUB_OUTPUT
