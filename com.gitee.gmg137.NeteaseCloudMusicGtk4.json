@@ -47,7 +47,7 @@
                 {
                     "type" : "git",
                     "url" : "https://github.com/Sanstoolow0513/netease-cloud-music-gtk-qmrVer.git",
-                    "tag" : "1.0.0"
+                    "tag" : "1.1.0"
                 }
             ],
             "config-opts" : []

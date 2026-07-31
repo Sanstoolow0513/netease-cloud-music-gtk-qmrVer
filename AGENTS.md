@@ -4,7 +4,7 @@
 
 ## 项目概览
 
-**netease-cloud-music-gtk4** 是基于 **GTK4 + Libadwaita** 的网易云音乐第三方桌面播放器，使用 **Rust**（edition 2024）编写，支持 Linux、Windows x64 与 macOS。Linux 在 openSUSE Tumbleweed + GNOME 下测试；Windows 使用 MSVC 便携包。当前版本 **1.0.0**（`qmr/release` 发行分支；`master` 仍跟踪开发），许可证 GPL-3.0-or-later。
+**netease-cloud-music-gtk4** 是基于 **GTK4 + Libadwaita** 的网易云音乐第三方桌面播放器，使用 **Rust**（edition 2024）编写，支持 Linux、Windows x64 与 macOS。Linux 在 openSUSE Tumbleweed + GNOME 下测试；Windows 使用 MSVC 便携包。当前版本 **1.1.0**（`qmr/release` 发行分支；`master` 仍跟踪开发），许可证 GPL-3.0-or-later。
 
 - 应用 ID：`com.gitee.gmg137.NeteaseCloudMusicGtk4`
 - 风格仿 GNOME Music，支持发现页、榜单、歌单、搜索、"我的"页、播放栏、应用内歌词、扫码/验证码登录等。

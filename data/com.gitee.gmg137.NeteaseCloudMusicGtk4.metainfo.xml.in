@@ -5,6 +5,16 @@
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>GPL-3.0-or-later</project_license>
     <releases>
+        <release version="1.1.0" date="2026-07-31" type="stable">
+            <description>
+                <ul>
+                    <li>歌曲列表行加大并显示歌曲封面</li>
+                    <li>「我的」页改版：日推/收藏单曲快捷入口，收藏网格加密</li>
+                    <li>修复音量跨曲丢失并支持无级调节，播放栏新增码率显示</li>
+                    <li>优化歌词页分栏比例与歌单/专辑详情页布局</li>
+                </ul>
+            </description>
+        </release>
         <release version="1.0.0" date="2026-07-30" type="stable">
             <description>
                 <ul>
