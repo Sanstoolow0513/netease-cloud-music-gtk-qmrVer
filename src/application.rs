@@ -120,7 +120,6 @@ pub enum Action {
     // my
     InitMyPage,
     LoadMyPageSection(MyPageSection),
-    SetupMyPageSongs(MyPageSection, MyPageRequestId, Vec<SongInfo>),
     SetupMyPageCollections(MyPageSection, MyPageRequestId, Vec<SongList>),
     FailMyPageSection(MyPageSection, MyPageRequestId),
 
@@ -163,7 +162,6 @@ pub enum Action {
     ShowPlayerBar,
 }
 
-const MY_PAGE_SONG_PREVIEW_LIMIT: usize = 8;
 const MY_PAGE_COLLECTION_PREVIEW_LIMIT: usize = 10;
 
 fn local_file_uri(path: &Path) -> String {
@@ -1381,62 +1379,6 @@ impl NeteaseCloudMusicGtk4Application {
                     let sender = imp.sender.clone();
                     MAINCONTEXT.spawn_local_with_priority(Priority::DEFAULT_IDLE, async move {
                         match section {
-                            MyPageSection::DailyRec => {
-                                match ncmapi.client.recommend_songs().await {
-                                    Ok(songs) => {
-                                        sender
-                                            .send(Action::SetupMyPageSongs(
-                                                section,
-                                                request_id,
-                                                take_preview(songs, MY_PAGE_SONG_PREVIEW_LIMIT),
-                                            ))
-                                            .await
-                                            .unwrap();
-                                    }
-                                    Err(err) => {
-                                        fail_my_page_request(&sender, section, request_id, err)
-                                    }
-                                }
-                            }
-                            MyPageSection::FavoriteSongs => {
-                                match ncmapi.client.user_song_list(uid, 0, 1).await {
-                                    Ok(songlists) => {
-                                        if let Some(songlist) = songlists.first() {
-                                            match ncmapi.client.song_list_detail(songlist.id).await
-                                            {
-                                                Ok(detail) => {
-                                                    sender
-                                                        .send(Action::SetupMyPageSongs(
-                                                            section,
-                                                            request_id,
-                                                            take_preview(
-                                                                detail.songs,
-                                                                MY_PAGE_SONG_PREVIEW_LIMIT,
-                                                            ),
-                                                        ))
-                                                        .await
-                                                        .unwrap();
-                                                }
-                                                Err(err) => fail_my_page_request(
-                                                    &sender, section, request_id, err,
-                                                ),
-                                            }
-                                        } else {
-                                            sender
-                                                .send(Action::SetupMyPageSongs(
-                                                    section,
-                                                    request_id,
-                                                    Vec::new(),
-                                                ))
-                                                .await
-                                                .unwrap();
-                                        }
-                                    }
-                                    Err(err) => {
-                                        fail_my_page_request(&sender, section, request_id, err)
-                                    }
-                                }
-                            }
                             MyPageSection::FavoriteAlbums => {
                                 match ncmapi
                                     .client
@@ -1491,11 +1433,6 @@ impl NeteaseCloudMusicGtk4Application {
                             }
                         }
                     });
-                }
-            }
-            Action::SetupMyPageSongs(section, request_id, songs) => {
-                if window.is_logined() && window.is_current_my_page_request(section, request_id) {
-                    window.update_my_page_songs(section, songs);
                 }
             }
             Action::SetupMyPageCollections(section, request_id, items) => {
@@ -1733,8 +1670,8 @@ fn remove_all_file(path: PathBuf) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        LoginSessionGeneration, MY_PAGE_COLLECTION_PREVIEW_LIMIT, MY_PAGE_SONG_PREVIEW_LIMIT,
-        local_file_uri, skip_liked_playlist, take_preview,
+        LoginSessionGeneration, MY_PAGE_COLLECTION_PREVIEW_LIMIT, local_file_uri,
+        skip_liked_playlist, take_preview,
     };
 
     #[test]
@@ -1750,7 +1687,6 @@ mod tests {
 
     #[test]
     fn preview_helpers_limit_and_preserve_order() {
-        assert_eq!(MY_PAGE_SONG_PREVIEW_LIMIT, 8);
         assert_eq!(MY_PAGE_COLLECTION_PREVIEW_LIMIT, 10);
         assert_eq!(take_preview(vec![1, 2, 3, 4], 3), vec![1, 2, 3]);
         assert_eq!(take_preview(vec![1, 2], 3), vec![1, 2]);

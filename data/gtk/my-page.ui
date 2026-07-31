@@ -9,394 +9,108 @@
             <class name="my-page" />
         </style>
 
+        <!-- 低频功能只保留入口卡片：每日推荐 / 收藏单曲 -->
         <child>
-            <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">16</property>
+            <object class="GtkFlowBox">
+                <property name="selection-mode">none</property>
+                <property name="min-children-per-line">1</property>
+                <property name="max-children-per-line">2</property>
+                <property name="homogeneous">true</property>
+                <property name="column-spacing">16</property>
+                <property name="row-spacing">16</property>
                 <style>
-                    <class name="page-section" />
+                    <class name="my-page-entry-flow" />
                 </style>
                 <child>
-                    <object class="GtkBox">
-                        <property name="spacing">8</property>
+                    <object class="GtkButton">
+                        <property name="width-request">320</property>
+                        <property name="tooltip-text" translatable="yes">Daily Recommendation</property>
+                        <signal name="clicked" handler="daily_rec_cb" swapped="true" />
                         <style>
-                            <class name="page-section-header" />
+                            <class name="quick-entry-card" />
                         </style>
-                        <child>
-                            <object class="GtkImage">
-                                <property name="icon-name">x-office-calendar-symbolic</property>
-                                <style>
-                                    <class name="page-section-icon" />
-                                </style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label" translatable="yes">Daily Recommendation</property>
-                                <style><class name="title-3" /></style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton" id="daily_more_button">
-                                <property name="hexpand">true</property>
-                                <property name="halign">end</property>
-                                <property name="sensitive">false</property>
-                                <property name="icon-name">view-more-symbolic</property>
-                                <property name="tooltip-text" translatable="yes">View More</property>
-                                <signal name="clicked" handler="daily_rec_cb" swapped="true" />
-                                <style><class name="flat" /></style>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkStack" id="daily_state">
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">loading</property>
-                                <property name="child">
-                                    <object class="GtkSpinner">
-                                        <property name="spinning">true</property>
-                                        <property name="halign">center</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">content</property>
-                                <property name="child">
-                                    <object class="GtkFlowBox">
-                                        <property name="selection-mode">none</property>
-                                        <property name="min-children-per-line">1</property>
-                                        <property name="max-children-per-line">2</property>
-                                        <property name="homogeneous">true</property>
-                                        <property name="column-spacing">20</property>
-                                        <property name="row-spacing">16</property>
+                        <property name="child">
+                            <object class="GtkBox">
+                                <property name="spacing">12</property>
+                                <child>
+                                    <object class="GtkImage">
+                                        <property name="icon-name">x-office-calendar-symbolic</property>
+                                        <property name="pixel-size">24</property>
+                                        <property name="valign">center</property>
                                         <style>
-                                            <class name="my-page-song-flow" />
+                                            <class name="songlist-card-cover" />
+                                            <class name="quick-entry-cover" />
+                                            <class name="quick-entry-icon" />
                                         </style>
-                                        <child>
-                                            <object class="GtkListBox" id="daily_left">
-                                                <property name="width-request">320</property>
-                                                <property name="selection-mode">none</property>
-                                                <style>
-                                                    <class name="boxed-list" />
-                                                    <class name="my-page-song-list" />
-                                                </style>
-                                            </object>
-                                        </child>
-                                        <child>
-                                            <object class="GtkListBox" id="daily_right">
-                                                <property name="width-request">320</property>
-                                                <property name="selection-mode">none</property>
-                                                <style>
-                                                    <class name="boxed-list" />
-                                                    <class name="my-page-song-list" />
-                                                </style>
-                                            </object>
-                                        </child>
                                     </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">empty</property>
-                                <property name="child">
+                                </child>
+                                <child>
                                     <object class="GtkLabel">
-                                        <property name="label" translatable="yes">No content</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                        <style><class name="dim-label" /></style>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">error</property>
-                                <property name="child">
-                                    <object class="GtkBox">
-                                        <property name="halign">center</property>
-                                        <property name="spacing">8</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                        <child>
-                                            <object class="GtkLabel">
-                                                <property name="label" translatable="yes">Failed to load</property>
-                                            </object>
-                                        </child>
-                                        <child>
-                                            <object class="GtkButton">
-                                                <property name="label" translatable="yes">Retry</property>
-                                                <signal name="clicked" handler="retry_daily_cb" swapped="true" />
-                                            </object>
-                                        </child>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-            </object>
-        </child>
-
-        <child>
-            <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">16</property>
-                <style>
-                    <class name="page-section" />
-                </style>
-                <child>
-                    <object class="GtkBox">
-                        <property name="spacing">8</property>
-                        <style>
-                            <class name="page-section-header" />
-                        </style>
-                        <child>
-                            <object class="GtkImage">
-                                <property name="icon-name">emote-love-symbolic</property>
-                                <style>
-                                    <class name="page-section-icon" />
-                                </style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label" translatable="yes">Favorite Songs</property>
-                                <style><class name="title-3" /></style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton" id="favorite_songs_more_button">
-                                <property name="hexpand">true</property>
-                                <property name="halign">end</property>
-                                <property name="sensitive">false</property>
-                                <property name="icon-name">view-more-symbolic</property>
-                                <property name="tooltip-text" translatable="yes">View More</property>
-                                <signal name="clicked" handler="heartbeat_cb" swapped="true" />
-                                <style><class name="flat" /></style>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkStack" id="favorite_songs_state">
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">loading</property>
-                                <property name="child">
-                                    <object class="GtkSpinner">
-                                        <property name="spinning">true</property>
-                                        <property name="halign">center</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">content</property>
-                                <property name="child">
-                                    <object class="GtkFlowBox">
-                                        <property name="selection-mode">none</property>
-                                        <property name="min-children-per-line">1</property>
-                                        <property name="max-children-per-line">2</property>
-                                        <property name="homogeneous">true</property>
-                                        <property name="column-spacing">20</property>
-                                        <property name="row-spacing">16</property>
-                                        <style>
-                                            <class name="my-page-song-flow" />
-                                        </style>
-                                        <child>
-                                            <object class="GtkListBox" id="favorite_songs_left">
-                                                <property name="width-request">320</property>
-                                                <property name="selection-mode">none</property>
-                                                <style>
-                                                    <class name="boxed-list" />
-                                                    <class name="my-page-song-list" />
-                                                </style>
-                                            </object>
-                                        </child>
-                                        <child>
-                                            <object class="GtkListBox" id="favorite_songs_right">
-                                                <property name="width-request">320</property>
-                                                <property name="selection-mode">none</property>
-                                                <style>
-                                                    <class name="boxed-list" />
-                                                    <class name="my-page-song-list" />
-                                                </style>
-                                            </object>
-                                        </child>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">empty</property>
-                                <property name="child">
-                                    <object class="GtkLabel">
-                                        <property name="label" translatable="yes">No content</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                        <style><class name="dim-label" /></style>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">error</property>
-                                <property name="child">
-                                    <object class="GtkBox">
-                                        <property name="halign">center</property>
-                                        <property name="spacing">8</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                        <child>
-                                            <object class="GtkLabel">
-                                                <property name="label" translatable="yes">Failed to load</property>
-                                            </object>
-                                        </child>
-                                        <child>
-                                            <object class="GtkButton">
-                                                <property name="label" translatable="yes">Retry</property>
-                                                <signal name="clicked" handler="retry_favorite_songs_cb" swapped="true" />
-                                            </object>
-                                        </child>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-            </object>
-        </child>
-
-        <child>
-            <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">16</property>
-                <style>
-                    <class name="page-section" />
-                </style>
-                <child>
-                    <object class="GtkBox">
-                        <property name="spacing">8</property>
-                        <style>
-                            <class name="page-section-header" />
-                        </style>
-                        <child>
-                            <object class="GtkImage">
-                                <property name="icon-name">media-optical-bd-symbolic</property>
-                                <style>
-                                    <class name="page-section-icon" />
-                                </style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkLabel">
-                                <property name="label" translatable="yes">Favorite Album</property>
-                                <style><class name="title-3" /></style>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton" id="albums_more_button">
-                                <property name="hexpand">true</property>
-                                <property name="halign">end</property>
-                                <property name="sensitive">false</property>
-                                <property name="icon-name">view-more-symbolic</property>
-                                <property name="tooltip-text" translatable="yes">View More</property>
-                                <signal name="clicked" handler="collection_album_cb" swapped="true" />
-                                <style><class name="flat" /></style>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkStack" id="albums_state">
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">loading</property>
-                                <property name="child">
-                                    <object class="GtkSpinner">
-                                        <property name="spinning">true</property>
-                                        <property name="halign">center</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                    </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">content</property>
-                                <property name="child">
-                                    <object class="GtkFlowBox" id="albums_grid">
+                                        <property name="label" translatable="yes">Daily Recommendation</property>
+                                        <property name="xalign">0</property>
+                                        <property name="valign">center</property>
                                         <property name="hexpand">true</property>
-                                        <property name="valign">start</property>
-                                        <property name="max-children-per-line">6</property>
-                                        <property name="min-children-per-line">2</property>
-                                        <property name="homogeneous">true</property>
-                                        <property name="column-spacing">8</property>
-                                        <property name="row-spacing">8</property>
-                                        <property name="selection-mode">none</property>
-                                        <property name="activate-on-single-click">true</property>
-                                        <style>
-                                            <class name="my-page-collection-grid" />
-                                        </style>
+                                        <style><class name="title-4" /></style>
                                     </object>
-                                </property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">empty</property>
-                                <property name="child">
-                                    <object class="GtkLabel">
-                                        <property name="label" translatable="yes">No content</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
+                                </child>
+                                <child>
+                                    <object class="GtkImage">
+                                        <property name="icon-name">go-next-symbolic</property>
+                                        <property name="valign">center</property>
                                         <style><class name="dim-label" /></style>
                                     </object>
-                                </property>
+                                </child>
                             </object>
-                        </child>
-                        <child>
-                            <object class="GtkStackPage">
-                                <property name="name">error</property>
-                                <property name="child">
-                                    <object class="GtkBox">
-                                        <property name="halign">center</property>
-                                        <property name="spacing">8</property>
-                                        <property name="margin-top">24</property>
-                                        <property name="margin-bottom">24</property>
-                                        <child>
-                                            <object class="GtkLabel">
-                                                <property name="label" translatable="yes">Failed to load</property>
-                                            </object>
-                                        </child>
-                                        <child>
-                                            <object class="GtkButton">
-                                                <property name="label" translatable="yes">Retry</property>
-                                                <signal name="clicked" handler="retry_albums_cb" swapped="true" />
-                                            </object>
-                                        </child>
+                        </property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton">
+                        <property name="width-request">320</property>
+                        <property name="tooltip-text" translatable="yes">Favorite Songs</property>
+                        <signal name="clicked" handler="heartbeat_cb" swapped="true" />
+                        <style>
+                            <class name="quick-entry-card" />
+                        </style>
+                        <property name="child">
+                            <object class="GtkBox">
+                                <property name="spacing">12</property>
+                                <child>
+                                    <object class="GtkImage">
+                                        <property name="icon-name">emote-love-symbolic</property>
+                                        <property name="pixel-size">24</property>
+                                        <property name="valign">center</property>
+                                        <style>
+                                            <class name="songlist-card-cover" />
+                                            <class name="quick-entry-cover" />
+                                            <class name="quick-entry-icon" />
+                                        </style>
                                     </object>
-                                </property>
+                                </child>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label" translatable="yes">Favorite Songs</property>
+                                        <property name="xalign">0</property>
+                                        <property name="valign">center</property>
+                                        <property name="hexpand">true</property>
+                                        <style><class name="title-4" /></style>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkImage">
+                                        <property name="icon-name">go-next-symbolic</property>
+                                        <property name="valign">center</property>
+                                        <style><class name="dim-label" /></style>
+                                    </object>
+                                </child>
                             </object>
-                        </child>
+                        </property>
                     </object>
                 </child>
             </object>
         </child>
 
+        <!-- 收藏歌单（比专辑更常用，排在前面） -->
         <child>
             <object class="GtkBox">
                 <property name="orientation">vertical</property>
@@ -459,7 +173,7 @@
                                     <object class="GtkFlowBox" id="songlists_grid">
                                         <property name="hexpand">true</property>
                                         <property name="valign">start</property>
-                                        <property name="max-children-per-line">6</property>
+                                        <property name="max-children-per-line">12</property>
                                         <property name="min-children-per-line">2</property>
                                         <property name="homogeneous">true</property>
                                         <property name="column-spacing">8</property>
@@ -504,6 +218,125 @@
                                             <object class="GtkButton">
                                                 <property name="label" translatable="yes">Retry</property>
                                                 <signal name="clicked" handler="retry_songlists_cb" swapped="true" />
+                                            </object>
+                                        </child>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+
+        <!-- 收藏专辑 -->
+        <child>
+            <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">16</property>
+                <style>
+                    <class name="page-section" />
+                </style>
+                <child>
+                    <object class="GtkBox">
+                        <property name="spacing">8</property>
+                        <style>
+                            <class name="page-section-header" />
+                        </style>
+                        <child>
+                            <object class="GtkImage">
+                                <property name="icon-name">media-optical-bd-symbolic</property>
+                                <style>
+                                    <class name="page-section-icon" />
+                                </style>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label" translatable="yes">Favorite Album</property>
+                                <style><class name="title-3" /></style>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkButton" id="albums_more_button">
+                                <property name="hexpand">true</property>
+                                <property name="halign">end</property>
+                                <property name="sensitive">false</property>
+                                <property name="icon-name">view-more-symbolic</property>
+                                <property name="tooltip-text" translatable="yes">View More</property>
+                                <signal name="clicked" handler="collection_album_cb" swapped="true" />
+                                <style><class name="flat" /></style>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkStack" id="albums_state">
+                        <child>
+                            <object class="GtkStackPage">
+                                <property name="name">loading</property>
+                                <property name="child">
+                                    <object class="GtkSpinner">
+                                        <property name="spinning">true</property>
+                                        <property name="halign">center</property>
+                                        <property name="margin-top">24</property>
+                                        <property name="margin-bottom">24</property>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkStackPage">
+                                <property name="name">content</property>
+                                <property name="child">
+                                    <object class="GtkFlowBox" id="albums_grid">
+                                        <property name="hexpand">true</property>
+                                        <property name="valign">start</property>
+                                        <property name="max-children-per-line">12</property>
+                                        <property name="min-children-per-line">2</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="column-spacing">8</property>
+                                        <property name="row-spacing">8</property>
+                                        <property name="selection-mode">none</property>
+                                        <property name="activate-on-single-click">true</property>
+                                        <style>
+                                            <class name="my-page-collection-grid" />
+                                        </style>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkStackPage">
+                                <property name="name">empty</property>
+                                <property name="child">
+                                    <object class="GtkLabel">
+                                        <property name="label" translatable="yes">No content</property>
+                                        <property name="margin-top">24</property>
+                                        <property name="margin-bottom">24</property>
+                                        <style><class name="dim-label" /></style>
+                                    </object>
+                                </property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkStackPage">
+                                <property name="name">error</property>
+                                <property name="child">
+                                    <object class="GtkBox">
+                                        <property name="halign">center</property>
+                                        <property name="spacing">8</property>
+                                        <property name="margin-top">24</property>
+                                        <property name="margin-bottom">24</property>
+                                        <child>
+                                            <object class="GtkLabel">
+                                                <property name="label" translatable="yes">Failed to load</property>
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkButton">
+                                                <property name="label" translatable="yes">Retry</property>
+                                                <signal name="clicked" handler="retry_albums_cb" swapped="true" />
                                             </object>
                                         </child>
                                     </object>

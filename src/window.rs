@@ -889,11 +889,6 @@ impl NeteaseCloudMusicGtk4Window {
         self.imp().my_page.is_current_request(section, request_id)
     }
 
-    pub fn update_my_page_songs(&self, section: MyPageSection, songs: Vec<SongInfo>) {
-        let likes = self.get_song_likes(&songs);
-        self.imp().my_page.update_songs(section, &songs, &likes);
-    }
-
     pub fn update_my_page_collections(&self, section: MyPageSection, items: Vec<SongList>) {
         self.imp().my_page.update_collections(section, items);
     }

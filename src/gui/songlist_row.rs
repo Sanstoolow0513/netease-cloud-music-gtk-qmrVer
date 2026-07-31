@@ -86,34 +86,6 @@ impl SonglistRow {
         imp.remove_button.set_visible(visible);
     }
 
-    pub fn set_my_page_preview_mode(&self) {
-        let imp = self.imp();
-        imp.album_label.set_visible(false);
-        if let Some(parent) = imp.album_label.parent() {
-            parent.set_visible(false);
-        }
-        self.set_album_button_visible(false);
-        self.set_remove_button_visible(false);
-
-        // Pack title + artist together on the left; duration absorbs leftover
-        // width so wide preview cards don't open a dead zone between the
-        // song name and the artist.
-        if let Some(title_box) = imp.title_label.parent() {
-            title_box.set_hexpand(false);
-        }
-        imp.title_label.set_max_width_chars(32);
-        if let Some(artist_box) = imp.artist_label.parent() {
-            artist_box.set_width_request(120);
-        }
-        imp.artist_label.set_width_chars(8);
-        imp.artist_label.set_max_width_chars(12);
-        if let Some(tail_box) = imp.duration_label.parent() {
-            tail_box.set_hexpand(true);
-        }
-        imp.duration_label.set_hexpand(true);
-        imp.duration_label.set_halign(gtk::Align::End);
-    }
-
     /// 双列布局下隐藏专辑列，收紧歌手列宽度，保留喜欢按钮。
     pub fn set_dual_column_compact(&self, compact: bool) {
         let imp = self.imp();
