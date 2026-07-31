@@ -5,16 +5,14 @@
 //
 
 use async_channel::Sender;
-use gio::Settings;
-use gtk::{CompositeTemplate, gio, glib, prelude::*, subclass::prelude::*};
-use ncm_api::{SongInfo, SongList};
+use gtk::{CompositeTemplate, glib, prelude::*, subclass::prelude::*};
+use ncm_api::SongList;
 use once_cell::sync::OnceCell;
 use std::cell::RefCell;
 
 use crate::{
-    APP_ID,
     application::Action,
-    gui::{SongListGridItem, songlist_row::SonglistRow},
+    gui::SongListGridItem,
     model::{MyPageRequestId, MyPageRequestTokens, MyPageSection},
 };
 
@@ -36,15 +34,6 @@ impl MyPage {
     pub fn reset(&self) {
         let imp = self.imp();
         imp.request_tokens.borrow_mut().invalidate_all();
-        self.clear_active_preview_row();
-        for list in [
-            imp.daily_left.get(),
-            imp.daily_right.get(),
-            imp.favorite_songs_left.get(),
-            imp.favorite_songs_right.get(),
-        ] {
-            Self::clear_listbox(&list);
-        }
         SongListGridItem::box_clear(imp.albums_grid.get());
         SongListGridItem::box_clear(imp.songlists_grid.get());
         imp.albums.borrow_mut().clear();
@@ -75,46 +64,17 @@ impl MyPage {
         self.set_section_state(section, "error");
     }
 
-    pub fn update_songs(&self, section: MyPageSection, songs: &[SongInfo], likes: &[bool]) {
-        let imp = self.imp();
-        let (left, right) = match section {
-            MyPageSection::DailyRec => (imp.daily_left.get(), imp.daily_right.get()),
-            MyPageSection::FavoriteSongs => (
-                imp.favorite_songs_left.get(),
-                imp.favorite_songs_right.get(),
-            ),
-            _ => return,
-        };
-
-        self.clear_active_preview_row();
-        Self::clear_listbox(&left);
-        Self::clear_listbox(&right);
-        if songs.is_empty() {
-            self.set_section_state(section, "empty");
-            return;
-        }
-
-        let split = songs.len().min(4);
-        Self::set_song_column_visible(&left, true);
-        Self::set_song_column_visible(&right, songs.len() > split);
-        self.fill_song_list(&left, &songs[..split], &likes[..split]);
-        self.fill_song_list(&right, &songs[split..], &likes[split..]);
-        self.set_section_state(section, "content");
-    }
-
     pub fn update_collections(&self, section: MyPageSection, items: Vec<SongList>) {
         let imp = self.imp();
         let (grid, show_author) = match section {
             MyPageSection::FavoriteAlbums => (imp.albums_grid.get(), true),
             MyPageSection::FavoriteSongLists => (imp.songlists_grid.get(), false),
-            _ => return,
         };
 
         SongListGridItem::box_clear(grid.clone());
         match section {
             MyPageSection::FavoriteAlbums => imp.albums.borrow_mut().clear(),
             MyPageSection::FavoriteSongLists => imp.songlists.borrow_mut().clear(),
-            _ => unreachable!(),
         }
         if items.is_empty() {
             self.set_section_state(section, "empty");
@@ -126,74 +86,13 @@ impl MyPage {
         match section {
             MyPageSection::FavoriteAlbums => imp.albums.replace(items),
             MyPageSection::FavoriteSongLists => imp.songlists.replace(items),
-            _ => unreachable!(),
         };
         self.set_section_state(section, "content");
-    }
-
-    fn fill_song_list(&self, list: &gtk::ListBox, songs: &[SongInfo], likes: &[bool]) {
-        let imp = self.imp();
-        let sender = imp.sender.get().unwrap().clone();
-        let settings = imp.settings.get().unwrap();
-
-        for (song, like_song) in songs.iter().zip(likes.iter()) {
-            let row = SonglistRow::new(sender.clone(), song);
-            row.set_property("like", like_song);
-            row.set_my_page_preview_mode();
-            settings
-                .bind("not-ignore-grey", &row, "not-ignore-grey")
-                .get_only()
-                .build();
-
-            let song = song.clone();
-            gtk::prelude::ListBoxRowExt::connect_activate(
-                &row,
-                glib::clone!(
-                    #[weak(rename_to = page)]
-                    self,
-                    #[strong]
-                    sender,
-                    move |row| {
-                        if row.is_activatable() || row.not_ignore_grey() {
-                            page.activate_preview_row(row);
-                            sender.send_blocking(Action::AddPlay(song.clone())).unwrap();
-                        }
-                    }
-                ),
-            );
-            list.append(&row);
-        }
-    }
-
-    fn activate_preview_row(&self, row: &SonglistRow) {
-        let imp = self.imp();
-        if let Some(old_row) = imp
-            .active_preview_row
-            .borrow()
-            .as_ref()
-            .and_then(|row| row.upgrade())
-        {
-            old_row.switch_image(false);
-        }
-        row.switch_image(true);
-        imp.active_preview_row.replace(Some(row.downgrade()));
-    }
-
-    fn clear_active_preview_row(&self) {
-        let active_row = self.imp().active_preview_row.borrow_mut().take();
-        if let Some(row) = active_row.and_then(|row| row.upgrade()) {
-            row.switch_image(false);
-        }
     }
 
     fn set_section_state(&self, section: MyPageSection, state: &str) {
         let imp = self.imp();
         let (stack, more_button) = match section {
-            MyPageSection::DailyRec => (imp.daily_state.get(), imp.daily_more_button.get()),
-            MyPageSection::FavoriteSongs => (
-                imp.favorite_songs_state.get(),
-                imp.favorite_songs_more_button.get(),
-            ),
             MyPageSection::FavoriteAlbums => (imp.albums_state.get(), imp.albums_more_button.get()),
             MyPageSection::FavoriteSongLists => {
                 (imp.songlists_state.get(), imp.songlists_more_button.get())
@@ -201,24 +100,6 @@ impl MyPage {
         };
         stack.set_visible_child_name(state);
         more_button.set_sensitive(state == "content");
-    }
-
-    fn clear_listbox(list: &gtk::ListBox) {
-        while let Some(child) = list.last_child() {
-            list.remove(&child);
-        }
-    }
-
-    /// Hide/show the FlowBoxChild wrapper so homogeneous FlowBox does not
-    /// reserve an empty column when the right list has no songs.
-    fn set_song_column_visible(list: &gtk::ListBox, visible: bool) {
-        match list
-            .parent()
-            .and_then(|parent| parent.downcast::<gtk::FlowBoxChild>().ok())
-        {
-            Some(wrapper) => wrapper.set_visible(visible),
-            None => list.set_visible(visible),
-        }
     }
 }
 
@@ -236,29 +117,13 @@ mod imp {
     #[template(resource = "/com/gitee/gmg137/NeteaseCloudMusicGtk4/gtk/my-page.ui")]
     pub struct MyPage {
         #[template_child]
-        pub daily_state: TemplateChild<gtk::Stack>,
-        #[template_child]
-        pub favorite_songs_state: TemplateChild<gtk::Stack>,
-        #[template_child]
         pub albums_state: TemplateChild<gtk::Stack>,
         #[template_child]
         pub songlists_state: TemplateChild<gtk::Stack>,
         #[template_child]
-        pub daily_more_button: TemplateChild<gtk::Button>,
-        #[template_child]
-        pub favorite_songs_more_button: TemplateChild<gtk::Button>,
-        #[template_child]
         pub albums_more_button: TemplateChild<gtk::Button>,
         #[template_child]
         pub songlists_more_button: TemplateChild<gtk::Button>,
-        #[template_child]
-        pub daily_left: TemplateChild<gtk::ListBox>,
-        #[template_child]
-        pub daily_right: TemplateChild<gtk::ListBox>,
-        #[template_child]
-        pub favorite_songs_left: TemplateChild<gtk::ListBox>,
-        #[template_child]
-        pub favorite_songs_right: TemplateChild<gtk::ListBox>,
         #[template_child]
         pub albums_grid: TemplateChild<gtk::FlowBox>,
         #[template_child]
@@ -266,10 +131,8 @@ mod imp {
 
         pub albums: RefCell<Vec<SongList>>,
         pub songlists: RefCell<Vec<SongList>>,
-        pub active_preview_row: RefCell<Option<glib::WeakRef<SonglistRow>>>,
         pub request_tokens: RefCell<MyPageRequestTokens>,
         pub sender: OnceCell<Sender<Action>>,
-        pub settings: OnceCell<Settings>,
     }
 
     #[glib::object_subclass]
@@ -327,16 +190,6 @@ mod imp {
         }
 
         #[template_callback]
-        fn retry_daily_cb(&self) {
-            self.load_section(MyPageSection::DailyRec);
-        }
-
-        #[template_callback]
-        fn retry_favorite_songs_cb(&self) {
-            self.load_section(MyPageSection::FavoriteSongs);
-        }
-
-        #[template_callback]
         fn retry_albums_cb(&self) {
             self.load_section(MyPageSection::FavoriteAlbums);
         }
@@ -358,7 +211,6 @@ mod imp {
     impl ObjectImpl for MyPage {
         fn constructed(&self) {
             self.parent_constructed();
-            self.settings.set(Settings::new(APP_ID)).unwrap();
             let obj = self.obj();
 
             self.albums_grid.connect_child_activated(glib::clone!(

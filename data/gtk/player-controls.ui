@@ -179,6 +179,18 @@
                                                 </style>
                                             </object>
                                         </child>
+                                        <child>
+                                            <object class="GtkLabel" id="bitrate_label">
+                                                <property name="halign">fill</property>
+                                                <property name="valign">center</property>
+                                                <property name="visible">false</property>
+                                                <style>
+                                                    <class name="caption" />
+                                                    <class name="dim-label" />
+                                                    <class name="numeric" />
+                                                </style>
+                                            </object>
+                                        </child>
                                     </object>
                                 </child>
                             </object>
@@ -293,6 +305,7 @@ audio-volume-high-symbolic</property>
                         <setter object="title_label" property="visible">false</setter>
                         <setter object="progress_time_label" property="visible">false</setter>
                         <setter object="duration_label" property="visible">false</setter>
+                        <setter object="bitrate_label" property="visible">false</setter>
                         <setter object="like_button" property="visible">false</setter>
                         <setter object="repeat_menu_button" property="visible">false</setter>
                     </object>
@@ -309,8 +322,8 @@ audio-volume-high-symbolic</property>
     <object class="GtkAdjustment" id="volume_adjustment">
         <property name="upper">1</property>
         <property name="value">0</property>
-        <property name="step-increment">0.05</property>
-        <property name="page-increment">0.2</property>
+        <property name="step-increment">0.01</property>
+        <property name="page-increment">0.1</property>
         <signal name="value-changed" handler="volume_cb" swapped="true" />
     </object>
     <object class="GtkPopover" id="repeat_popover">

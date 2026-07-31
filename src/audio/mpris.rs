@@ -80,7 +80,7 @@ impl MprisController {
     }
 
     pub async fn set_volume(&self, volume: f64) -> Result<()> {
-        if (self.mpris_player.volume() * 100.0).round() as i64 != (volume * 100.0).round() as i64 {
+        if self.mpris_player.volume() != volume {
             self.mpris_player.set_volume(volume).await?;
         }
         Ok(())

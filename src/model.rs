@@ -162,26 +162,17 @@ impl SongListDetail {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum MyPageSection {
-    DailyRec,
-    FavoriteSongs,
     FavoriteAlbums,
     FavoriteSongLists,
 }
 
 impl MyPageSection {
-    pub const ALL: [Self; 4] = [
-        Self::DailyRec,
-        Self::FavoriteSongs,
-        Self::FavoriteAlbums,
-        Self::FavoriteSongLists,
-    ];
+    pub const ALL: [Self; 2] = [Self::FavoriteSongLists, Self::FavoriteAlbums];
 
     const fn index(self) -> usize {
         match self {
-            Self::DailyRec => 0,
-            Self::FavoriteSongs => 1,
-            Self::FavoriteAlbums => 2,
-            Self::FavoriteSongLists => 3,
+            Self::FavoriteSongLists => 0,
+            Self::FavoriteAlbums => 1,
         }
     }
 }
@@ -191,7 +182,7 @@ pub struct MyPageRequestId(u64);
 
 #[derive(Debug, Default)]
 pub struct MyPageRequestTokens {
-    generations: [u64; 4],
+    generations: [u64; 2],
 }
 
 impl MyPageRequestTokens {
@@ -357,19 +348,19 @@ mod tests {
     #[test]
     fn my_page_request_tokens_are_independent_and_invalidate_stale_requests() {
         let mut tokens = MyPageRequestTokens::default();
-        let daily = tokens.begin(MyPageSection::DailyRec);
+        let songlists = tokens.begin(MyPageSection::FavoriteSongLists);
         let albums = tokens.begin(MyPageSection::FavoriteAlbums);
 
-        assert!(tokens.is_current(MyPageSection::DailyRec, daily));
+        assert!(tokens.is_current(MyPageSection::FavoriteSongLists, songlists));
         assert!(tokens.is_current(MyPageSection::FavoriteAlbums, albums));
 
-        let newer_daily = tokens.begin(MyPageSection::DailyRec);
-        assert!(!tokens.is_current(MyPageSection::DailyRec, daily));
-        assert!(tokens.is_current(MyPageSection::DailyRec, newer_daily));
+        let newer_songlists = tokens.begin(MyPageSection::FavoriteSongLists);
+        assert!(!tokens.is_current(MyPageSection::FavoriteSongLists, songlists));
+        assert!(tokens.is_current(MyPageSection::FavoriteSongLists, newer_songlists));
         assert!(tokens.is_current(MyPageSection::FavoriteAlbums, albums));
 
         tokens.invalidate_all();
-        assert!(!tokens.is_current(MyPageSection::DailyRec, newer_daily));
+        assert!(!tokens.is_current(MyPageSection::FavoriteSongLists, newer_songlists));
         assert!(!tokens.is_current(MyPageSection::FavoriteAlbums, albums));
     }
 }
