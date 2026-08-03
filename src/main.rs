@@ -1,3 +1,11 @@
+// Release builds link as a Windows GUI app so launching the portable package
+// does not allocate a console window; debug builds keep the console so
+// terminal logging (RUST_LOG) and GLib warnings stay visible.
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
+
 mod application;
 mod audio;
 mod config;

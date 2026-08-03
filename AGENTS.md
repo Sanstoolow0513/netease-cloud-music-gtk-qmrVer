@@ -83,7 +83,7 @@ make dev
 - 便携包运行时从 exe 相对目录加载 gresource、locale、schema、图标和 GStreamer 插件；`src/platform/mod.rs` 在 Windows 上于 `gstreamer::init` 前设置相关环境变量。
 - bootstrap 跳过 `webrtc-audio-processing`（播放不需要 webrtcdsp）。播放链路必需 `glib-networking`（TLS）+ `libsoup3`（→ `souphttpsrc` 拉流）+ `gst-libav`/`ffmpeg`（mp3/flac/aac 解码），bootstrap 会强制重编 `gst-plugins-good` 直到 `gstsoup.dll` 产出；仓库内 `ffmpeg-build.sh` 覆盖 gvsbuild 的 ffmpeg 脚本时须按 `UV_CACHE_DIR`（未设则 `%LOCALAPPDATA%\uv\cache`）定位，勿写死 LOCALAPPDATA（CI 的 setup-uv 会改缓存根）。
 
-查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。
+查看日志：从终端启动并设置环境变量 `RUST_LOG=debug` 或 `RUST_LOG=netease_cloud_music_gtk4`（默认日志级别为 off，见 `src/main.rs`）。注意 Windows 的 release 构建链接为 GUI 子系统（`src/main.rs` 的 `windows_subsystem`，双击不再弹控制台黑框），终端日志需用 debug 构建（`make dev`）查看；CI 打包（windows-portable action）固定 `-BuildType release`。
 
 macOS 构建时根目录 `build.rs`（Cargo 自动识别）会设置 GStreamer framework 的 pkg-config / rpath 路径；`Cargo.toml` 中 `[package.metadata.bundle]` 供 cargo-bundle 打包 macOS dmg 使用。仓库根部的 `.buildconfig` 是 GNOME Builder 的配置文件，与构建脚本无关。
 

@@ -38,6 +38,8 @@ make dev
 
 **运行注意**：`build.ps1` 不带 `-Package` 时只写入 `_windows\install`；请再执行带 `-Package` 的打包、`make dev`，或打开 `_windows\dist\...` 目录中的 exe。直接双击 `_windows\install\bin\*.exe` 会缺 DLL/gresource。
 
+**控制台窗口**：release 构建链接为 Windows GUI 子系统（`src/main.rs` 的 `windows_subsystem` 属性），双击启动不再弹出控制台黑框，`RUST_LOG` 与 GLib 警告也不再落终端；需要终端日志时用 debug 构建（`make dev`，debug 保留控制台）。CI（meson/nightly/release 三个 workflow 均经 windows-portable action）始终以 `-BuildType release` 打包。
+
 常见失败对照：
 
 | 现象 | 处理 |
